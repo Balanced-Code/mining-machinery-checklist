@@ -1,0 +1,51 @@
+{
+  "folders": [
+    {
+      "name": "Root",
+      "path": "."
+    },
+    {
+      "name": "Frontend (Angular)",
+      "path": "front"
+    },
+    {
+      "name": "Backend (Fastify + Prisma)",
+      "path": "back"
+    }
+  ],
+  "settings": {
+    // Configuración global del workspace
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.git": true,
+      "**/dist": true,
+      "**/build": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/.angular": true
+    },
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      // Angular
+      "angular.ng-template",
+      // Node.js / TypeScript
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      // Prisma
+      "prisma.prisma",
+      // Git
+      "eamodio.gitlens",
+      // Útiles
+      "usernamehw.errorlens",
+      "streetsidesoftware.code-spell-checker"
+    ]
+  }
+}
