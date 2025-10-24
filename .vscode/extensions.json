@@ -5,7 +5,6 @@
     "esbenp.prettier-vscode",
     "prisma.prisma",
     "eamodio.gitlens",
-    "usernamehw.errorlens",
-    "streetsidesoftware.code-spell-checker"
+    "usernamehw.errorlens"
   ]
 }

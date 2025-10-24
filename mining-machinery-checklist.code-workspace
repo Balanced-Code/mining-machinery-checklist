@@ -44,8 +44,7 @@
       // Git
       "eamodio.gitlens",
       // Útiles
-      "usernamehw.errorlens",
-      "streetsidesoftware.code-spell-checker"
+      "usernamehw.errorlens"
     ]
   }
 }
