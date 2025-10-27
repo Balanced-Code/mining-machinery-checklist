@@ -50,7 +50,7 @@ async function start() {
       {
         schema: { hide: true },
       },
-      (request, reply) => {
+      async (request, reply) => {
         return reply.redirect('/documentation');
       }
     );
