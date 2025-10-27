@@ -5,6 +5,9 @@
     "esbenp.prettier-vscode",
     "prisma.prisma",
     "eamodio.gitlens",
-    "usernamehw.errorlens"
+    "github.copilot",
+    "github.copilot-chat",
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker"
   ]
 }

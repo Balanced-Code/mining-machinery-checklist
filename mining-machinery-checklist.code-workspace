@@ -39,8 +39,21 @@
       "prisma.prisma",
       // Git
       "eamodio.gitlens",
+      // GitHub Copilot (requerido para MCP)
+      "github.copilot",
+      "github.copilot-chat",
       // Útiles
-      "usernamehw.errorlens"
+      "usernamehw.errorlens",
+      "streetsidesoftware.code-spell-checker"
     ]
+  },
+  "mcp": {
+    "servers": {
+      "ESLint": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["@eslint/mcp@latest"]
+      }
+    }
   }
 }
