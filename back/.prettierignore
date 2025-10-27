@@ -1,0 +1,40 @@
+# Archivos compilados
+dist/
+build/
+
+# Dependencias
+node_modules/
+
+# Archivos generados
+src/generated/
+
+# Logs
+*.log
+logs/
+
+# Cache
+.eslintcache
+
+# Archivos de configuración específicos
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Archivos temporales
+.tmp/
+temp/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+prisma/migrations/
