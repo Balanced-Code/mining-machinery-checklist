@@ -5,8 +5,11 @@
 
 import { loginBodySchema } from './request';
 import {
+  cargosConfigResponseSchema,
   loginSuccessResponseSchema,
   logoutSuccessResponseSchema,
+  notFoundResponseSchema,
+  profileMeResponseSchema,
   unauthorizedResponseSchema,
 } from './response';
 
@@ -32,5 +35,29 @@ export const logoutSchema = {
   response: {
     200: logoutSuccessResponseSchema,
     401: unauthorizedResponseSchema,
+  },
+} as const;
+
+/**
+ * Schema completo para GET /auth/cargos
+ */
+export const cargosConfigSchema = {
+  description: 'Obtener jerarquía de cargos del sistema',
+  tags: ['Auth'],
+  response: {
+    200: cargosConfigResponseSchema,
+  },
+} as const;
+
+/**
+ * Schema completo para GET /auth/profile/me
+ */
+export const profileMeSchema = {
+  description: 'Obtener perfil del usuario autenticado',
+  tags: ['Auth'],
+  response: {
+    200: profileMeResponseSchema,
+    401: unauthorizedResponseSchema,
+    404: notFoundResponseSchema,
   },
 } as const;

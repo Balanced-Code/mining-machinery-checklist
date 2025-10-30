@@ -10,8 +10,4 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class Dashboard {
   readonly authService = inject(AuthService);
-
-  async onLogout(): Promise<void> {
-    await this.authService.logout();
-  }
 }

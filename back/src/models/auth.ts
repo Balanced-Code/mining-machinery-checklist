@@ -70,3 +70,10 @@ export interface TokenData {
   cargoNombre: string;
   jti: string;
 }
+
+/**
+ * Configuración de jerarquía de cargos
+ */
+export interface CargosConfigResponse {
+  hierarchy: Record<string, number>;
+}

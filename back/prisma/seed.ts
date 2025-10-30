@@ -11,12 +11,13 @@ async function main() {
   // await prisma.cargo.deleteMany();
   // await prisma.maquina.deleteMany();
 
-  // Crear cargos
+  // Crear cargos (niveles más altos = mayor jerarquía)
   console.log('📋 Creando cargos...');
-  const cargoAdmin = await prisma.cargo.create({
+  await prisma.cargo.create({
     data: {
-      nombre: 'Administrador',
+      nombre: 'Operador',
       nivel: 1,
+      creadoPor: null,
     },
   });
 
@@ -30,15 +31,15 @@ async function main() {
 
   await prisma.cargo.create({
     data: {
-      nombre: 'Inspector',
+      nombre: 'Gerente',
       nivel: 3,
       creadoPor: null,
     },
   });
 
-  await prisma.cargo.create({
+  const cargoAdmin = await prisma.cargo.create({
     data: {
-      nombre: 'Invitado',
+      nombre: 'Administrador',
       nivel: 4,
       creadoPor: null,
     },
@@ -57,6 +58,15 @@ async function main() {
     },
   });
 
+  const operadorUser = await prisma.usuario.create({
+    data: {
+      nombre: 'Carlos Martinez',
+      correo: 'operador@normet.com',
+      cargoId: 1, // Operador
+      contrasena: hashedPassword,
+    },
+  });
+
   const supervisorUser = await prisma.usuario.create({
     data: {
       nombre: 'Juan Pérez',
@@ -66,20 +76,11 @@ async function main() {
     },
   });
 
-  const inspectorUser = await prisma.usuario.create({
+  const gerenteUser = await prisma.usuario.create({
     data: {
       nombre: 'María González',
-      correo: 'inspector@normet.com',
-      cargoId: 3, // Inspector
-      contrasena: hashedPassword,
-    },
-  });
-
-  const invitadoUser = await prisma.usuario.create({
-    data: {
-      nombre: 'Carlos Martinez',
-      correo: 'invitado@normet.com',
-      cargoId: 4, // Invitado
+      correo: 'gerente@normet.com',
+      cargoId: 3, // Gerente
       contrasena: hashedPassword,
     },
   });
@@ -176,12 +177,14 @@ async function main() {
 
   console.log('✅ Seed completado exitosamente!');
   console.log('\n📊 Datos creados:');
-  console.log(`   - 4 Cargos (Administrador, Supervisor, Inspector, Invitado)`);
+  console.log(
+    `   - 4 Cargos (Operador=1, Supervisor=2, Gerente=3, Administrador=4)`
+  );
   console.log(`   - 4 Usuarios:`);
-  console.log(`     • Admin: ${adminUser.correo}`);
+  console.log(`     • Administrador: ${adminUser.correo}`);
+  console.log(`     • Gerente: ${gerenteUser.correo}`);
   console.log(`     • Supervisor: ${supervisorUser.correo}`);
-  console.log(`     • Inspector: ${inspectorUser.correo}`);
-  console.log(`     • Invitado: ${invitadoUser.correo}`);
+  console.log(`     • Operador: ${operadorUser.correo}`);
   console.log(`   - ${maquinas.length} Máquinas`);
   console.log(`   - 3 Roles de asignación`);
   console.log(`   - 1 Template con 5 secciones`);

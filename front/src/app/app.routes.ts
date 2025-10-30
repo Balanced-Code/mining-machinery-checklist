@@ -1,8 +1,6 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { authChildGuard, authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
-import { Dashboard } from './pages/dashboard/dashboard';
-import { Login } from './pages/login/login';
 
 export const routes: Routes = [
   {
@@ -12,18 +10,42 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    component: Login,
-    canActivate: [guestGuard],
+    loadComponent: () => import('./pages/login/login').then((m) => m.Login),
+    canActivate: [guestGuard], // Solo accesible si NO está autenticado
   },
   {
-    path: 'dashboard',
-    component: Dashboard,
-    canActivate: [authGuard],
-    // Ejemplos de protección por cargo o nivel:
-    // canActivate: [authGuard],
-    // data: { cargo: 'supervisor' }  // Solo supervisores o superior
-    // O por nivel numérico:
-    // data: { nivel: 2 }  // Solo nivel 2 o superior
+    path: '',
+    loadComponent: () => import('./shared/components/layout/layout').then((m) => m.Layout),
+    canActivate: [authGuard], // Verifica autenticación para el layout
+    canActivateChild: [authChildGuard], // Verifica roles para cada ruta hija automáticamente
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard),
+        // Sin restricciones de cargo/nivel - accesible para todos los usuarios autenticados
+      },
+      // Ejemplo: Ruta solo para supervisores o superior
+      // {
+      //   path: 'inspecciones',
+      //   loadComponent: () =>
+      //     import('./pages/inspecciones/inspecciones').then((m) => m.Inspecciones),
+      //   data: { cargo: 'supervisor' }, // Solo supervisores, gerentes y administradores
+      // },
+      // Ejemplo: Ruta solo para nivel 3 o superior (gerente y administrador)
+      // {
+      //   path: 'reportes',
+      //   loadComponent: () =>
+      //     import('./pages/reportes/reportes').then((m) => m.Reportes),
+      //   data: { nivel: 3 },
+      // },
+      // Ejemplo: Ruta solo para administradores
+      // {
+      //   path: 'admin',
+      //   loadComponent: () =>
+      //     import('./pages/admin/admin').then((m) => m.Admin),
+      //   data: { cargo: 'administrador' },
+      // },
+    ],
   },
   {
     path: '**',
