@@ -2,7 +2,7 @@ import fastifyEnv from '@fastify/env';
 import addFormats from 'ajv-formats';
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
-import { envSchema } from '../config/env';
+import { envSchema } from '../models/config';
 
 async function envPlugin(app: FastifyInstance) {
   await app.register(fastifyEnv, {

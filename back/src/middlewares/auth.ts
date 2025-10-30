@@ -1,46 +1,36 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { UserRole } from '../generated/prisma/index';
-import { UserService } from '../services/userService';
-
-// Definir tipos para el usuario autenticado
-export interface AuthenticatedUser {
-  id: number;
-  username: string;
-  email: string;
-  rol: UserRole;
-}
-
-// Extender FastifyRequest para incluir información del usuario autenticado
-declare module 'fastify' {
-  interface FastifyRequest {
-    currentUser?: AuthenticatedUser;
-  }
-}
+import type { AuthenticatedUser, JwtPayload } from '../models/auth';
+// Importar extensiones de tipos de Fastify
+import '../models/fastify';
 
 /**
  *? Verificar si un token está revocado
- * Consulta la tabla revoked_tokens
+ * Consulta la tabla tokens verificando el JTI
  */
 async function checkRevokedToken(
   request: FastifyRequest,
-  userId: number
+  _userId: number
 ): Promise<boolean> {
   try {
-    // Buscar si existe algún token revocado para este usuario
-    // que sea posterior a la emisión del token actual
-    const payload = request.user as { userId: number; iat: number };
-    const tokenIssuedAt = new Date(payload.iat * 1000); // iat está en segundos
+    const payload = request.user as JwtPayload;
 
-    const revokedToken = await request.server.prisma.revokedToken.findFirst({
+    // Buscar el token específico por JTI
+    const token = await request.server.prisma.token.findUnique({
       where: {
-        userId: userId,
-        revokedAt: {
-          gte: tokenIssuedAt, // Token revocado después de la emisión
-        },
+        jti: payload.jti,
+      },
+      select: {
+        active: true,
+        expiresAt: true,
       },
     });
 
-    return !!revokedToken; // Retorna true si existe un token revocado
+    // Token no existe o está inactivo o expirado
+    if (!token || !token.active || token.expiresAt < new Date()) {
+      return true;
+    }
+
+    return false;
   } catch (error) {
     // Para proyectos pequeños/críticos: bloquear acceso en caso de error BD
     // Priorizar seguridad sobre disponibilidad
@@ -62,13 +52,7 @@ export async function verifyJWTAndToken(
     await request.jwtVerify();
 
     // 2. Extraer payload del JWT (que ya contiene la info básica del usuario)
-    const payload = request.user as {
-      userId: number;
-      username: string;
-      email: string;
-      rol: UserRole;
-      iat: number;
-    };
+    const payload = request.user as JwtPayload;
 
     if (!payload || !payload.userId) {
       return null;
@@ -81,30 +65,47 @@ export async function verifyJWTAndToken(
     }
 
     // 4. Consultar datos completos del usuario para validar consistencia
-    const userService = new UserService(request.server.prisma);
-    const user = await userService.getUserByIdPublic(payload.userId);
+    const user = await request.server.prisma.usuario.findUnique({
+      where: {
+        id: payload.userId,
+        eliminadoEn: null, // Solo usuarios activos
+      },
+      include: {
+        cargo: {
+          select: {
+            id: true,
+            nombre: true,
+            nivel: true,
+          },
+        },
+      },
+    });
 
-    if (!user) {
+    if (!user || !user.cargo) {
       return null; // Usuario no existe o está desactivado
     }
 
     // 5. Validar que los datos del JWT sigan siendo válidos
     // Si hay cambios críticos, invalidar el token
     if (
-      user.email !== payload.email ||
-      user.username !== payload.username ||
-      user.rol !== payload.rol
+      user.correo !== payload.correo ||
+      user.nombre !== payload.nombre ||
+      user.cargoId !== payload.cargoId
     ) {
       // Token contiene datos obsoletos, forzar re-autenticación
       request.log.warn({
         userId: payload.userId,
         reason: 'JWT datos obsoletos',
         jwtData: {
-          email: payload.email,
-          username: payload.username,
-          rol: payload.rol,
+          correo: payload.correo,
+          nombre: payload.nombre,
+          cargoId: payload.cargoId,
         },
-        dbData: { email: user.email, username: user.username, rol: user.rol },
+        dbData: {
+          correo: user.correo,
+          nombre: user.nombre,
+          cargoId: user.cargoId,
+        },
       });
       return null;
     }
@@ -112,9 +113,11 @@ export async function verifyJWTAndToken(
     // 6. Retornar datos frescos de la BD (garantizados como actuales)
     return {
       id: user.id,
-      username: user.username,
-      email: user.email,
-      rol: user.rol,
+      nombre: user.nombre,
+      correo: user.correo,
+      cargoId: user.cargoId,
+      cargoNombre: user.cargo.nombre,
+      cargoNivel: user.cargo.nivel,
     };
   } catch {
     return null;
@@ -143,8 +146,8 @@ export async function requireNotAuth(
       // Verificar si es el mismo usuario o uno diferente
       const isSameUser =
         attemptedIdentifier &&
-        (currentUser.username === attemptedIdentifier ||
-          currentUser.email === attemptedIdentifier);
+        (currentUser.nombre === attemptedIdentifier ||
+          currentUser.correo === attemptedIdentifier);
 
       if (isSameUser) {
         return reply.conflict(
@@ -163,9 +166,10 @@ export async function requireNotAuth(
 }
 
 /**
- * Middleware para verificar roles específicos
+ * Middleware para verificar cargos específicos por nombre
+ * @param allowedCargoNames - Array de nombres de cargos permitidos (ej: ['Administrador', 'Supervisor'])
  */
-export function requireRole(...allowedRoles: UserRole[]) {
+export function requireCargo(...allowedCargoNames: string[]) {
   return async (
     request: FastifyRequest,
     reply: FastifyReply
@@ -175,10 +179,34 @@ export function requireRole(...allowedRoles: UserRole[]) {
       return reply.unauthorized('Usuario no autenticado');
     }
 
-    // Verificar que el rol esté permitido
-    if (!allowedRoles.includes(request.currentUser.rol)) {
+    // Verificar que el cargo esté permitido
+    if (!allowedCargoNames.includes(request.currentUser.cargoNombre)) {
       return reply.forbidden(
-        `Acceso denegado. Roles permitidos: ${allowedRoles.join(', ')}`
+        `Acceso denegado. Cargos permitidos: ${allowedCargoNames.join(', ')}`
+      );
+    }
+  };
+}
+
+/**
+ * Middleware para verificar nivel mínimo de cargo
+ * @param minLevel - Nivel mínimo requerido (1 = Admin, 2 = Supervisor, etc.)
+ * Niveles menores = mayor jerarquía
+ */
+export function requireCargoLevel(minLevel: number) {
+  return async (
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<void> => {
+    // Verificar que el usuario esté autenticado
+    if (!request.currentUser) {
+      return reply.unauthorized('Usuario no autenticado');
+    }
+
+    // Verificar que tenga el nivel de jerarquía requerido o superior
+    if (request.currentUser.cargoNivel > minLevel) {
+      return reply.forbidden(
+        `Acceso denegado. Se requiere nivel de cargo ${minLevel} o superior. Nivel actual: ${request.currentUser.cargoNivel}`
       );
     }
   };
@@ -193,9 +221,13 @@ export async function revokeUserTokens(
   userId: number,
   reason?: string
 ): Promise<void> {
-  await request.server.prisma.revokedToken.create({
-    data: {
+  await request.server.prisma.token.updateMany({
+    where: {
       userId: userId,
+      active: true,
+    },
+    data: {
+      active: false,
       revokedAt: new Date(),
       reason: reason || 'Logout del usuario',
     },

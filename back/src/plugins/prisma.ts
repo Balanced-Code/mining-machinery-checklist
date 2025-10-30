@@ -25,7 +25,7 @@ declare module 'fastify' {
  * Uso en rutas:
  * ```typescript
  * app.get('/users', async (request, reply) => {
- *   const users = await request.server.prisma.usuarioSistema.findMany();
+ *   const users = await request.server.prisma.usuario.findMany();
  *   return users;
  * });
  * ```

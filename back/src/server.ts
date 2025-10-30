@@ -1,5 +1,6 @@
 import sensible from '@fastify/sensible';
 import Fastify from 'fastify';
+import './models/fastify';
 import authPlugin from './plugins/auth';
 import cookiePlugin from './plugins/cookie';
 import corsPlugin from './plugins/cors';
@@ -10,7 +11,7 @@ import normalizationPlugin from './plugins/normalization';
 import prismaPlugin from './plugins/prisma';
 import rateLimitPlugin from './plugins/rateLimit';
 import swaggerPlugin from './plugins/swagger';
-// import authRoutes from './routes/auth/index';
+import authRoutes from './routes/auth/index';
 
 const app = Fastify({
   logger: {
@@ -42,7 +43,7 @@ async function start() {
     await app.register(corsPlugin); // 8. CORS
     await app.register(jwtPlugin); // 9. Autenticación JWT
     await app.register(authPlugin); // 10. Plugin de autenticación global
-    await app.register(swaggerPlugin); // 11. Swagger y Swagger UI para documentación
+    await app.register(swaggerPlugin); // 11. Swagger
 
     // Ruta raíz - Redirección a documentación (oculta de Swagger)
     app.get(
@@ -50,13 +51,13 @@ async function start() {
       {
         schema: { hide: true },
       },
-      (request, reply) => {
+      async (request, reply) => {
         return reply.redirect('/documentation');
       }
     );
 
-    // 11. Rutas con prefijos
-    // await app.register(authRoutes, { prefix: '/auth' }); // Gestión de Autenticación/Usuarios
+    // 12. Rutas con prefijos
+    await app.register(authRoutes, { prefix: '/auth' }); // Gestión de Autenticación/Usuarios
 
     // Iniciar servidor
     await app.listen({

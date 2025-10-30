@@ -13,7 +13,7 @@ export const setupNormalizationHooks = (fastify: FastifyInstance) => {
     const params = request.params as Record<string, unknown> | undefined;
 
     // Campos que necesitan normalización
-    const fieldsToNormalize = ['username', 'email', 'identifier'];
+    const fieldsToNormalize = ['nombre', 'correo'];
 
     // Normalizar body
     if (body && typeof body === 'object') {
@@ -87,6 +87,16 @@ const convertSpecificDatesToISO = (obj: unknown): unknown => {
  * Verifica si el campo es uno de los campos de fecha que deben ser convertidos
  */
 const isDateField = (fieldName: string): boolean => {
-  const dateFields = ['createdAt', 'updatedAt', 'deletedAt'];
+  const dateFields = [
+    'creadoEn',
+    'actualizadoEn',
+    'eliminadoEn',
+    'fechaInicio',
+    'fechaFinalizacion',
+    'issuedAt',
+    'expiresAt',
+    'revokedAt',
+    'fechaOperacion',
+  ];
   return dateFields.includes(fieldName);
 };

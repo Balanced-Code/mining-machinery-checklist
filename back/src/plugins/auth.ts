@@ -5,26 +5,8 @@ import type {
   FastifyRequest,
 } from 'fastify';
 import fp from 'fastify-plugin';
-import type { UserRole } from '../generated/prisma/index';
 import { verifyJWTAndToken } from '../middlewares/auth';
-
-// Definir tipos para el usuario autenticado
-export interface AuthenticatedUser {
-  id: number;
-  username: string;
-  email: string;
-  rol: UserRole;
-}
-
-declare module 'fastify' {
-  interface FastifyRequest {
-    currentUser?: AuthenticatedUser;
-  }
-
-  interface FastifyContextConfig {
-    requiresAuth?: boolean;
-  }
-}
+import '../models/fastify';
 
 /**
  * Lógica de autenticación (movida desde middlewares/auth.ts)
@@ -47,8 +29,8 @@ async function requireAuth(
  * Plugin de autenticación global
  *
  * Aplica autenticación automática a todas las rutas excepto:
+ * - Rutas de documentación (/documentation/*)
  * - Rutas que específicamente definen config.requiresAuth: false
- * - Rutas que no requieren autenticación (como /login)
  *
  * @param fastify Instancia de Fastify
  */
@@ -62,22 +44,24 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     '/documentation/json', // Schema OpenAPI JSON
     '/documentation/yaml', // Schema OpenAPI YAML
     '/documentation/uiConfig', // Configuración UI de Swagger
+    '/swagger.json', // Schema OpenAPI JSON (ruta alternativa)
+    '/openapi.json', // Schema OpenAPI JSON (ruta alternativa)
   ];
 
   // Hook global que se ejecuta antes de cada handler de ruta
   fastify.addHook('preHandler', async (request, reply) => {
     // Verificar si la ruta es de documentación (rutas públicas)
-    const isDocumentationRoute = publicRoutes.some(
+    const isPublicRoute = publicRoutes.some(
       route => request.url === route || request.url.startsWith(route + '/')
     );
 
-    if (isDocumentationRoute) {
+    if (isPublicRoute) {
       fastify.log.debug({
         url: request.url,
         method: request.method,
-        message: 'Ruta de documentación - sin autenticación requerida',
+        message: 'Ruta pública - sin autenticación requerida',
       });
-      return; // Saltar autenticación para rutas de documentación
+      return; // Saltar autenticación para rutas públicas
     }
 
     // Verificar si la ruta específicamente no requiere autenticación

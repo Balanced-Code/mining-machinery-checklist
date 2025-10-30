@@ -1,0 +1,334 @@
+Table usuario {
+  id int [pk, increment]
+  nombre varchar(100) [not null]
+  correo varchar(150) [unique, not null]
+  cargo_id int [ref: > cargo.id, not null]
+  contrasena varchar(255) [not null]
+  creado_en timestamp [default: `now()`]
+  actualizado_en timestamp [null]
+  eliminado_en timestamp [null]
+
+  Indexes {
+    cargo_id
+    correo
+    eliminado_en
+  }
+}
+
+Table tokens {
+  id bigint [pk, increment]
+  user_id integer [ref: > usuario.id, not null]
+  jti varchar(255) [unique, not null]
+  
+  issued_at timestamp [default: `now()`]
+  expires_at timestamp [not null]
+  revoked_at timestamp [null]
+  
+  reason varchar(255)
+  active boolean [default: true]
+  
+  indexes {
+    (jti) [unique, name: 'idx_tokens_jti']
+    (user_id, active) [name: 'idx_tokens_user_active']
+    (expires_at) [name: 'idx_tokens_expires']
+  }
+  
+  Note: '''
+  Gestión de tokens JWT con auditoría de sesiones
+  BigInt para alto volumen diario de logins
+  Limpieza automática: DELETE FROM tokens WHERE expires_at < NOW() - INTERVAL '30 days'
+  '''
+}
+
+Table cargo {
+  id int [pk, increment]
+  nombre varchar(100) [not null, unique]
+  nivel int [not null, unique]
+  
+  creado_por int [ref: > usuario.id, null]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+  eliminado_en timestamp [null]
+  
+  Indexes {
+    eliminado_en
+  }
+}
+
+Table maquina {
+  id int [pk, increment]
+  nombre varchar(100) [note: "Modelo", not null, unique]
+  
+  creado_por int [ref: > usuario.id, null]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+  eliminado_en timestamp [null]
+  
+  Indexes {
+    eliminado_en
+  }
+}
+
+Table template [note: 'Checklist - Ejemplo: "REVISIÓN PUESTA EN MARCHA, REGULACIONES Y MOVIMIENTOS"'] {
+  id int [pk, increment]
+  nombre varchar(150) [not null]
+  
+  creado_por int [ref: > usuario.id, not null]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+  eliminado_por int [ref: > usuario.id, null]
+  eliminado_en timestamp [null]
+
+  Indexes {
+    eliminado_en
+  }
+}
+
+Table template_seccion [note: 'Atributos del checklist - Ejemplo: "1. Puesta en marcha (primer arranque)"'] {
+  id int [pk, increment]
+  nombre varchar(250) [not null]
+  template_id int [ref: > template.id, not null]
+  orden smallint [not null, note: "Orden de visualización (1-32767)"]
+  
+  creado_por int [ref: > usuario.id, not null]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+  eliminado_por int [ref: > usuario.id, null]
+  eliminado_en timestamp [null]
+
+  Indexes {
+    template_id
+    (template_id, orden, eliminado_en) [unique, name: 'idx_template_seccion_orden_unico']
+    eliminado_en
+  }
+  
+  Note: '''
+  Un template puede tener múltiples secciones/atributos
+  El orden define la secuencia de visualización en el checklist
+  La constraint única permite reutilizar órdenes de secciones eliminadas
+  '''
+}
+
+Table inspeccion {
+  id bigint [pk, increment]
+  fecha_inicio date [not null]
+  fecha_finalizacion date [null, note: "NULL si aún está en proceso"]
+  
+  // Datos específicos de la máquina inspeccionada
+  maquina_id int [ref: > maquina.id, not null]
+  num_serie varchar(50) [not null]
+  n_serie_motor varchar(50) [null]
+  cabinado boolean [null]
+  horometro decimal(10,2) [null, note: "Horas de uso"]
+
+  creado_por int [ref: > usuario.id, not null]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+  eliminado_por int [ref: > usuario.id, null]
+  eliminado_en timestamp [null]
+
+  Indexes {
+    maquina_id
+    num_serie
+    fecha_inicio
+    fecha_finalizacion
+    eliminado_en
+    (maquina_id, fecha_inicio)
+  }
+  
+  Note: '''
+  Representa una inspección de maquinaria
+  CHECK: fecha_finalizacion IS NULL OR fecha_finalizacion >= fecha_inicio
+  Implementar en BD: ALTER TABLE inspeccion ADD CONSTRAINT chk_fechas_validas CHECK (fecha_finalizacion IS NULL OR fecha_finalizacion >= fecha_inicio)
+  '''
+}
+
+Table eleccion_template [note: 'Vincula templates (checklists) con una inspección específica'] {
+  id int [pk, increment]
+  template_id int [ref: > template.id, not null]
+  inspeccion_id bigint [ref: > inspeccion.id, not null]
+  
+  creado_por int [ref: > usuario.id, not null]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+  eliminado_por int [ref: > usuario.id, null]
+  eliminado_en timestamp [null]
+
+  Indexes {
+    inspeccion_id
+    template_id
+    (inspeccion_id, template_id, eliminado_en) [unique, name: 'idx_eleccion_template_unica']
+    eliminado_en
+  }
+  
+  Note: '''
+  Una inspección puede usar múltiples templates (checklists)
+  Pero no puede repetir el mismo template
+  La constraint única previene duplicados considerando soft delete
+  '''
+}
+
+Table resultado_atributo_checklist [note: 'Resultado de verificación: Sí/No/N/A'] {
+  id bigint [pk, increment]
+  cumple boolean [null, note: "true=Sí, false=No, NULL=N/A"]
+  observacion_id bigint [ref: > observacion.id, null]
+  
+  creado_por int [ref: > usuario.id, not null, note: "Quien verificó este parámetro"]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+
+  Indexes {
+    observacion_id
+    creado_por
+    creado_en
+  }
+}
+
+Table eleccion_respuesta [note: 'Vincula cada atributo del checklist con su respuesta en la inspección'] {
+  id int [pk, increment]
+  eleccion_template_id int [ref: > eleccion_template.id, not null, note: "Qué checklist de la inspección"]
+  template_seccion_id int [ref: > template_seccion.id, not null, note: "Qué atributo se está respondiendo"]
+  resultado_atributo_checklist_id bigint [ref: > resultado_atributo_checklist.id, not null, note: "La respuesta: Sí/No/N/A"]
+  
+  creado_por int [ref: > usuario.id, not null]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+  eliminado_por int [ref: > usuario.id, null]
+  eliminado_en timestamp [null]
+
+  Indexes {
+    eleccion_template_id
+    template_seccion_id
+    resultado_atributo_checklist_id
+    (eleccion_template_id, template_seccion_id, eliminado_en) [unique, name: 'idx_respuesta_unica_por_atributo']
+    eliminado_en
+  }
+  
+  Note: '''
+  Cada atributo (template_seccion) de un checklist solo puede responderse una vez por inspección
+  La constraint única asegura que no se dupliquen respuestas para el mismo atributo
+  Flujo: eleccion_template define qué checklist → template_seccion son los atributos → resultado es la respuesta
+  '''
+}
+
+Table rol_asignacion {
+  id int [pk, increment]
+  nombre varchar(100) [not null, unique]
+  
+  creado_por int [ref: > usuario.id, null]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+  eliminado_en timestamp [null]
+
+  Indexes {
+    eliminado_en
+  }
+}
+
+Table asignacion_inspeccion {
+  id int [pk, increment]
+  inspeccion_id bigint [ref: > inspeccion.id, not null]
+  usuario_id int [ref: > usuario.id, not null]
+  rol_asignacion_id int [ref: > rol_asignacion.id, not null]
+  
+  creado_por int [ref: > usuario.id, not null]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+  eliminado_por int [ref: > usuario.id, null]
+  eliminado_en timestamp [null]
+
+  Indexes {
+    inspeccion_id
+    usuario_id
+    rol_asignacion_id
+    (inspeccion_id, usuario_id, eliminado_en) [unique, name: 'idx_usuario_unico_por_inspeccion']
+    eliminado_en
+  }
+  
+  Note: '''
+  Un usuario solo puede tener un rol activo por inspección
+  Si se necesita cambiar el rol, se elimina lógicamente el anterior y se crea uno nuevo
+  '''
+}
+
+Table observacion {
+  id bigint [pk, increment]
+  descripcion text [not null]
+  
+  creado_por int [ref: > usuario.id, not null]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+
+  Indexes {
+    creado_por
+    creado_en
+  }
+}
+
+Table archivo {
+  id bigint [pk, increment]
+  nombre varchar(255) [not null]
+  tipo varchar(50) [not null]
+  tamano bigint [not null, note: "Tamaño en bytes"]
+  ruta varchar(500) [not null]
+  hash char(64) [unique, not null, note: "SHA-256 para deduplicación"]
+  observacion_id bigint [ref: > observacion.id, null]
+  
+  creado_por int [ref: > usuario.id, not null]
+  creado_en timestamp [default: `now()`]
+  actualizado_por int [ref: > usuario.id, null]
+  actualizado_en timestamp [null]
+
+  Indexes {
+    observacion_id
+    hash
+    creado_por
+  }
+}
+
+Table auditoria_operacion {
+  id bigint [pk, increment]
+  tabla_afectada varchar(50) [not null]
+  id_registro bigint [not null]
+  operacion varchar(10) [not null, note: "INSERT, UPDATE, DELETE"]
+  usuario_id int [ref: > usuario.id, not null]
+  fecha_operacion timestamp [default: `now()`]
+
+  Indexes {
+    usuario_id
+    (tabla_afectada, id_registro)
+    fecha_operacion
+    (fecha_operacion, tabla_afectada)
+  }
+  
+  Note: '''
+  Auditoría centralizada de todas las operaciones
+  Considerar particionamiento por fecha para tablas grandes
+  Implementar política de retención (ej: 2 años)
+  '''
+}
+
+Table auditoria_detalle {
+  id bigint [pk, increment]
+  auditoria_operacion_id bigint [ref: > auditoria_operacion.id, not null]
+  campo_modificado varchar(100) [not null]
+  valor_anterior text [null]
+  valor_nuevo text [null]
+  tipo_dato varchar(20) [not null]
+
+  Indexes {
+    auditoria_operacion_id
+    (auditoria_operacion_id, campo_modificado) [name: 'idx_auditoria_detalle_campo']
+  }
+}

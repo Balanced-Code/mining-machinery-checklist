@@ -1,3 +1,20 @@
+/**
+ * Configuración de variables de entorno
+ * Tipado fuerte para la configuración de la aplicación
+ */
+export interface EnvConfig {
+  JWT_SECRET: string;
+  COOKIE_SECRET: string;
+  NODE_ENV: 'development' | 'production' | 'test';
+  PORT: number;
+  HOST: string;
+  DATABASE_URL: string;
+}
+
+/**
+ * Schema de validación para variables de entorno
+ * Usado por fastify-env o similar
+ */
 export const envSchema = {
   type: 'object',
   required: [
@@ -23,20 +40,4 @@ export const envSchema = {
     HOST: { type: 'string', format: 'ipv4' },
     DATABASE_URL: { type: 'string', format: 'uri' },
   },
-};
-
-export interface EnvConfig {
-  JWT_SECRET: string;
-  COOKIE_SECRET: string;
-  NODE_ENV: 'development' | 'production' | 'test';
-  PORT: number;
-  HOST: string;
-  DATABASE_URL: string;
-}
-
-// Extender Fastify para incluir la configuración tipada
-declare module 'fastify' {
-  interface FastifyInstance {
-    config: EnvConfig;
-  }
-}
+} as const;

@@ -8,9 +8,9 @@ async function swaggerPlugin(app: FastifyInstance) {
     openapi: {
       openapi: '3.0.0',
       info: {
-        title: 'Mi Backend API',
+        title: 'Mining Machinery Checklist API',
         description:
-          'API completa para gestión de inventario, usuarios y contactos comerciales',
+          'API completa para gestión de checklists de maquinaria minera, usuarios y autenticación',
         version: '1.0.0',
       },
     },
@@ -44,6 +44,10 @@ async function swaggerPlugin(app: FastifyInstance) {
     },
     staticCSP: false, // Deshabilitado para mejor compatibilidad
   });
+
+  app.log.info('Plugin Swagger UI registrado correctamente');
 }
 
-export default fp(swaggerPlugin);
+export default fp(swaggerPlugin, {
+  name: 'swaggerPlugin',
+});

@@ -5,10 +5,10 @@ import { setupNormalizationHooks } from '../middlewares/normalization';
 /**
  * Plugin de normalización automática y serialización de fechas
  * Configura hooks para:
- * - preValidation: normalizar datos de entrada (username, email, etc.)
+ * - preValidation: normalizar datos de entrada (nombre, correo, etc.)
  * - preSerialization: convertir fechas específicas a ISO string automáticamente
  */
-const normalizationPlugin = async (fastify: FastifyInstance) => {
+const normalizationPlugin = (fastify: FastifyInstance) => {
   // Configurar hooks de normalización automática
   setupNormalizationHooks(fastify);
 

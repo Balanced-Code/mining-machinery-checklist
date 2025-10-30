@@ -1,0 +1,57 @@
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <h1>Dashboard</h1>
+    <div class="user-info">
+      @if (authService.user(); as user) {
+      <div class="user-details">
+        <span class="user-name">{{ user.nombre }}</span>
+        <span class="user-role">{{ user.cargo.nombre }}</span>
+      </div>
+      }
+      <button (click)="onLogout()" class="logout-btn">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <main class="dashboard-content">
+    @if (authService.user(); as user) {
+    <div class="welcome-section">
+      <h2>Bienvenido, {{ user.nombre }}!</h2>
+      <p>
+        Tu cargo actual es: <strong>{{ user.cargo.nombre }}</strong> (Nivel {{ user.cargo.nivel }})
+      </p>
+
+      <div class="info-cards">
+        <div class="info-card">
+          <h3>Correo</h3>
+          <p>{{ user.correo }}</p>
+        </div>
+
+        <div class="info-card">
+          <h3>Cargo</h3>
+          <p>{{ user.cargo.nombre }}</p>
+        </div>
+
+        <div class="info-card">
+          <h3>Nivel de Acceso</h3>
+          <p>Nivel {{ user.cargo.nivel }}</p>
+        </div>
+      </div>
+
+      <div class="role-permissions">
+        <h3>Permisos según tu cargo:</h3>
+        <ul>
+          @if (authService.hasRequiredLevel(1)) {
+          <li>✓ Ver inspecciones</li>
+          } @if (authService.hasRequiredLevel(2)) {
+          <li>✓ Crear y editar checklists</li>
+          } @if (authService.hasRequiredLevel(3)) {
+          <li>✓ Supervisar inspecciones</li>
+          } @if (authService.hasRequiredLevel(4)) {
+          <li>✓ Administración completa del sistema</li>
+          }
+        </ul>
+      </div>
+    </div>
+    }
+  </main>
+</div>

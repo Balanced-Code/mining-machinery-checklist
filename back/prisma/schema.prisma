@@ -1,15 +1,453 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USUARIOS Y AUTENTICACIÓN
+// ============================================================================
+
+model Usuario {
+  id            Int       @id @default(autoincrement())
+  nombre        String    @db.VarChar(100)
+  correo        String    @unique @db.VarChar(150)
+  cargoId       Int       @map("cargo_id")
+  contrasena    String    @db.VarChar(255)
+  creadoEn      DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoEn DateTime? @map("actualizado_en") @db.Timestamp()
+  eliminadoEn   DateTime? @map("eliminado_en") @db.Timestamp()
+
+  // Relaciones
+  cargo  Cargo   @relation("UsuarioCargo", fields: [cargoId], references: [id])
+  tokens Token[]
+
+  // Relaciones de creación/actualización
+  cargosCreados                  Cargo[]                      @relation("CargoCreador")
+  cargosActualizados             Cargo[]                      @relation("CargoActualizador")
+  maquinasCreadas                Maquina[]                    @relation("MaquinaCreador")
+  maquinasActualizadas           Maquina[]                    @relation("MaquinaActualizador")
+  templatesCreados               Template[]                   @relation("TemplateCreador")
+  templatesActualizados          Template[]                   @relation("TemplateActualizador")
+  templatesEliminados            Template[]                   @relation("TemplateEliminador")
+  templateSeccionesCreadas       TemplateSeccion[]            @relation("TemplateSeccionCreador")
+  templateSeccionesActualizadas  TemplateSeccion[]            @relation("TemplateSeccionActualizador")
+  templateSeccionesEliminadas    TemplateSeccion[]            @relation("TemplateSeccionEliminador")
+  inspeccionesCreadas            Inspeccion[]                 @relation("InspeccionCreador")
+  inspeccionesActualizadas       Inspeccion[]                 @relation("InspeccionActualizador")
+  inspeccionesEliminadas         Inspeccion[]                 @relation("InspeccionEliminador")
+  eleccionTemplatesCreados       EleccionTemplate[]           @relation("EleccionTemplateCreador")
+  eleccionTemplatesActualizados  EleccionTemplate[]           @relation("EleccionTemplateActualizador")
+  eleccionTemplatesEliminados    EleccionTemplate[]           @relation("EleccionTemplateEliminador")
+  resultadosCreados              ResultadoAtributoChecklist[] @relation("ResultadoCreador")
+  resultadosActualizados         ResultadoAtributoChecklist[] @relation("ResultadoActualizador")
+  eleccionRespuestasCreadas      EleccionRespuesta[]          @relation("EleccionRespuestaCreador")
+  eleccionRespuestasActualizadas EleccionRespuesta[]          @relation("EleccionRespuestaActualizador")
+  eleccionRespuestasEliminadas   EleccionRespuesta[]          @relation("EleccionRespuestaEliminador")
+  rolesAsignacionCreados         RolAsignacion[]              @relation("RolAsignacionCreador")
+  rolesAsignacionActualizados    RolAsignacion[]              @relation("RolAsignacionActualizador")
+  asignacionesCreadas            AsignacionInspeccion[]       @relation("AsignacionInspeccionCreador")
+  asignacionesActualizadas       AsignacionInspeccion[]       @relation("AsignacionInspeccionActualizador")
+  asignacionesEliminadas         AsignacionInspeccion[]       @relation("AsignacionInspeccionEliminador")
+  asignacionesInspeccion         AsignacionInspeccion[]       @relation("UsuarioAsignacion")
+  observacionesCreadas           Observacion[]                @relation("ObservacionCreador")
+  observacionesActualizadas      Observacion[]                @relation("ObservacionActualizador")
+  archivosCreados                Archivo[]                    @relation("ArchivoCreador")
+  archivosActualizados           Archivo[]                    @relation("ArchivoActualizador")
+  auditorias                     AuditoriaOperacion[]
+
+  @@index([cargoId])
+  @@index([correo])
+  @@index([eliminadoEn])
+  @@map("usuario")
+}
+
+/// Gestión de tokens JWT con auditoría de sesiones
+/// BigInt para alto volumen diario de logins
+/// Limpieza automática: DELETE FROM tokens WHERE expires_at < NOW() - INTERVAL '30 days'
+model Token {
+  id        BigInt    @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  jti       String    @unique(map: "idx_tokens_jti") @db.VarChar(255)
+  issuedAt  DateTime  @default(now()) @map("issued_at") @db.Timestamp()
+  expiresAt DateTime  @map("expires_at") @db.Timestamp()
+  revokedAt DateTime? @map("revoked_at") @db.Timestamp()
+  reason    String?   @db.VarChar(255)
+  active    Boolean   @default(true)
+
+  // Relaciones
+  user Usuario @relation(fields: [userId], references: [id])
+
+  @@index([userId, active], name: "idx_tokens_user_active")
+  @@index([expiresAt], name: "idx_tokens_expires")
+  @@map("tokens")
+}
+
+model Cargo {
+  id             Int       @id @default(autoincrement())
+  nombre         String    @unique @db.VarChar(100)
+  nivel          Int       @unique
+  creadoPor      Int?      @map("creado_por")
+  creadoEn       DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor Int?      @map("actualizado_por")
+  actualizadoEn  DateTime? @map("actualizado_en") @db.Timestamp()
+  eliminadoEn    DateTime? @map("eliminado_en") @db.Timestamp()
+
+  // Relaciones
+  usuarios     Usuario[] @relation("UsuarioCargo")
+  creador      Usuario?  @relation("CargoCreador", fields: [creadoPor], references: [id])
+  actualizador Usuario?  @relation("CargoActualizador", fields: [actualizadoPor], references: [id])
+
+  @@index([eliminadoEn])
+  @@map("cargo")
+}
+
+// ============================================================================
+// MAQUINARIA Y TEMPLATES
+// ============================================================================
+
+model Maquina {
+  id             Int       @id @default(autoincrement())
+  /// Modelo
+  nombre         String    @unique @db.VarChar(100)
+  creadoPor      Int?      @map("creado_por")
+  creadoEn       DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor Int?      @map("actualizado_por")
+  actualizadoEn  DateTime? @map("actualizado_en") @db.Timestamp()
+  eliminadoEn    DateTime? @map("eliminado_en") @db.Timestamp()
+
+  // Relaciones
+  inspecciones Inspeccion[]
+  creador      Usuario?     @relation("MaquinaCreador", fields: [creadoPor], references: [id])
+  actualizador Usuario?     @relation("MaquinaActualizador", fields: [actualizadoPor], references: [id])
+
+  @@index([eliminadoEn])
+  @@map("maquina")
+}
+
+/// Checklist - Ejemplo: "REVISIÓN PUESTA EN MARCHA, REGULACIONES Y MOVIMIENTOS"
+model Template {
+  id             Int       @id @default(autoincrement())
+  nombre         String    @db.VarChar(150)
+  creadoPor      Int       @map("creado_por")
+  creadoEn       DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor Int?      @map("actualizado_por")
+  actualizadoEn  DateTime? @map("actualizado_en") @db.Timestamp()
+  eliminadoPor   Int?      @map("eliminado_por")
+  eliminadoEn    DateTime? @map("eliminado_en") @db.Timestamp()
+
+  // Relaciones
+  secciones          TemplateSeccion[]
+  eleccionesTemplate EleccionTemplate[]
+  creador            Usuario            @relation("TemplateCreador", fields: [creadoPor], references: [id])
+  actualizador       Usuario?           @relation("TemplateActualizador", fields: [actualizadoPor], references: [id])
+  eliminador         Usuario?           @relation("TemplateEliminador", fields: [eliminadoPor], references: [id])
+
+  @@index([eliminadoEn])
+  @@map("template")
+}
+
+/// Un template puede tener múltiples secciones/atributos
+/// El orden define la secuencia de visualización en el checklist
+/// La constraint única permite reutilizar órdenes de secciones eliminadas
+model TemplateSeccion {
+  id             Int       @id @default(autoincrement())
+  nombre         String    @db.VarChar(250)
+  templateId     Int       @map("template_id")
+  /// Orden de visualización (1-32767)
+  orden          Int       @db.SmallInt
+  creadoPor      Int       @map("creado_por")
+  creadoEn       DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor Int?      @map("actualizado_por")
+  actualizadoEn  DateTime? @map("actualizado_en") @db.Timestamp()
+  eliminadoPor   Int?      @map("eliminado_por")
+  eliminadoEn    DateTime? @map("eliminado_en") @db.Timestamp()
+
+  // Relaciones
+  template           Template            @relation(fields: [templateId], references: [id])
+  eleccionRespuestas EleccionRespuesta[]
+  creador            Usuario             @relation("TemplateSeccionCreador", fields: [creadoPor], references: [id])
+  actualizador       Usuario?            @relation("TemplateSeccionActualizador", fields: [actualizadoPor], references: [id])
+  eliminador         Usuario?            @relation("TemplateSeccionEliminador", fields: [eliminadoPor], references: [id])
+
+  @@unique([templateId, orden, eliminadoEn], name: "idx_template_seccion_orden_unico")
+  @@index([templateId])
+  @@index([eliminadoEn])
+  @@map("template_seccion")
+}
+
+// ============================================================================
+// INSPECCIONES
+// ============================================================================
+
+/// Representa una inspección de maquinaria
+/// CHECK: fecha_finalizacion IS NULL OR fecha_finalizacion >= fecha_inicio
+model Inspeccion {
+  id                BigInt    @id @default(autoincrement())
+  fechaInicio       DateTime  @map("fecha_inicio") @db.Date
+  /// NULL si aún está en proceso
+  fechaFinalizacion DateTime? @map("fecha_finalizacion") @db.Date
+  maquinaId         Int       @map("maquina_id")
+  numSerie          String    @map("num_serie") @db.VarChar(50)
+  nSerieMotor       String?   @map("n_serie_motor") @db.VarChar(50)
+  cabinado          Boolean?
+  /// Horas de uso
+  horometro         Decimal?  @db.Decimal(10, 2)
+  creadoPor         Int       @map("creado_por")
+  creadoEn          DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor    Int?      @map("actualizado_por")
+  actualizadoEn     DateTime? @map("actualizado_en") @db.Timestamp()
+  eliminadoPor      Int?      @map("eliminado_por")
+  eliminadoEn       DateTime? @map("eliminado_en") @db.Timestamp()
+
+  // Relaciones
+  maquina            Maquina                @relation(fields: [maquinaId], references: [id])
+  eleccionesTemplate EleccionTemplate[]
+  asignaciones       AsignacionInspeccion[]
+  creador            Usuario                @relation("InspeccionCreador", fields: [creadoPor], references: [id])
+  actualizador       Usuario?               @relation("InspeccionActualizador", fields: [actualizadoPor], references: [id])
+  eliminador         Usuario?               @relation("InspeccionEliminador", fields: [eliminadoPor], references: [id])
+
+  @@index([maquinaId])
+  @@index([numSerie])
+  @@index([fechaInicio])
+  @@index([fechaFinalizacion])
+  @@index([eliminadoEn])
+  @@index([maquinaId, fechaInicio])
+  @@map("inspeccion")
+}
+
+/// Una inspección puede usar múltiples templates (checklists)
+/// Pero no puede repetir el mismo template
+/// La constraint única previene duplicados considerando soft delete
+model EleccionTemplate {
+  id             Int       @id @default(autoincrement())
+  templateId     Int       @map("template_id")
+  inspeccionId   BigInt    @map("inspeccion_id")
+  creadoPor      Int       @map("creado_por")
+  creadoEn       DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor Int?      @map("actualizado_por")
+  actualizadoEn  DateTime? @map("actualizado_en") @db.Timestamp()
+  eliminadoPor   Int?      @map("eliminado_por")
+  eliminadoEn    DateTime? @map("eliminado_en") @db.Timestamp()
+
+  // Relaciones
+  template           Template            @relation(fields: [templateId], references: [id])
+  inspeccion         Inspeccion          @relation(fields: [inspeccionId], references: [id])
+  eleccionRespuestas EleccionRespuesta[]
+  creador            Usuario             @relation("EleccionTemplateCreador", fields: [creadoPor], references: [id])
+  actualizador       Usuario?            @relation("EleccionTemplateActualizador", fields: [actualizadoPor], references: [id])
+  eliminador         Usuario?            @relation("EleccionTemplateEliminador", fields: [eliminadoPor], references: [id])
+
+  @@unique([inspeccionId, templateId, eliminadoEn], name: "idx_eleccion_template_unica")
+  @@index([inspeccionId])
+  @@index([templateId])
+  @@index([eliminadoEn])
+  @@map("eleccion_template")
+}
+
+/// Resultado de verificación: Sí/No/N/A
+model ResultadoAtributoChecklist {
+  id             BigInt    @id @default(autoincrement())
+  /// true=Sí, false=No, NULL=N/A
+  cumple         Boolean?
+  observacionId  BigInt?   @map("observacion_id")
+  /// Quien verificó este parámetro
+  creadoPor      Int       @map("creado_por")
+  creadoEn       DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor Int?      @map("actualizado_por")
+  actualizadoEn  DateTime? @map("actualizado_en") @db.Timestamp()
+
+  // Relaciones
+  observacion        Observacion?        @relation(fields: [observacionId], references: [id])
+  eleccionRespuestas EleccionRespuesta[]
+  creador            Usuario             @relation("ResultadoCreador", fields: [creadoPor], references: [id])
+  actualizador       Usuario?            @relation("ResultadoActualizador", fields: [actualizadoPor], references: [id])
+
+  @@index([observacionId])
+  @@index([creadoPor])
+  @@index([creadoEn])
+  @@map("resultado_atributo_checklist")
+}
+
+/// Cada atributo (template_seccion) de un checklist solo puede responderse una vez por inspección
+/// La constraint única asegura que no se dupliquen respuestas para el mismo atributo
+/// Flujo: eleccion_template define qué checklist → template_seccion son los atributos → resultado es la respuesta
+model EleccionRespuesta {
+  id                           Int       @id @default(autoincrement())
+  /// Qué checklist de la inspección
+  eleccionTemplateId           Int       @map("eleccion_template_id")
+  /// Qué atributo se está respondiendo
+  templateSeccionId            Int       @map("template_seccion_id")
+  /// La respuesta: Sí/No/N/A
+  resultadoAtributoChecklistId BigInt    @map("resultado_atributo_checklist_id")
+  creadoPor                    Int       @map("creado_por")
+  creadoEn                     DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor               Int?      @map("actualizado_por")
+  actualizadoEn                DateTime? @map("actualizado_en") @db.Timestamp()
+  eliminadoPor                 Int?      @map("eliminado_por")
+  eliminadoEn                  DateTime? @map("eliminado_en") @db.Timestamp()
+
+  // Relaciones
+  eleccionTemplate  EleccionTemplate           @relation(fields: [eleccionTemplateId], references: [id])
+  templateSeccion   TemplateSeccion            @relation(fields: [templateSeccionId], references: [id])
+  resultadoAtributo ResultadoAtributoChecklist @relation(fields: [resultadoAtributoChecklistId], references: [id])
+  creador           Usuario                    @relation("EleccionRespuestaCreador", fields: [creadoPor], references: [id])
+  actualizador      Usuario?                   @relation("EleccionRespuestaActualizador", fields: [actualizadoPor], references: [id])
+  eliminador        Usuario?                   @relation("EleccionRespuestaEliminador", fields: [eliminadoPor], references: [id])
+
+  @@unique([eleccionTemplateId, templateSeccionId, eliminadoEn], name: "idx_respuesta_unica_por_atributo")
+  @@index([eleccionTemplateId])
+  @@index([templateSeccionId])
+  @@index([resultadoAtributoChecklistId])
+  @@index([eliminadoEn])
+  @@map("eleccion_respuesta")
+}
+
+// ============================================================================
+// ASIGNACIONES Y ROLES
+// ============================================================================
+
+model RolAsignacion {
+  id             Int       @id @default(autoincrement())
+  nombre         String    @unique @db.VarChar(100)
+  creadoPor      Int?      @map("creado_por")
+  creadoEn       DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor Int?      @map("actualizado_por")
+  actualizadoEn  DateTime? @map("actualizado_en") @db.Timestamp()
+  eliminadoEn    DateTime? @map("eliminado_en") @db.Timestamp()
+
+  // Relaciones
+  asignaciones AsignacionInspeccion[]
+  creador      Usuario?               @relation("RolAsignacionCreador", fields: [creadoPor], references: [id])
+  actualizador Usuario?               @relation("RolAsignacionActualizador", fields: [actualizadoPor], references: [id])
+
+  @@index([eliminadoEn])
+  @@map("rol_asignacion")
+}
+
+/// Un usuario solo puede tener un rol activo por inspección
+/// Si se necesita cambiar el rol, se elimina lógicamente el anterior y se crea uno nuevo
+model AsignacionInspeccion {
+  id              Int       @id @default(autoincrement())
+  inspeccionId    BigInt    @map("inspeccion_id")
+  usuarioId       Int       @map("usuario_id")
+  rolAsignacionId Int       @map("rol_asignacion_id")
+  creadoPor       Int       @map("creado_por")
+  creadoEn        DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor  Int?      @map("actualizado_por")
+  actualizadoEn   DateTime? @map("actualizado_en") @db.Timestamp()
+  eliminadoPor    Int?      @map("eliminado_por")
+  eliminadoEn     DateTime? @map("eliminado_en") @db.Timestamp()
+
+  // Relaciones
+  inspeccion    Inspeccion    @relation(fields: [inspeccionId], references: [id])
+  usuario       Usuario       @relation("UsuarioAsignacion", fields: [usuarioId], references: [id])
+  rolAsignacion RolAsignacion @relation(fields: [rolAsignacionId], references: [id])
+  creador       Usuario       @relation("AsignacionInspeccionCreador", fields: [creadoPor], references: [id])
+  actualizador  Usuario?      @relation("AsignacionInspeccionActualizador", fields: [actualizadoPor], references: [id])
+  eliminador    Usuario?      @relation("AsignacionInspeccionEliminador", fields: [eliminadoPor], references: [id])
+
+  @@unique([inspeccionId, usuarioId, eliminadoEn], name: "idx_usuario_unico_por_inspeccion")
+  @@index([inspeccionId])
+  @@index([usuarioId])
+  @@index([rolAsignacionId])
+  @@index([eliminadoEn])
+  @@map("asignacion_inspeccion")
+}
+
+// ============================================================================
+// OBSERVACIONES Y ARCHIVOS
+// ============================================================================
+
+model Observacion {
+  id             BigInt    @id @default(autoincrement())
+  descripcion    String    @db.Text
+  creadoPor      Int       @map("creado_por")
+  creadoEn       DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor Int?      @map("actualizado_por")
+  actualizadoEn  DateTime? @map("actualizado_en") @db.Timestamp()
+
+  // Relaciones
+  resultados   ResultadoAtributoChecklist[]
+  archivos     Archivo[]
+  creador      Usuario                      @relation("ObservacionCreador", fields: [creadoPor], references: [id])
+  actualizador Usuario?                     @relation("ObservacionActualizador", fields: [actualizadoPor], references: [id])
+
+  @@index([creadoPor])
+  @@index([creadoEn])
+  @@map("observacion")
+}
+
+model Archivo {
+  id             BigInt    @id @default(autoincrement())
+  nombre         String    @db.VarChar(255)
+  tipo           String    @db.VarChar(50)
+  /// Tamaño en bytes
+  tamano         BigInt
+  ruta           String    @db.VarChar(500)
+  /// SHA-256 para deduplicación
+  hash           String    @unique @db.Char(64)
+  observacionId  BigInt?   @map("observacion_id")
+  creadoPor      Int       @map("creado_por")
+  creadoEn       DateTime  @default(now()) @map("creado_en") @db.Timestamp()
+  actualizadoPor Int?      @map("actualizado_por")
+  actualizadoEn  DateTime? @map("actualizado_en") @db.Timestamp()
+
+  // Relaciones
+  observacion  Observacion? @relation(fields: [observacionId], references: [id])
+  creador      Usuario      @relation("ArchivoCreador", fields: [creadoPor], references: [id])
+  actualizador Usuario?     @relation("ArchivoActualizador", fields: [actualizadoPor], references: [id])
+
+  @@index([observacionId])
+  @@index([hash])
+  @@index([creadoPor])
+  @@map("archivo")
+}
+
+// ============================================================================
+// AUDITORÍA
+// ============================================================================
+
+/// Auditoría centralizada de todas las operaciones
+/// Considerar particionamiento por fecha para tablas grandes
+/// Implementar política de retención (ej: 2 años)
+model AuditoriaOperacion {
+  id             BigInt   @id @default(autoincrement())
+  tablaAfectada  String   @map("tabla_afectada") @db.VarChar(50)
+  idRegistro     BigInt   @map("id_registro")
+  /// INSERT, UPDATE, DELETE
+  operacion      String   @db.VarChar(10)
+  usuarioId      Int      @map("usuario_id")
+  fechaOperacion DateTime @default(now()) @map("fecha_operacion") @db.Timestamp()
+
+  // Relaciones
+  usuario  Usuario            @relation(fields: [usuarioId], references: [id])
+  detalles AuditoriaDetalle[]
+
+  @@index([usuarioId])
+  @@index([tablaAfectada, idRegistro])
+  @@index([fechaOperacion])
+  @@index([fechaOperacion, tablaAfectada])
+  @@map("auditoria_operacion")
+}
+
+model AuditoriaDetalle {
+  id                   BigInt  @id @default(autoincrement())
+  auditoriaOperacionId BigInt  @map("auditoria_operacion_id")
+  campoModificado      String  @map("campo_modificado") @db.VarChar(100)
+  valorAnterior        String? @map("valor_anterior") @db.Text
+  valorNuevo           String? @map("valor_nuevo") @db.Text
+  tipoDato             String  @map("tipo_dato") @db.VarChar(20)
+
+  // Relaciones
+  auditoriaOperacion AuditoriaOperacion @relation(fields: [auditoriaOperacionId], references: [id])
+
+  @@index([auditoriaOperacionId])
+  @@index([auditoriaOperacionId, campoModificado], name: "idx_auditoria_detalle_campo")
+  @@map("auditoria_detalle")
 }

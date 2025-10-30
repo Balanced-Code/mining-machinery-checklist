@@ -1,26 +1,62 @@
-import jwt from '@fastify/jwt';
+import helmet from '@fastify/helmet';
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
-import { JWT_CONFIG } from '../config/jwt';
 
-async function jwtPlugin(app: FastifyInstance) {
-  await app.register(jwt, {
-    secret: app.config.JWT_SECRET,
-    // Configuraciones globales de sign por defecto
-    sign: {
-      expiresIn: JWT_CONFIG.EXPIRES_IN,
-      algorithm: JWT_CONFIG.ALGORITHM,
+async function helmetPlugin(app: FastifyInstance) {
+  const isProduction = app.config.NODE_ENV === 'production';
+
+  // En desarrollo, deshabilitar Helmet completamente para evitar conflictos con Swagger UI
+  if (!isProduction) {
+    app.log.info(
+      `Plugin Helmet deshabilitado en entorno: ${app.config.NODE_ENV}`
+    );
+    return;
+  }
+
+  await app.register(helmet, {
+    // Content Security Policy - estricto en producción
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
     },
-    // Configuraciones globales de verify por defecto
-    verify: {
-      algorithms: [JWT_CONFIG.ALGORITHM],
+
+    // Cross-Origin-Embedder-Policy
+    crossOriginEmbedderPolicy: true,
+
+    // Protección contra clickjacking
+    frameguard: {
+      action: 'sameorigin',
     },
-    // Configurar para leer JWT desde cookies automáticamente
-    cookie: {
-      cookieName: JWT_CONFIG.COOKIE_NAME,
-      signed: false, // No firmar la cookie (JWT ya está firmado)
+
+    // Forzar HTTPS en producción
+    hsts: {
+      maxAge: 31536000, // 1 año
+      includeSubDomains: true,
+      preload: true,
     },
+
+    // Prevenir que el navegador infiera el MIME type
+    noSniff: true,
+
+    // Protección XSS
+    xssFilter: true,
   });
+
+  app.log.info(
+    `Plugin Helmet configurado para entorno: ${app.config.NODE_ENV}`
+  );
 }
 
-export default fp(jwtPlugin, { name: 'jwtPlugin' });
+export default fp(helmetPlugin, {
+  name: 'helmetPlugin',
+  dependencies: ['env'],
+});

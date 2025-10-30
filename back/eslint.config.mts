@@ -48,7 +48,8 @@ export default tseslint.config(
         },
       ],
       // Mejores prácticas para async/await (común en Fastify)
-      'require-await': 'error',
+      // require-await desactivado porque FastifyPluginAsync requiere async aunque no use await directamente
+      'require-await': 'off',
       'no-return-await': 'error',
     },
   },
