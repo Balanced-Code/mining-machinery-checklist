@@ -1,0 +1,45 @@
+<div class="layout">
+  <!-- Header/Navbar -->
+  <header class="header">
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <h1>Mining Machinery Checklist</h1>
+      </div>
+
+      <div class="navbar-menu">
+        <a routerLink="/dashboard" routerLinkActive="active" class="nav-link"> Dashboard </a>
+
+        <!-- Agregar más enlaces según necesites -->
+        <!-- 
+        <a routerLink="/inspecciones" routerLinkActive="active" class="nav-link">
+          Inspecciones
+        </a>
+        <a routerLink="/maquinas" routerLinkActive="active" class="nav-link">
+          Máquinas
+        </a>
+        -->
+      </div>
+
+      <div class="navbar-user">
+        @if (user(); as currentUser) {
+        <div class="user-info">
+          <span class="user-name">{{ currentUser.nombre }}</span>
+          <span class="user-cargo">{{ currentUser.cargo.nombre }}</span>
+        </div>
+        <button (click)="handleLogout()" class="btn-logout" type="button">Cerrar Sesión</button>
+        }
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <!-- Aquí se cargan las páginas hijas (Dashboard, etc.) -->
+    <router-outlet />
+  </main>
+
+  <!-- Footer (opcional) -->
+  <footer class="footer">
+    <p>&copy; 2025 Mining Machinery Checklist. Todos los derechos reservados.</p>
+  </footer>
+</div>

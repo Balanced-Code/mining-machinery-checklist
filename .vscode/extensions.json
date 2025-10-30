@@ -7,7 +7,6 @@
     "eamodio.gitlens",
     "github.copilot",
     "github.copilot-chat",
-    "usernamehw.errorlens",
-    "streetsidesoftware.code-spell-checker"
+    "usernamehw.errorlens"
   ]
 }

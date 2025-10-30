@@ -43,8 +43,7 @@
       "github.copilot",
       "github.copilot-chat",
       // Útiles
-      "usernamehw.errorlens",
-      "streetsidesoftware.code-spell-checker"
+      "usernamehw.errorlens"
     ]
   },
   "mcp": {

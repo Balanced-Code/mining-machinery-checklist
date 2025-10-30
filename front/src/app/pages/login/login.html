@@ -1,0 +1,61 @@
+<div class="login-container">
+  <div class="login-card">
+    <!-- Logo -->
+    <div class="logo-container">
+      <img src="/logo.png" alt="Logo" class="logo" />
+    </div>
+
+    <!-- Formulario -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <!-- Campo Correo -->
+      <div class="form-field">
+        <label for="correo" class="form-label">Correo</label>
+        <input
+          type="email"
+          id="correo"
+          formControlName="correo"
+          placeholder="Correo"
+          class="form-input"
+          [class.error]="correo?.invalid && correo?.touched"
+        />
+        @if (correo?.invalid && correo?.touched) {
+        <span class="field-error">
+          @if (correo?.errors?.['required']) { El correo es requerido } @else if
+          (correo?.errors?.['email']) { El correo no es válido }
+        </span>
+        }
+      </div>
+
+      <!-- Campo Contraseña -->
+      <div class="form-field">
+        <label for="contrasena" class="form-label">Contraseña</label>
+        <input
+          type="password"
+          id="contrasena"
+          formControlName="contrasena"
+          placeholder="Contraseña"
+          class="form-input"
+          [class.error]="contrasena?.invalid && contrasena?.touched"
+        />
+        @if (contrasena?.invalid && contrasena?.touched) {
+        <span class="field-error">
+          @if (contrasena?.errors?.['required']) { La contraseña es requerida } @else if
+          (contrasena?.errors?.['minlength']) { La contraseña debe tener al menos 6 caracteres }
+        </span>
+        }
+      </div>
+
+      <!-- Mensaje de error del servidor -->
+      @if (authService.errorMessage()) {
+      <div class="server-error">
+        {{ authService.errorMessage() }}
+      </div>
+      }
+
+      <!-- Botón de envío -->
+      <button type="submit" class="submit-button" [disabled]="authService.loading()">
+        @if (authService.loading()) { Cargando... } @else { Iniciar sesión }
+      </button>
+    </form>
+  </div>
+</div>

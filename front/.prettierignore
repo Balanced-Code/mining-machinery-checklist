@@ -1,0 +1,15 @@
+# Dependencias
+node_modules/
+
+# Archivos compilados
+dist/
+.angular/
+coverage/
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Logs
+*.log
