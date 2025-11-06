@@ -22,7 +22,6 @@ export interface Cargo {
  * Configuración de cargos desde el backend
  */
 export interface CargosConfig {
-  cargos: Cargo[];
   hierarchy: Record<string, number>; // { "operador": 1, "supervisor": 2, ... }
 }
 

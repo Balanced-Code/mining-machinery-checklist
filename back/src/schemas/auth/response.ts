@@ -68,9 +68,11 @@ export const cargosConfigResponseSchema = {
       description: 'Mapa de nombre de cargo a nivel jerárquico',
       examples: [
         {
+          invitado: 1,
           operador: 1,
+          'tecnico mecanico': 2,
           supervisor: 2,
-          gerente: 3,
+          inspector: 3,
           administrador: 4,
         },
       ],

@@ -13,7 +13,15 @@ async function main() {
 
   // Crear cargos (niveles más altos = mayor jerarquía)
   console.log('📋 Creando cargos...');
-  await prisma.cargo.create({
+  const cargoInvitado = await prisma.cargo.create({
+    data: {
+      nombre: 'Invitado',
+      nivel: 1,
+      creadoPor: null,
+    },
+  });
+
+  const cargoOperador = await prisma.cargo.create({
     data: {
       nombre: 'Operador',
       nivel: 1,
@@ -21,7 +29,15 @@ async function main() {
     },
   });
 
-  await prisma.cargo.create({
+  const cargoTecnicoMecanico = await prisma.cargo.create({
+    data: {
+      nombre: 'Tecnico Mecanico',
+      nivel: 2,
+      creadoPor: null,
+    },
+  });
+
+  const cargoSupervisor = await prisma.cargo.create({
     data: {
       nombre: 'Supervisor',
       nivel: 2,
@@ -29,9 +45,9 @@ async function main() {
     },
   });
 
-  await prisma.cargo.create({
+  const cargoInspector = await prisma.cargo.create({
     data: {
-      nombre: 'Gerente',
+      nombre: 'Inspector',
       nivel: 3,
       creadoPor: null,
     },
@@ -58,29 +74,47 @@ async function main() {
     },
   });
 
-  const operadorUser = await prisma.usuario.create({
-    data: {
-      nombre: 'Carlos Martinez',
-      correo: 'operador@normet.com',
-      cargoId: 1, // Operador
-      contrasena: hashedPassword,
-    },
-  });
-
   const supervisorUser = await prisma.usuario.create({
     data: {
       nombre: 'Juan Pérez',
       correo: 'supervisor@normet.com',
-      cargoId: 2, // Supervisor
+      cargoId: cargoSupervisor.id,
       contrasena: hashedPassword,
     },
   });
 
-  const gerenteUser = await prisma.usuario.create({
+  const operadorUser = await prisma.usuario.create({
+    data: {
+      nombre: 'Carlos Martinez',
+      correo: 'operador@normet.com',
+      cargoId: cargoOperador.id,
+      contrasena: hashedPassword,
+    },
+  });
+
+  const tecnicoUser = await prisma.usuario.create({
     data: {
       nombre: 'María González',
-      correo: 'gerente@normet.com',
-      cargoId: 3, // Gerente
+      correo: 'tecnico@normet.com',
+      cargoId: cargoTecnicoMecanico.id,
+      contrasena: hashedPassword,
+    },
+  });
+
+  const inspectorUser = await prisma.usuario.create({
+    data: {
+      nombre: 'Roberto Silva',
+      correo: 'inspector@normet.com',
+      cargoId: cargoInspector.id,
+      contrasena: hashedPassword,
+    },
+  });
+
+  const invitadoUser = await prisma.usuario.create({
+    data: {
+      nombre: 'Invitado General',
+      correo: 'invitado@normet.com',
+      cargoId: cargoInvitado.id,
       contrasena: hashedPassword,
     },
   });
@@ -177,14 +211,22 @@ async function main() {
 
   console.log('✅ Seed completado exitosamente!');
   console.log('\n📊 Datos creados:');
+  console.log(`   - 6 Cargos:`);
+  console.log(`     • Nivel 4: Administrador (ID: ${cargoAdmin.id})`);
+  console.log(`     • Nivel 3: Inspector (ID: ${cargoInspector.id})`);
   console.log(
-    `   - 4 Cargos (Operador=1, Supervisor=2, Gerente=3, Administrador=4)`
+    `     • Nivel 2: Supervisor (ID: ${cargoSupervisor.id}), Técnico Mecánico (ID: ${cargoTecnicoMecanico.id})`
   );
-  console.log(`   - 4 Usuarios:`);
-  console.log(`     • Administrador: ${adminUser.correo}`);
-  console.log(`     • Gerente: ${gerenteUser.correo}`);
-  console.log(`     • Supervisor: ${supervisorUser.correo}`);
-  console.log(`     • Operador: ${operadorUser.correo}`);
+  console.log(
+    `     • Nivel 1: Operador (ID: ${cargoOperador.id}), Invitado (ID: ${cargoInvitado.id})`
+  );
+  console.log(`   - 6 Usuarios:`);
+  console.log(`     • Administrador (Nivel 4): ${adminUser.correo}`);
+  console.log(`     • Inspector (Nivel 3): ${inspectorUser.correo}`);
+  console.log(`     • Técnico Mecánico (Nivel 2): ${tecnicoUser.correo}`);
+  console.log(`     • Supervisor (Nivel 2): ${supervisorUser.correo}`);
+  console.log(`     • Operador (Nivel 1): ${operadorUser.correo}`);
+  console.log(`     • Invitado (Nivel 1): ${invitadoUser.correo}`);
   console.log(`   - ${maquinas.length} Máquinas`);
   console.log(`   - 3 Roles de asignación`);
   console.log(`   - 1 Template con 5 secciones`);

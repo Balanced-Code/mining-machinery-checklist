@@ -1,0 +1,83 @@
+<!-- Backdrop para mobile -->
+@if (sidebarService.isMobile() && sidebarService.isOpen()) {
+<div class="sidebar-backdrop" (click)="closeOnBackdrop()"></div>
+}
+
+<aside
+  [class.sidebar]="true"
+  [class.sidebar-open]="sidebarService.isOpen()"
+  [class.sidebar-closed]="!sidebarService.isOpen()"
+  [class.sidebar-mobile]="sidebarService.isMobile()"
+  [class.sidebar-tablet]="sidebarService.isTablet()"
+>
+  <!-- Header del sidebar -->
+  <div class="sidebar-header">
+    @if (sidebarService.isOpen()) {
+    <div class="sidebar-title">
+      <h2>Menú</h2>
+      <p>Navegación principal</p>
+    </div>
+    }
+    <button
+      class="toggle-button"
+      (click)="toggleSidebar()"
+      [attr.aria-label]="sidebarService.isOpen() ? 'Cerrar menú' : 'Abrir menú'"
+    >
+      @if (sidebarService.isMobile() && sidebarService.isOpen()) {
+      <!-- X para cerrar en mobile -->
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M15 5L5 15M5 5l10 10"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      } @else {
+      <!-- Flecha para desktop/tablet -->
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M15 10H5M10 15L5 10L10 5"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      }
+    </button>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    @for (item of menuItems; track item.route) {
+    <a
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      class="menu-item"
+      [attr.aria-label]="item.label"
+      (click)="onNavigate()"
+    >
+      <!-- Icono -->
+      <span class="menu-icon" [attr.data-icon]="item.icon"></span>
+      <!-- Texto (solo visible cuando el sidebar está abierto) -->
+      @if (sidebarService.isOpen()) {
+      <span class="menu-label">{{ item.label }}</span>
+      }
+    </a>
+    }
+  </nav>
+</aside>

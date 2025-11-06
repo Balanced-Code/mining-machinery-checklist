@@ -1,48 +1,11 @@
-<div class="dashboard-container">
-  <div class="dashboard-header">
-    <h1>Dashboard</h1>
-  </div>
+<div class="dashboard">
+  <div class="dashboard-container">
+    <h2>Bienvenido, {{ authService.user()?.nombre }}!</h2>
+    <p>Cargo: {{ authService.currentCargo()?.nombre }}</p>
 
-  <main class="dashboard-content">
-    @if (authService.user(); as user) {
-    <div class="welcome-section">
-      <h2>Bienvenido, {{ user.nombre }}!</h2>
-      <p>
-        Tu cargo actual es: <strong>{{ user.cargo.nombre }}</strong> (Nivel {{ user.cargo.nivel }})
-      </p>
-
-      <div class="info-cards">
-        <div class="info-card">
-          <h3>Correo</h3>
-          <p>{{ user.correo }}</p>
-        </div>
-
-        <div class="info-card">
-          <h3>Cargo</h3>
-          <p>{{ user.cargo.nombre }}</p>
-        </div>
-
-        <div class="info-card">
-          <h3>Nivel de Acceso</h3>
-          <p>Nivel {{ user.cargo.nivel }}</p>
-        </div>
-      </div>
-
-      <div class="role-permissions">
-        <h3>Permisos según tu cargo:</h3>
-        <ul>
-          @if (authService.hasRequiredLevel(1)) {
-          <li>✓ Ver inspecciones</li>
-          } @if (authService.hasRequiredLevel(2)) {
-          <li>✓ Crear y editar checklists</li>
-          } @if (authService.hasRequiredLevel(3)) {
-          <li>✓ Supervisar inspecciones</li>
-          } @if (authService.hasRequiredLevel(4)) {
-          <li>✓ Administración completa del sistema</li>
-          }
-        </ul>
-      </div>
+    <div class="dashboard-cards">
+      <!-- Las tarjetas del dashboard se implementarán después -->
+      <p>Contenido del dashboard en construcción...</p>
     </div>
-    }
-  </main>
+  </div>
 </div>
