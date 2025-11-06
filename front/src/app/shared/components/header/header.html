@@ -23,7 +23,8 @@
 
     <!-- Sección Logo + Separador (ancho fijo 280px como sidebar) -->
     <div class="logo-section">
-      <div class="logo-container">
+      <!-- Logo clickeable -->
+      <button class="logo-btn" (click)="goToDashboard()" aria-label="Ir al inicio">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="665"
@@ -42,7 +43,7 @@
             d="M143.5 37.5V30h-28.8v50h28.8c1.6-14.1 9-19.9 20-21 13-1.2 28.6 5.3 28.3 23.8-.3 15.3-9.4 23.8-24.7 24-11.6.2-23-7.2-23.8-20.7H114c0 15.8 4.7 25 13 34a55.5 55.5 0 0 0 40 15.9 53.2 53.2 0 0 0 38.5-15.8 52.5 52.5 0 0 0-2.8-77A54.6 54.6 0 0 0 167 30c-11 0-14.2 2-23.6 7.5"
           />
         </svg>
-      </div>
+      </button>
 
       <!-- Separador vertical (solo desktop/tablet) -->
       @if (!sidebarService.isMobile()) {
@@ -70,7 +71,7 @@
             <p class="user-role">{{ currentCargo()?.nombre }}</p>
           </div>
           }
-          <div class="user-avatar">
+          <div class="user-avatar" [style.background-color]="avatarBgColor()">
             <span class="avatar-initials">{{ userInitials }}</span>
           </div>
           <svg
@@ -95,6 +96,22 @@
         <!-- Menú contextual -->
         @if (isMenuOpen()) {
         <div class="user-dropdown">
+          <!-- Información del usuario (solo mobile) -->
+          @if (sidebarService.isMobile()) {
+          <div class="dropdown-user-info">
+            <p class="dropdown-user-name">{{ fullName }}</p>
+            <p
+              class="dropdown-user-role"
+              [style.background-color]="badgeColors().background"
+              [style.color]="badgeColors().text"
+              [style.border-color]="badgeColors().border"
+            >
+              {{ currentCargo()?.nombre }}
+            </p>
+          </div>
+          <div class="dropdown-divider"></div>
+          }
+
           <button class="dropdown-item" (click)="goToProfile()">
             <svg
               width="16"

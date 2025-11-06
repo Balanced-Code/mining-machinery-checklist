@@ -1,7 +1,8 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { SidebarService } from '../../services/sidebar';
+import { getAvatarBackground, getCargoColors } from '../../utils/cargo-colors.util';
 
 @Component({
   selector: 'app-header',
@@ -17,9 +18,9 @@ export class Header {
   private readonly router = inject(Router);
   protected readonly sidebarService = inject(SidebarService);
 
-  // Inputs para el título y descripción de la página actual
-  title = input<string>('Dashboard');
-  description = input<string>('Panel principal');
+  // Inputs para el título y descripción de la página actual (vienen del Layout)
+  title = input.required<string>();
+  description = input.required<string>();
 
   // Estado del menú contextual
   protected isMenuOpen = signal(false);
@@ -27,6 +28,17 @@ export class Header {
   // Exponer datos del usuario
   protected readonly user = this.authService.user;
   protected readonly currentCargo = this.authService.currentCargo;
+
+  // Colores dinámicos basados en el nivel del cargo
+  protected readonly avatarBgColor = computed(() => {
+    const nivel = this.user()?.cargo.nivel ?? 1;
+    return getAvatarBackground(nivel);
+  });
+
+  protected readonly badgeColors = computed(() => {
+    const nivel = this.user()?.cargo.nivel ?? 1;
+    return getCargoColors(nivel);
+  });
 
   // Generar las iniciales del usuario (primeras dos letras del nombre)
   protected get userInitials(): string {
@@ -44,6 +56,20 @@ export class Header {
    */
   protected toggleSidebar(): void {
     this.sidebarService.toggle();
+  }
+
+  /**
+   * Navega al dashboard (página de inicio)
+   * Si ya estás en dashboard, recarga la página
+   */
+  protected goToDashboard(): void {
+    if (this.router.url === '/dashboard') {
+      // Si ya estamos en dashboard, recargar la página
+      window.location.reload();
+    } else {
+      // Si no, navegar al dashboard
+      this.router.navigate(['/dashboard']);
+    }
   }
 
   /**

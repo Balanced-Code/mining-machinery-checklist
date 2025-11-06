@@ -22,29 +22,21 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard),
+        data: {
+          title: 'Dashboard',
+          description: 'Bienvenido al sistema de gestión de checklist',
+        },
         // Sin restricciones de cargo/nivel - accesible para todos los usuarios autenticados
       },
-      // Ejemplo: Ruta solo para supervisores o superior
-      // {
-      //   path: 'inspecciones',
-      //   loadComponent: () =>
-      //     import('./pages/inspecciones/inspecciones').then((m) => m.Inspecciones),
-      //   data: { cargo: 'supervisor' }, // Solo supervisores, gerentes y administradores
-      // },
-      // Ejemplo: Ruta solo para nivel 3 o superior (gerente y administrador)
-      // {
-      //   path: 'reportes',
-      //   loadComponent: () =>
-      //     import('./pages/reportes/reportes').then((m) => m.Reportes),
-      //   data: { nivel: 3 },
-      // },
-      // Ejemplo: Ruta solo para administradores
-      // {
-      //   path: 'admin',
-      //   loadComponent: () =>
-      //     import('./pages/admin/admin').then((m) => m.Admin),
-      //   data: { cargo: 'administrador' },
-      // },
+      {
+        path: 'perfil',
+        loadComponent: () => import('./pages/profile/profile').then((m) => m.Profile),
+        data: {
+          title: 'Mi Perfil',
+          description: 'Gestiona tu información personal y configuración de cuenta',
+        },
+        // Accesible para todos los usuarios autenticados
+      },
     ],
   },
   {
