@@ -122,3 +122,16 @@ export const notFoundResponseSchema = {
     statusCode: { type: 'number' },
   },
 } as const;
+
+/**
+ * Schema de respuesta exitosa de cambio de contraseña (200)
+ */
+export const changePasswordSuccessResponseSchema = {
+  description: 'Contraseña cambiada exitosamente',
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+  },
+  required: ['success', 'message'],
+} as const;

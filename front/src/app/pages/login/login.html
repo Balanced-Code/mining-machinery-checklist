@@ -37,7 +37,8 @@
         @if (correo?.invalid && correo?.touched) {
         <span class="field-error">
           @if (correo?.errors?.['required']) { El correo es requerido } @else if
-          (correo?.errors?.['email']) { El correo no es válido }
+          (correo?.errors?.['email']) { El correo no es válido } @else if
+          (correo?.errors?.['normetDomain']) { El correo debe ser del dominio @normet.com }
         </span>
         }
       </div>

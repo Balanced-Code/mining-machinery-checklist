@@ -42,10 +42,14 @@ async function checkRevokedToken(
 /**
  * Verificar autenticación JWT y validar token
  * Función interna reutilizable que evita duplicación de código
- * Valida que los datos del JWT sigan siendo consistentes con la BD
+ *
+ * Estrategia optimizada:
+ * - Modo LIGHT: Solo verifica token válido y revocación (rápido, sin consulta BD completa)
+ * - Modo STRICT: Valida consistencia completa con BD (para endpoints críticos)
  */
 export async function verifyJWTAndToken(
-  request: FastifyRequest
+  request: FastifyRequest,
+  strict = false // Por defecto usa modo ligero
 ): Promise<AuthenticatedUser | null> {
   try {
     // 1. Verificar JWT desde cookie
@@ -58,13 +62,25 @@ export async function verifyJWTAndToken(
       return null;
     }
 
-    // 3. Solo verificar que el token no esté revocado
+    // 3. Verificar que el token no esté revocado (consulta ligera)
     const isRevoked = await checkRevokedToken(request, payload.userId);
     if (isRevoked) {
       return null;
     }
 
-    // 4. Consultar datos completos del usuario para validar consistencia
+    // 4. MODO LIGHT: Confiar en el JWT (válido para la mayoría de casos)
+    if (!strict) {
+      return {
+        id: payload.userId,
+        nombre: payload.nombre,
+        correo: payload.correo,
+        cargoId: payload.cargoId,
+        cargoNombre: payload.cargoNombre,
+        cargoNivel: payload.cargoNivel,
+      };
+    }
+
+    // 5. MODO STRICT: Validar datos completos con BD (para operaciones críticas)
     const user = await request.server.prisma.usuario.findUnique({
       where: {
         id: payload.userId,
@@ -82,35 +98,10 @@ export async function verifyJWTAndToken(
     });
 
     if (!user || !user.cargo) {
-      return null; // Usuario no existe o está desactivado
+      return null; // Usuario desactivado o eliminado
     }
 
-    // 5. Validar que los datos del JWT sigan siendo válidos
-    // Si hay cambios críticos, invalidar el token
-    if (
-      user.correo !== payload.correo ||
-      user.nombre !== payload.nombre ||
-      user.cargoId !== payload.cargoId
-    ) {
-      // Token contiene datos obsoletos, forzar re-autenticación
-      request.log.warn({
-        userId: payload.userId,
-        reason: 'JWT datos obsoletos',
-        jwtData: {
-          correo: payload.correo,
-          nombre: payload.nombre,
-          cargoId: payload.cargoId,
-        },
-        dbData: {
-          correo: user.correo,
-          nombre: user.nombre,
-          cargoId: user.cargoId,
-        },
-      });
-      return null;
-    }
-
-    // 6. Retornar datos frescos de la BD (garantizados como actuales)
+    // 8. Retornar datos frescos de la BD
     return {
       id: user.id,
       nombre: user.nombre,

@@ -41,3 +41,20 @@ export interface LoginResponse {
   message: string;
   user?: User;
 }
+
+/**
+ * Request para cambio de contraseña
+ */
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+/**
+ * Respuesta del cambio de contraseña
+ */
+export interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
+}

@@ -20,6 +20,7 @@ export interface JwtPayload {
   correo: string;
   cargoId: number;
   cargoNombre: string;
+  cargoNivel: number;
   jti: string; // JWT ID único
   iat: number; // Issued at
   exp: number; // Expiration
@@ -68,6 +69,7 @@ export interface TokenData {
   correo: string;
   cargoId: number;
   cargoNombre: string;
+  cargoNivel: number;
   jti: string;
 }
 
@@ -76,4 +78,21 @@ export interface TokenData {
  */
 export interface CargosConfigResponse {
   hierarchy: Record<string, number>;
+}
+
+/**
+ * Request para cambiar contraseña
+ */
+export interface ChangePasswordRequest {
+  currentPassword: string; // Contraseña actual (para verificar que es el usuario)
+  newPassword: string; // Nueva contraseña
+  confirmPassword: string; // Confirmación de nueva contraseña
+}
+
+/**
+ * Respuesta de cambio de contraseña exitoso
+ */
+export interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
 }

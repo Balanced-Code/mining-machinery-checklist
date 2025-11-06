@@ -157,7 +157,14 @@
         <div class="form-field">
           <label class="field-label">CONTRASEÑA ACTUAL</label>
           <div class="input-container">
-            <div class="input-wrapper">
+            <div
+              class="input-wrapper"
+              [class.input-error]="
+                (passwordForm.get('currentPassword')?.invalid &&
+                  passwordForm.get('currentPassword')?.touched) ||
+                currentPasswordError()
+              "
+            >
               <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <rect
                   x="3"
@@ -224,13 +231,33 @@
               </button>
             </div>
           </div>
+          <!-- Mensaje de validación para contraseña actual -->
+          @if ( passwordForm.get('currentPassword')?.hasError('required') &&
+          passwordForm.get('currentPassword')?.touched ) {
+          <p class="field-error">Campo requerido</p>
+          } @else if ( passwordForm.get('currentPassword')?.hasError('minlength') &&
+          passwordForm.get('currentPassword')?.touched ) {
+          <p class="field-error">Debe tener al menos 8 caracteres</p>
+          } @else if (currentPasswordError()) {
+          <p class="field-error">{{ currentPasswordError() }}</p>
+          }
         </div>
 
         <!-- Campo: Nueva Contraseña -->
         <div class="form-field">
-          <label class="field-label">NUEVA CONTRASEÑA</label>
+          <label class="field-label"
+            >NUEVA CONTRASEÑA <span class="field-hint-inline">(Mínimo 8 caracteres)</span></label
+          >
           <div class="input-container">
-            <div class="input-wrapper">
+            <div
+              class="input-wrapper"
+              [class.input-error]="
+                ((passwordForm.get('newPassword')?.invalid ||
+                  passwordForm.hasError('passwordSame')) &&
+                  passwordForm.get('newPassword')?.touched) ||
+                newPasswordError()
+              "
+            >
               <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <rect
                   x="3"
@@ -297,14 +324,47 @@
               </button>
             </div>
           </div>
-          <p class="field-hint">Mínimo 8 caracteres</p>
+          <!-- Mensajes de validación para nueva contraseña -->
+          @if ( passwordForm.get('newPassword')?.hasError('required') &&
+          passwordForm.get('newPassword')?.touched ) {
+          <p class="field-error">Campo requerido</p>
+          } @else if ( passwordForm.get('newPassword')?.hasError('minlength') &&
+          passwordForm.get('newPassword')?.touched ) {
+          <p class="field-error">Debe tener al menos 8 caracteres</p>
+          } @else if ( passwordForm.get('newPassword')?.hasError('passwordStrength') &&
+          passwordForm.get('newPassword')?.touched ) {
+          <p class="field-error">
+            La contraseña debe contener:<br />
+            @if (!passwordForm.get('newPassword')?.errors?.['passwordStrength']?.hasUpperCase) { -
+            Mayúscula<br />
+            } @if (!passwordForm.get('newPassword')?.errors?.['passwordStrength']?.hasLowerCase) { -
+            Minúscula<br />
+            } @if (!passwordForm.get('newPassword')?.errors?.['passwordStrength']?.hasNumber) { -
+            Número<br />
+            } @if (!passwordForm.get('newPassword')?.errors?.['passwordStrength']?.hasSpecialChar) {
+            - Símbolo especial }
+          </p>
+          } @else if ( passwordForm.hasError('passwordSame') &&
+          passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.value ) {
+          <p class="field-error">La nueva contraseña debe ser diferente de la actual</p>
+          } @else if (newPasswordError()) {
+          <p class="field-error">{{ newPasswordError() }}</p>
+          }
         </div>
 
         <!-- Campo: Confirmar Nueva Contraseña -->
         <div class="form-field">
           <label class="field-label">CONFIRMAR NUEVA CONTRASEÑA</label>
           <div class="input-container">
-            <div class="input-wrapper">
+            <div
+              class="input-wrapper"
+              [class.input-error]="
+                ((passwordForm.get('confirmPassword')?.invalid ||
+                  passwordForm.hasError('passwordMismatch')) &&
+                  passwordForm.get('confirmPassword')?.touched) ||
+                confirmPasswordError()
+              "
+            >
               <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <rect
                   x="3"
@@ -371,23 +431,26 @@
               </button>
             </div>
           </div>
+          <!-- Mensaje de validación para confirmar contraseña -->
+          @if ( passwordForm.get('confirmPassword')?.hasError('required') &&
+          passwordForm.get('confirmPassword')?.touched ) {
+          <p class="field-error">Campo requerido</p>
+          } @else if ( passwordForm.hasError('passwordMismatch') &&
+          passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.value
+          ) {
+          <p class="field-error">Las contraseñas no coinciden</p>
+          } @else if (confirmPasswordError()) {
+          <p class="field-error">{{ confirmPasswordError() }}</p>
+          }
         </div>
 
-        <!-- Mensajes de error/éxito -->
+        <!-- Mensaje de éxito -->
         @if (successMessage()) {
         <div class="message success-message">{{ successMessage() }}</div>
-        } @if (errorMessage()) {
-        <div class="message error-message">{{ errorMessage() }}</div>
-        } @if (passwordForm.hasError('passwordMismatch') && passwordForm.touched) {
-        <div class="message error-message">Las contraseñas no coinciden</div>
         }
 
         <!-- Botón de envío -->
-        <button
-          type="submit"
-          class="submit-button"
-          [disabled]="passwordForm.invalid || isLoading()"
-        >
+        <button type="submit" class="submit-button" [disabled]="isLoading()">
           @if (isLoading()) {
           <span>Actualizando...</span>
           } @else {

@@ -2,7 +2,14 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { CargosConfig, LoginRequest, LoginResponse, User } from '../models/user.model';
+import {
+  CargosConfig,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
+  LoginRequest,
+  LoginResponse,
+  User,
+} from '../models/user.model';
 
 @Injectable({
   providedIn: 'root',
@@ -82,6 +89,76 @@ export class AuthService {
     } finally {
       this.currentUserSignal.set(null);
       this.router.navigate(['/login']);
+    }
+  }
+
+  /**
+   * Cambia la contraseña del usuario autenticado
+   * @throws Error con el mensaje específico del backend
+   */
+  async changePassword(
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ): Promise<void> {
+    const request: ChangePasswordRequest = {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    };
+
+    try {
+      const response = await firstValueFrom(
+        this.http.put<ChangePasswordResponse>(`${this.baseUrl}/auth/profile/password`, request)
+      );
+
+      if (!response?.success) {
+        throw new Error(response?.message || 'Error al cambiar la contraseña');
+      }
+
+      // Después de cambiar la contraseña exitosamente, el backend revoca todos los tokens
+      // Por lo tanto, debemos limpiar el estado local y redirigir al login
+      this.currentUserSignal.set(null);
+      this.router.navigate(['/login']);
+    } catch (err: unknown) {
+      // Manejo específico de errores HTTP del backend
+      if (err instanceof HttpErrorResponse) {
+        // El backend retorna { error: string, message: string, statusCode: number }
+        const backendMessage = err.error?.message;
+
+        // Mapear códigos de estado a mensajes específicos si el backend no provee mensaje
+        let errorMessage: string;
+
+        switch (err.status) {
+          case 400:
+            // Bad Request: validación fallida (contraseñas no coinciden, etc.)
+            errorMessage = backendMessage || 'Las contraseñas no cumplen con los requisitos';
+            break;
+          case 401:
+            // Unauthorized: contraseña actual incorrecta o sesión inválida
+            errorMessage = backendMessage || 'La contraseña actual es incorrecta';
+            break;
+          case 404:
+            // Not Found: usuario no existe (raro, pero posible)
+            errorMessage = backendMessage || 'Usuario no encontrado';
+            break;
+          case 500:
+            // Internal Server Error
+            errorMessage = backendMessage || 'Error del servidor. Intenta nuevamente más tarde';
+            break;
+          case 0:
+            // Sin conexión al servidor
+            errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión';
+            break;
+          default:
+            errorMessage = backendMessage || `Error inesperado (${err.status})`;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      // Si no es HttpErrorResponse, propagar el error original
+      throw err;
     }
   }
 
