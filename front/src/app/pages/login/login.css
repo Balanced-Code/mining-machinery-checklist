@@ -29,7 +29,7 @@
 .logo {
   height: 140px;
   width: auto;
-  object-fit: contain;
+  max-width: 100%;
   user-select: none;
   pointer-events: none;
 }

@@ -1,11 +1,13 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 import { SidebarService } from '../../services/sidebar';
 
 interface MenuItem {
   icon: string;
   label: string;
   route: string;
+  minLevel?: number; // Nivel mínimo requerido para ver esta opción
 }
 
 @Component({
@@ -15,16 +17,23 @@ interface MenuItem {
   styleUrl: './sidebar.css',
 })
 export class Sidebar {
+  private readonly authService = inject(AuthService);
   protected readonly sidebarService = inject(SidebarService);
 
   // Menú de navegación
-  protected readonly menuItems: MenuItem[] = [
+  private readonly allMenuItems: MenuItem[] = [
     { icon: 'home', label: 'Home', route: '/dashboard' },
-    { icon: 'users', label: 'Usuarios', route: '/usuarios' },
+    { icon: 'users', label: 'Usuarios', route: '/usuarios', minLevel: 3 },
     { icon: 'checklist', label: 'Checklist', route: '/checklist' },
     { icon: 'history', label: 'Historial', route: '/historial' },
     { icon: 'clipboard', label: 'Crear revisión', route: '/revision' },
   ];
+
+  // Filtrar items del menú según el nivel del cargo del usuario
+  protected readonly menuItems = computed(() => {
+    const userLevel = this.authService.user()?.cargo.nivel ?? 0;
+    return this.allMenuItems.filter((item) => !item.minLevel || userLevel >= item.minLevel);
+  });
 
   /**
    * Alterna el estado del sidebar (abrir/cerrar)
