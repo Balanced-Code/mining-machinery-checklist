@@ -43,8 +43,8 @@ export class AuthService {
   private readonly baseUrl = 'http://localhost:3000';
 
   constructor() {
-    // Cargar cargos al inicializar el servicio
-    this.loadCargosConfigWithCache();
+    // Los cargos se cargan a través de APP_INITIALIZER antes de que la app arranque
+    // Ver app.config.ts
   }
   /**
    * Realiza el login del usuario
@@ -183,8 +183,9 @@ export class AuthService {
   /**
    * Carga la configuración de cargos con sistema de cache
    * Usa localStorage para persistencia y sessionStorage para detectar cierre de navegador
+   * Este método es llamado por APP_INITIALIZER en app.config.ts
    */
-  private async loadCargosConfigWithCache(): Promise<void> {
+  async loadCargosConfigWithCache(): Promise<void> {
     this.configLoadedSignal.set(false);
     this.configErrorSignal.set(null);
 

@@ -15,3 +15,8 @@ body {
 body {
   font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
+
+/* Evitar que los iconos de Material Icons sean seleccionables */
+.material-icons {
+  user-select: none;
+}

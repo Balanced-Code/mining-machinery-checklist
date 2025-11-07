@@ -37,6 +37,15 @@ export const routes: Routes = [
         },
         // Accesible para todos los usuarios autenticados
       },
+      {
+        path: 'usuarios',
+        loadComponent: () => import('./pages/usuarios/usuarios').then((m) => m.Usuarios),
+        data: {
+          title: 'Usuarios',
+          description: 'Gestión de usuarios del sistema',
+          nivel: 3, // Solo accesible para nivel 3 o superior (Inspector, Administrador)
+        },
+      },
     ],
   },
   {

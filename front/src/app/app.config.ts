@@ -18,6 +18,18 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
+    // Cargar configuración de cargos ANTES de iniciar la aplicación
+    provideAppInitializer(async () => {
+      const authService = inject(AuthService);
+      try {
+        console.log('🔧 Inicializando configuración de cargos...');
+        await authService.loadCargosConfigWithCache();
+        console.log('✅ Configuración de cargos cargada');
+      } catch (error) {
+        console.error('❌ Error al cargar configuración de cargos:', error);
+      }
+    }),
+    // Verificar estado de autenticación del usuario
     provideAppInitializer(async () => {
       const authService = inject(AuthService);
       try {

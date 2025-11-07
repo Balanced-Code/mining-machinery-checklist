@@ -34,8 +34,7 @@
 }
 
 .section-icon {
-  width: 20px;
-  height: 20px;
+  font-size: 20px;
   color: rgb(30 41 59);
 }
 
@@ -106,8 +105,7 @@
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
+  font-size: 16px;
   color: rgb(148 163 184);
 }
 
@@ -154,14 +152,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
   padding: 0;
   background: transparent;
   border: none;
   cursor: pointer;
   color: rgb(148 163 184);
   transition: color 0.2s;
+}
+
+.toggle-password .material-icons {
+  font-size: 16px;
 }
 
 .toggle-password:hover {
@@ -227,8 +227,7 @@
 }
 
 .cargo-icon {
-  width: 12px;
-  height: 12px;
+  font-size: 12px;
 }
 
 .cargo-company {
@@ -295,6 +294,10 @@
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%);
 }
 
+.submit-button .material-icons {
+  font-size: 16px;
+}
+
 .submit-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -312,8 +315,7 @@
 }
 
 .info-icon {
-  width: 16px;
-  height: 16px;
+  font-size: 16px;
   color: rgb(100 116 139);
   flex-shrink: 0;
   margin-top: 2px;

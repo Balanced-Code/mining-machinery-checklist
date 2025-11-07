@@ -1,0 +1,383 @@
+/* Host del diálogo */
+.user-dialog-host {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Wrapper del diálogo */
+.dialog-wrapper {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  pointer-events: none;
+}
+
+/* Backdrop */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 50%);
+  animation: fade-in 0.2s;
+  cursor: default;
+  z-index: 10000;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Container del diálogo */
+.dialog-container {
+  position: relative;
+  width: 512px;
+  max-height: 90vh;
+  background: white;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 10px;
+  overflow: hidden;
+  animation: slide-in 0.3s;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.dialog-header {
+  display: flex;
+  gap: 8px;
+  padding: 25px 25px 16px;
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+  flex-shrink: 0;
+}
+
+.dialog-header > div {
+  flex: 1;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-family: Inter, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 18px;
+  color: black;
+}
+
+.dialog-header p {
+  margin: 8px 0 0;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: rgb(0 0 0 / 60%);
+}
+
+.close-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 2px;
+  opacity: 0.7;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn .material-icons {
+  font-size: 20px;
+}
+
+.close-btn:hover {
+  opacity: 1;
+}
+
+/* Form */
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 25px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Form field */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field label {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 14px;
+  color: black;
+}
+
+.required {
+  color: red;
+  margin-left: 2px;
+}
+
+.form-input {
+  height: 36px;
+  padding: 4px 12px;
+  background: rgb(0 0 0 / 5%);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: black;
+  transition: all 0.2s;
+}
+
+.form-input::placeholder {
+  color: rgb(0 0 0 / 60%);
+}
+
+.form-input:focus {
+  outline: none;
+  background: white;
+  border-color: #ed1b2e;
+}
+
+.form-input.error {
+  border-color: red;
+  background: rgb(255 0 0 / 5%);
+}
+
+.form-hint {
+  margin: 0;
+  font-family: Inter, sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  color: rgb(0 0 0 / 50%);
+}
+
+/* Select wrapper */
+.select-wrapper {
+  position: relative;
+}
+
+.form-select {
+  width: 100%;
+  height: 36px;
+  padding: 1px 36px 1px 13px;
+  background: rgb(0 0 0 / 5%);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: black;
+  cursor: pointer;
+  appearance: none;
+  transition: all 0.2s;
+}
+
+.form-select:focus {
+  outline: none;
+  background: white;
+  border-color: #ed1b2e;
+}
+
+.select-icon {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: currentcolor;
+  font-size: 20px;
+}
+
+/* Password section */
+.password-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 17px;
+  border-top: 1px solid rgb(0 0 0 / 10%);
+}
+
+.password-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.password-header .material-icons {
+  font-size: 18px;
+}
+
+.password-header label {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 14px;
+  color: black;
+  margin: 0;
+}
+
+.reset-password-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  background: white;
+  border: 1px solid #ed1b2e;
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ed1b2e;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reset-password-btn .material-icons {
+  font-size: 18px;
+}
+
+.reset-password-btn:hover {
+  background: rgb(237 27 46 / 5%);
+}
+
+/* Password display (solo crear) */
+.password-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  background: white;
+  border: 1px solid #ed1b2e;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.password-display:hover {
+  background: rgb(237 27 46 / 5%);
+}
+
+.password-display:active {
+  transform: scale(0.98);
+}
+
+.password-display.copied {
+  background: rgb(34 197 94 / 10%);
+  border-color: #22c55e;
+}
+
+.copy-icon {
+  font-size: 20px;
+  color: #ed1b2e;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.password-display.copied .copy-icon {
+  color: #22c55e;
+}
+
+.password-text {
+  flex: 1;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: black;
+  text-align: center;
+}
+
+/* Footer */
+.dialog-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 0 25px 25px;
+  flex-shrink: 0;
+}
+
+.btn-cancel {
+  height: 38px;
+  padding: 9px 17px;
+  background: white;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: black;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: rgb(0 0 0 / 5%);
+}
+
+.btn-save {
+  height: 36px;
+  padding: 8px 16px;
+  background: #ed1b2e;
+  border: none;
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #d01828;
+}
+
+.btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (width <= 600px) {
+  .dialog-container {
+    width: calc(100vw - 32px);
+    max-width: 512px;
+  }
+}

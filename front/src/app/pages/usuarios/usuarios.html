@@ -1,0 +1,155 @@
+<div class="usuarios-page">
+  <!-- Barra de acciones superior -->
+  <div class="actions-bar">
+    <!-- Buscador -->
+    <div class="search-container">
+      <span class="material-icons search-icon">search</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Buscar por Nombre o Email"
+        [(ngModel)]="searchQuery"
+        (input)="onSearch()"
+      />
+    </div>
+
+    <!-- Botón crear usuario -->
+    <button class="btn-create" (click)="openCreateDialog()" type="button">
+      <span class="material-icons">add</span>
+      <span>Crear usuario</span>
+    </button>
+  </div>
+
+  <!-- Tabla de usuarios -->
+  <div class="table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th class="col-id">#</th>
+          <th class="col-name">Nombre</th>
+          <th class="col-email">Email</th>
+          <th class="col-role">Rol</th>
+          <th class="col-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+        <tr>
+          <td colspan="5" class="loading-cell">
+            <div class="loading-spinner"></div>
+            <span>Cargando usuarios...</span>
+          </td>
+        </tr>
+        } @else if (filteredUsers().length === 0) {
+        <tr>
+          <td colspan="5" class="empty-cell">
+            <span>{{
+              searchQuery ? 'No se encontraron usuarios' : 'No hay usuarios registrados'
+            }}</span>
+          </td>
+        </tr>
+        } @else { @for (user of filteredUsers(); track user.id) {
+        <tr>
+          <td class="col-id">{{ $index + 1 }}</td>
+          <td class="col-name">{{ user.nombre }}</td>
+          <td class="col-email">{{ user.correo }}</td>
+          <td class="col-role">
+            <span
+              class="role-badge"
+              [style.background]="getCargoColors(user.cargo.nivel).background"
+              [style.color]="getCargoColors(user.cargo.nivel).text"
+            >
+              {{ user.cargo.nombre }}
+            </span>
+          </td>
+          <td class="col-actions">
+            <div class="action-buttons">
+              <!-- Botón restablecer contraseña -->
+              <button
+                class="action-btn"
+                (click)="resetPassword(user)"
+                type="button"
+                title="Restablecer contraseña"
+              >
+                <span class="material-icons">lock_reset</span>
+              </button>
+
+              <!-- Botón editar -->
+              <button
+                class="action-btn"
+                (click)="openEditDialog(user)"
+                type="button"
+                title="Editar usuario"
+              >
+                <span class="material-icons">edit</span>
+              </button>
+
+              <!-- Botón eliminar -->
+              <button
+                class="action-btn btn-delete"
+                (click)="deleteUser(user)"
+                type="button"
+                title="Eliminar usuario"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } }
+      </tbody>
+    </table>
+
+    <!-- Footer con total -->
+    <div class="table-footer">
+      <p>
+        Total de usuarios: <strong>{{ users().length }}</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- Diálogo de crear/editar usuario -->
+  @if (showDialog()) {
+  <app-user-dialog
+    [mode]="dialogMode()"
+    [user]="selectedUser()"
+    [cargos]="cargos()"
+    (onClose)="closeDialog()"
+    (onSave)="handleSave($event)"
+  />
+  }
+
+  <!-- Diálogo de confirmación para restablecer contraseña -->
+  @if (showResetConfirm()) {
+  <app-confirm-dialog
+    [title]="'Restablecer contraseña'"
+    [message]="
+      '¿Estás seguro de restablecer la contraseña de ' +
+      userToReset()?.nombre +
+      '?\n\nLa nueva contraseña será: Password123?'
+    "
+    [confirmText]="'Restablecer'"
+    [cancelText]="'Cancelar'"
+    [type]="'warning'"
+    (onConfirm)="confirmResetPassword()"
+    (onCancel)="cancelResetPassword()"
+  />
+  }
+
+  <!-- Diálogo de confirmación para eliminar usuario -->
+  @if (showDeleteConfirm()) {
+  <app-confirm-dialog
+    [title]="'Eliminar usuario'"
+    [message]="
+      '¿Estás seguro de eliminar a ' +
+      userToDelete()?.nombre +
+      '?\n\nEsta acción no se puede deshacer.'
+    "
+    [confirmText]="'Eliminar'"
+    [cancelText]="'Cancelar'"
+    [type]="'danger'"
+    (onConfirm)="confirmDeleteUser()"
+    (onCancel)="cancelDeleteUser()"
+  />
+  }
+</div>
