@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Cargo } from '../../core/models/user.model';
+import {
+  Cargo,
+  CreateUsuarioRequest,
+  UpdateUsuarioRequest,
+  User,
+  UserDialogMode,
+} from '../../core/models/user.model';
 import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog';
 import { getCargoColors } from '../../shared/utils/cargo-colors.util';
 import { UserDialog } from './user-dialog/user-dialog';
-import {
-  CreateUsuarioRequest,
-  UpdateUsuarioRequest,
-  UserDialogMode,
-  Usuario,
-} from './usuarios.models';
 
 @Component({
   selector: 'app-usuarios',
@@ -20,7 +20,7 @@ import {
 })
 export class Usuarios {
   // Signals para estado
-  protected users = signal<Usuario[]>([]);
+  protected users = signal<User[]>([]);
   protected loading = signal(false);
   protected searchQuery = '';
   protected selectedCargoId = signal<number | null>(null);
@@ -28,13 +28,13 @@ export class Usuarios {
   // Dialog state
   protected showDialog = signal(false);
   protected dialogMode = signal<UserDialogMode>('create');
-  protected selectedUser = signal<Usuario | undefined>(undefined);
+  protected selectedUser = signal<User | undefined>(undefined);
 
   // Confirm dialogs
   protected showResetConfirm = signal(false);
   protected showDeleteConfirm = signal(false);
-  protected userToReset = signal<Usuario | undefined>(undefined);
-  protected userToDelete = signal<Usuario | undefined>(undefined);
+  protected userToReset = signal<User | undefined>(undefined);
+  protected userToDelete = signal<User | undefined>(undefined);
 
   // Cargos disponibles para el select
   protected cargos = signal<Cargo[]>([
@@ -147,7 +147,7 @@ export class Usuarios {
   /**
    * Abrir diálogo para editar usuario
    */
-  protected openEditDialog(user: Usuario): void {
+  protected openEditDialog(user: User): void {
     this.dialogMode.set('edit');
     this.selectedUser.set(user);
     this.showDialog.set(true);
@@ -202,7 +202,7 @@ export class Usuarios {
    * Restablecer contraseña de usuario
    * TODO: Implementar llamada HTTP real
    */
-  protected resetPassword(user: Usuario): void {
+  protected resetPassword(user: User): void {
     this.userToReset.set(user);
     this.showResetConfirm.set(true);
   }
@@ -237,7 +237,7 @@ export class Usuarios {
    * Eliminar usuario
    * TODO: Implementar llamada HTTP real
    */
-  protected deleteUser(user: Usuario): void {
+  protected deleteUser(user: User): void {
     this.userToDelete.set(user);
     this.showDeleteConfirm.set(true);
   }

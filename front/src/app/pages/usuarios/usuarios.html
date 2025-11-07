@@ -62,10 +62,10 @@
         </tr>
         } @else { @for (user of filteredUsers(); track user.id) {
         <tr>
-          <td class="col-id">{{ $index + 1 }}</td>
-          <td class="col-name">{{ user.nombre }}</td>
-          <td class="col-email">{{ user.correo }}</td>
-          <td class="col-role">
+          <td class="col-id" data-label="ID">{{ $index + 1 }}</td>
+          <td class="col-name" data-label="Nombre">{{ user.nombre }}</td>
+          <td class="col-email" data-label="Email">{{ user.correo }}</td>
+          <td class="col-role" data-label="Rol">
             <span
               class="role-badge"
               [style.background]="getCargoColors(user.cargo.nivel).background"
@@ -74,7 +74,7 @@
               {{ user.cargo.nombre }}
             </span>
           </td>
-          <td class="col-actions">
+          <td class="col-actions" data-label="Acciones">
             <div class="action-buttons">
               <!-- Botón restablecer contraseña -->
               <button

@@ -212,7 +212,7 @@
   box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
   min-width: 200px;
   padding: 8px;
-  z-index: 100;
+  z-index: 10;
   animation: fade-in 0.2s ease;
 }
 

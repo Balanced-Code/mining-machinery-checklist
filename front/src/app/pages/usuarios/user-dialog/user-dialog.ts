@@ -8,14 +8,14 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Cargo } from '../../../core/models/user.model';
-import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import {
+  Cargo,
   CreateUsuarioRequest,
   UpdateUsuarioRequest,
+  User,
   UserDialogMode,
-  Usuario,
-} from '../usuarios.models';
+} from '../../../core/models/user.model';
+import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-user-dialog',
@@ -30,7 +30,7 @@ import {
 export class UserDialog implements OnInit {
   // Inputs
   mode = input.required<UserDialogMode>();
-  user = input<Usuario | undefined>();
+  user = input<User | undefined>();
   cargos = input.required<Cargo[]>();
 
   // Outputs
