@@ -23,6 +23,7 @@ export class Usuarios {
   protected users = signal<Usuario[]>([]);
   protected loading = signal(false);
   protected searchQuery = '';
+  protected selectedCargoId = signal<number | null>(null);
 
   // Dialog state
   protected showDialog = signal(false);
@@ -44,15 +45,26 @@ export class Usuarios {
     { id: 5, nombre: 'Administrador', nivel: 4 },
   ]);
 
-  // Computed: usuarios filtrados por búsqueda
+  // Computed: usuarios filtrados por búsqueda y rol
   protected filteredUsers = computed(() => {
     const query = this.searchQuery.toLowerCase().trim();
-    if (!query) return this.users();
+    const cargoId = this.selectedCargoId();
+    let filtered = this.users();
 
-    return this.users().filter(
-      (user) =>
-        user.nombre.toLowerCase().includes(query) || user.correo.toLowerCase().includes(query)
-    );
+    // Filtrar por cargo si está seleccionado
+    if (cargoId !== null) {
+      filtered = filtered.filter((user) => user.cargo.id === cargoId);
+    }
+
+    // Filtrar por búsqueda
+    if (query) {
+      filtered = filtered.filter(
+        (user) =>
+          user.nombre.toLowerCase().includes(query) || user.correo.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
   });
 
   constructor() {
@@ -114,6 +126,13 @@ export class Usuarios {
    */
   protected onSearch(): void {
     // La búsqueda es reactiva gracias al computed
+  }
+
+  /**
+   * Handler para cambio de filtro de cargo
+   */
+  protected onFilterChange(): void {
+    // El filtro es reactivo gracias al computed
   }
 
   /**
