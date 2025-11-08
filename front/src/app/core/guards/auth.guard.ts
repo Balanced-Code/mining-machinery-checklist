@@ -28,13 +28,13 @@ const checkAuthAndRole = async (route: ActivatedRouteSnapshot): Promise<boolean>
     }
 
     if (!authService.configLoaded()) {
-      console.error('❌ Timeout esperando configuración de cargos');
+      console.error('Timeout esperando configuración de cargos');
       // Si hay error de configuración, usar fallback
       if (authService.configError()) {
-        console.warn('⚠️ Usando configuración fallback');
+        console.warn('⚠ando configuración fallback');
       }
     } else {
-      console.log('✅ Configuración de cargos lista');
+      console.log('nfiguración de cargos lista');
     }
   }
 
@@ -61,9 +61,7 @@ const checkAuthAndRole = async (route: ActivatedRouteSnapshot): Promise<boolean>
   } else {
     // Si no cumple, redirigir al dashboard
     console.warn(
-      `🚫 Acceso denegado. Se requiere cargo '${
-        requiredCargo || `nivel ${requiredLevel}`
-      }' o superior.`
+      `eso denegado. Se requiere cargo '${requiredCargo || `nivel ${requiredLevel}`}' o superior.`
     );
     router.navigate(['/dashboard']);
     return false;

@@ -4,7 +4,7 @@ import { PrismaClient } from '../src/generated/prisma';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Iniciando seed de la base de datos...');
+  console.log('Iniciando seed de la base de datos...');
 
   // Limpiar datos existentes (opcional, comentar si no deseas eliminar)
   // await prisma.usuario.deleteMany();
@@ -12,7 +12,7 @@ async function main() {
   // await prisma.maquina.deleteMany();
 
   // Crear cargos (niveles más altos = mayor jerarquía)
-  console.log('📋 Creando cargos...');
+  console.log('ando cargos...');
   const cargoInvitado = await prisma.cargo.create({
     data: {
       nombre: 'Invitado',
@@ -62,7 +62,7 @@ async function main() {
   });
 
   // Crear usuarios
-  console.log('👤 Creando usuarios...');
+  console.log('ando usuarios...');
   const hashedPassword = await bcrypt.hash('admin123?', 10);
 
   const adminUser = await prisma.usuario.create({
@@ -126,7 +126,7 @@ async function main() {
   });
 
   // Crear algunas máquinas de ejemplo
-  console.log('🚜 Creando máquinas...');
+  console.log('Creando máquinas...');
   const maquinas = await Promise.all([
     prisma.maquina.create({
       data: {
@@ -172,7 +172,7 @@ async function main() {
   ]);
 
   // Crear un template de ejemplo
-  console.log('📝 Creando template de inspección...');
+  console.log('ando template de inspección...');
   await prisma.template.create({
     data: {
       nombre: 'REVISIÓN PUESTA EN MARCHA, REGULACIONES Y MOVIMIENTOS',
@@ -209,8 +209,8 @@ async function main() {
     },
   });
 
-  console.log('✅ Seed completado exitosamente!');
-  console.log('\n📊 Datos creados:');
+  console.log('ed completado exitosamente!');
+  console.log('\nos creados:');
   console.log(`   - 6 Cargos:`);
   console.log(`     • Nivel 4: Administrador (ID: ${cargoAdmin.id})`);
   console.log(`     • Nivel 3: Inspector (ID: ${cargoInspector.id})`);
@@ -230,15 +230,13 @@ async function main() {
   console.log(`   - ${maquinas.length} Máquinas`);
   console.log(`   - 3 Roles de asignación`);
   console.log(`   - 1 Template con 5 secciones`);
-  console.log(
-    '\n🔐 Credenciales de acceso (todos tienen la misma contraseña):'
-  );
+  console.log('\ndenciales de acceso (todos tienen la misma contraseña):');
   console.log('   Password: admin123');
 }
 
 main()
   .catch(e => {
-    console.error('❌ Error durante el seed:', e);
+    console.error('ror durante el seed:', e);
     process.exit(1);
   })
   .finally(async () => {

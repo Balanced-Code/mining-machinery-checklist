@@ -38,11 +38,11 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(async () => {
       const authService = inject(AuthService);
       try {
-        console.log('🔧 Inicializando configuración de cargos...');
+        console.log('Inicializando configuración de cargos...');
         await authService.loadCargosConfigWithCache();
-        console.log('✅ Configuración de cargos cargada');
+        console.log('nfiguración de cargos cargada');
       } catch (error) {
-        console.error('❌ Error al cargar configuración de cargos:', error);
+        console.error('ror al cargar configuración de cargos:', error);
       }
     }),
     // Verificar estado de autenticación del usuario
