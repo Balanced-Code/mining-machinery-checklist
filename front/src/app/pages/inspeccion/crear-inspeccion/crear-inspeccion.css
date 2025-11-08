@@ -10,7 +10,7 @@
   background: white;
   border: 1px solid rgb(0 0 0 / 10%);
   border-radius: 10px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
 }
 
@@ -128,7 +128,45 @@
   pointer-events: none;
 }
 
-/* Campo readonly que permite selección de texto (ej: inspector) */
+/* ========== PRIMENG DATEPICKER ========== */
+
+/* Input del datepicker */
+:host ::ng-deep p-datepicker input,
+:host ::ng-deep p-datepicker .p-inputtext,
+:host ::ng-deep p-datepicker input.p-inputtext,
+:host ::ng-deep .p-datepicker-input-icon-container input,
+:host ::ng-deep .p-datepicker-input-icon-container .p-inputtext {
+  display: block !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 8px 40px 8px 12px !important;
+  background: rgb(248 250 252) !important;
+  border: 1px solid rgb(226 232 240) !important;
+  border-radius: 8px !important;
+  font-family: Inter, sans-serif !important;
+  font-size: 14px !important;
+  line-height: normal !important;
+  color: rgb(15 23 42) !important;
+  transition: all 0.2s !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+
+/* Icono del calendario - dentro del input */
+:host ::ng-deep .p-datepicker-input-icon-container svg,
+:host ::ng-deep .p-datepicker-input-icon-container i {
+  right: 12px !important;
+  width: 20px !important;
+  color: #ed1b2e !important;
+  fill: #ed1b2e !important;
+}
+
 .field-input-readonly {
   user-select: text !important;
   pointer-events: auto !important;
@@ -252,12 +290,11 @@
   color: inherit;
 }
 
-/* ========== SECCIÓN DE CHECKLISTS ========== */
 .checklists-section {
   background: white;
   border: 1px solid rgb(0 0 0 / 10%);
   border-radius: 10px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
 }
 
@@ -741,7 +778,6 @@
   height: 18px;
 }
 
-/* ========== ESTADO VACÍO ========== */
 .empty-state-templates {
   display: flex;
   flex-direction: column;
@@ -889,7 +925,6 @@
     font-size: 14px;
   }
 
-  /* Header de checklists en móvil - wrap en dos líneas */
   .checklists-section .section-header {
     flex-direction: column;
     align-items: stretch;
