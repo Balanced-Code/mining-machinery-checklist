@@ -7,7 +7,10 @@
   <div class="dialog-container" role="dialog" aria-modal="true">
     <!-- Header -->
     <div class="dialog-header">
-      <h2 class="dialog-title">{{ getTitulo() }}</h2>
+      <div>
+        <h2 class="dialog-title">{{ getTitulo() }}</h2>
+        <p class="dialog-subtitle">{{ itemDescripcion() }}</p>
+      </div>
       <button class="dialog-close" (click)="cancelar()" type="button" aria-label="Cerrar">
         <mat-icon>close</mat-icon>
       </button>
@@ -15,20 +18,14 @@
 
     <!-- Content -->
     <div class="dialog-content">
-      <!-- Item a revisar -->
-      <div class="form-field">
-        <label class="field-label">Item a revisar</label>
-        <div class="field-value readonly">
-          {{ itemDescripcion() }}
-        </div>
-      </div>
-
       <!-- Observaciones -->
       <div class="form-field">
         <div class="field-label-row">
           <label class="field-label">Observaciones</label>
           @if (requiereObservacion() && esEditable()) {
-          <span class="field-required">* Obligatorio</span>
+          <span class="field-required">*</span>
+          } @else if (esEditable()) {
+          <span class="field-optional">(opcional)</span>
           }
         </div>
 
@@ -132,16 +129,14 @@
 
     <!-- Footer -->
     <div class="dialog-footer">
-      <div class="dialog-actions">
-        @if (esEditable()) {
-        <button class="btn-cancel" (click)="cancelar()" type="button">Cancelar</button>
-        <button class="btn-confirm" (click)="guardar()" type="button" [disabled]="!puedeGuardar()">
-          Guardar
-        </button>
-        } @else {
-        <button class="btn-confirm" (click)="cancelar()" type="button">Cerrar</button>
-        }
-      </div>
+      @if (esEditable()) {
+      <button class="btn-cancel" (click)="cancelar()" type="button">Cancelar</button>
+      <button class="btn-confirm" (click)="guardar()" type="button" [disabled]="!puedeGuardar()">
+        Guardar
+      </button>
+      } @else {
+      <button class="btn-confirm" (click)="cancelar()" type="button">Cerrar</button>
+      }
     </div>
   </div>
 </div>

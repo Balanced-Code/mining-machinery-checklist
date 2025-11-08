@@ -73,7 +73,12 @@
       </div>
       <div class="form-field">
         <label class="field-label">Inspector</label>
-        <input type="text" class="field-input" [value]="inspector()?.nombre || 'Cargando...'" readonly />
+        <input
+          type="text"
+          class="field-input"
+          [value]="inspector()?.nombre || 'Cargando...'"
+          readonly
+        />
       </div>
     </div>
   </div>
@@ -84,7 +89,6 @@
       <div class="section-header-left">
         <mat-icon>checklist</mat-icon>
         <h2 class="section-title">Checklists de la Inspección</h2>
-        <span class="section-badge">{{ checklists().length }}</span>
       </div>
       <button class="btn-primary" (click)="agregarChecklist()">
         <mat-icon>add</mat-icon>
@@ -94,29 +98,23 @@
 
     @if (checklists().length > 0) {
     <div class="progress-summary">
+      <div class="summary-header">
+        <span class="summary-count">
+          {{ checklists().length }}
+          {{ checklists().length === 1 ? 'checklist' : 'checklists' }}
+        </span>
+      </div>
       <div class="progress-bar-container">
         <div class="progress-bar">
           <div class="progress-fill" [style.width.%]="resumen().porcentajeCompletado"></div>
         </div>
         <span class="progress-text">{{ resumen().porcentajeCompletado.toFixed(0) }}%</span>
       </div>
-      <div class="progress-stats">
-        <div class="stat-item stat-si">
-          <mat-icon>check_circle</mat-icon>
-          <span>{{ resumen().itemsSI }} SÍ</span>
-        </div>
-        <div class="stat-item stat-no">
-          <mat-icon>cancel</mat-icon>
-          <span>{{ resumen().itemsNO }} NO</span>
-        </div>
-        <div class="stat-item stat-na">
-          <mat-icon>remove_circle</mat-icon>
-          <span>{{ resumen().itemsNA }} N/A</span>
-        </div>
-        <div class="stat-item stat-pending">
-          <mat-icon>pending</mat-icon>
-          <span>{{ resumen().itemsIncompletos }} Pendientes</span>
-        </div>
+      <div class="progress-stats-compact">
+        <span class="stat-text stat-si">{{ resumen().itemsSI }} SÍ</span>
+        <span class="stat-text stat-no">{{ resumen().itemsNO }} NO</span>
+        <span class="stat-text stat-na">{{ resumen().itemsNA }} N/A</span>
+        <span class="stat-text stat-pending">{{ resumen().itemsIncompletos }} Pendientes</span>
       </div>
     </div>
 
@@ -160,9 +158,7 @@
                 (checklist.progresoSI > 0 || checklist.progresoNO > 0 || checklist.progresoNA > 0)
               "
             >
-              {{
-                checklist.progresoSI + checklist.progresoNO + checklist.progresoNA
-              }}
+              {{ checklist.progresoSI + checklist.progresoNO + checklist.progresoNA }}
               /
               {{ checklist.progresoTotal }}
             </span>
@@ -225,7 +221,6 @@
                 <mat-icon>remove</mat-icon>
                 N/A
               </button>
-              @if (requiereObservacion(item) || item.observacion) {
               <button
                 class="btn-observacion"
                 [class.required]="requiereObservacion(item) && !item.observacion"
@@ -238,7 +233,6 @@
               >
                 <mat-icon>{{ item.observacion ? 'edit_note' : 'add_comment' }}</mat-icon>
               </button>
-              }
             </div>
           </div>
           }
@@ -261,9 +255,7 @@
       class="btn-primary"
       (click)="intentarTerminar()"
       [disabled]="!puedeTerminar()"
-      [title]="
-        puedeTerminar() ? 'Guardar inspección' : 'Complete todos los campos requeridos'
-      "
+      [title]="puedeTerminar() ? 'Guardar inspección' : 'Complete todos los campos requeridos'"
     >
       Terminar Inspección
     </button>
@@ -283,7 +275,9 @@
 } @if (showConfirmTerminar()) {
 <app-confirm-dialog
   [title]="'Terminar inspección'"
-  [message]="'¿Está seguro de que desea finalizar esta inspección?\n\nTodos los checklists han sido completados y la inspección quedará registrada.'"
+  [message]="
+    '¿Está seguro de que desea finalizar esta inspección?\n\nTodos los checklists han sido completados y la inspección quedará registrada.'
+  "
   [confirmText]="'Finalizar'"
   [cancelText]="'Continuar editando'"
   [type]="'info'"

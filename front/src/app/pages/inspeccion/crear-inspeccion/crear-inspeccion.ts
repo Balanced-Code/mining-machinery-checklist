@@ -161,10 +161,6 @@ export class CrearInspeccion implements OnInit, OnDestroy {
           }
         : undefined,
     });
-
-    if (cumple === false && !item.observacion) {
-      this.abrirObservacion(checklistIndex, itemIndex);
-    }
   }
 
   protected abrirObservacion(checklistIndex: number, itemIndex: number): void {
