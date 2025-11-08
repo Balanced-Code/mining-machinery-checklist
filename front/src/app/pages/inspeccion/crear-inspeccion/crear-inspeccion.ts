@@ -13,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
+import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { DatePicker } from 'primeng/datepicker';
 import { filter } from 'rxjs';
 import { ChecklistTemplate } from '../../../core/models/checklist.model';
@@ -34,6 +35,7 @@ import { ObservacionDialog } from '../../../shared/components/observacion-dialog
     MatIconModule,
     MatSelectModule,
     MatFormFieldModule,
+    NgxMatSelectSearchModule,
     DatePicker,
     ConfirmDialog,
   ],
@@ -49,6 +51,7 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
   // Estados del formulario
   protected readonly fechaInicio = signal<Date>(new Date());
+  protected readonly horaInicio = signal<Date>(new Date());
   protected readonly numSerie = signal('');
   protected readonly maquinaId = signal<number | null>(null);
   protected readonly supervisorId = signal<number | null>(null);
@@ -59,9 +62,45 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   protected readonly usuarios = signal<UsuarioInspeccion[]>([]);
   protected readonly templatesDisponibles = signal<ChecklistTemplate[]>([]);
 
+  // Filtros de búsqueda
+  protected readonly searchMaquina = signal('');
+  protected readonly searchSupervisor = signal('');
+  protected readonly searchTecnicos = signal('');
+
+  // Listas filtradas
+  protected readonly maquinasFiltradas = computed(() => {
+    const search = this.searchMaquina().toLowerCase().trim();
+    if (!search) return this.maquinas();
+
+    return this.maquinas().filter((maquina) => maquina.nombre.toLowerCase().includes(search));
+  });
+
+  protected readonly usuariosFiltradosSupervisor = computed(() => {
+    const search = this.searchSupervisor().toLowerCase().trim();
+    if (!search) return this.usuarios();
+
+    return this.usuarios().filter(
+      (usuario) =>
+        usuario.nombre.toLowerCase().includes(search) ||
+        usuario.correo.toLowerCase().includes(search)
+    );
+  });
+
+  protected readonly usuariosFiltradosTecnicos = computed(() => {
+    const search = this.searchTecnicos().toLowerCase().trim();
+    if (!search) return this.usuarios();
+
+    return this.usuarios().filter(
+      (usuario) =>
+        usuario.nombre.toLowerCase().includes(search) ||
+        usuario.correo.toLowerCase().includes(search)
+    );
+  });
+
   // Estados de UI
   protected readonly showConfirmSalir = signal(false);
   protected readonly showConfirmTerminar = signal(false);
+  private agregandoChecklist = false;
 
   // Computed del servicio
   protected readonly checklists = this.inspeccionService.checklists;
@@ -82,11 +121,27 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   protected readonly formularioValido = computed(() => {
     return (
       this.fechaInicio() !== null &&
+      this.horaInicio() !== null &&
       this.numSerie().trim().length > 0 &&
       this.maquinaId() !== null &&
       this.checklists().length > 0 &&
       this.checklists().every((c) => c.templateId > 0) // No placeholders
     );
+  });
+
+  // Combinar fecha y hora en un solo Date
+  protected readonly fechaHoraInicio = computed(() => {
+    const fecha = this.fechaInicio();
+    const hora = this.horaInicio();
+
+    if (!fecha || !hora) return new Date();
+
+    const resultado = new Date(fecha);
+    resultado.setHours(hora.getHours());
+    resultado.setMinutes(hora.getMinutes());
+    resultado.setSeconds(hora.getSeconds());
+
+    return resultado;
   });
 
   protected readonly puedeTerminar = computed(() => {
@@ -137,7 +192,16 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   }
 
   protected agregarChecklist(): void {
+    // Prevenir clics múltiples rápidos (debounce manual)
+    if (this.agregandoChecklist) return;
+
+    this.agregandoChecklist = true;
     this.inspeccionService.agregarChecklistPlaceholder();
+
+    // Liberar después de 300ms
+    setTimeout(() => {
+      this.agregandoChecklist = false;
+    }, 300);
   }
 
   protected async seleccionarTemplate(
@@ -235,7 +299,7 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
     // TODO: Guardar en backend
     console.log('Guardando inspección...', {
-      fechaInicio: this.fechaInicio().toISOString(),
+      fechaInicio: this.fechaHoraInicio().toISOString(),
       numSerie: this.numSerie(),
       maquinaId: this.maquinaId(),
       supervisorId: this.supervisorId(),

@@ -9,16 +9,26 @@
     </div>
     <div class="form-grid">
       <div class="form-field">
-        <label class="field-label"> Fecha y Hora de Inicio <span class="required">*</span> </label>
+        <label class="field-label"> Fecha de Inicio <span class="required">*</span> </label>
         <p-datepicker
           [(ngModel)]="fechaInicio"
-          [showTime]="true"
-          hourFormat="24"
           dateFormat="dd/mm/yy"
-          placeholder="Seleccione fecha y hora"
+          placeholder="Seleccione fecha"
           [showIcon]="true"
           iconDisplay="input"
           [readonlyInput]="true"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="form-field">
+        <label class="field-label"> Hora de Inicio <span class="required">*</span> </label>
+        <p-datepicker
+          [(ngModel)]="horaInicio"
+          [timeOnly]="true"
+          hourFormat="24"
+          placeholder="Seleccione hora"
+          [showIcon]="true"
+          iconDisplay="input"
           styleClass="w-full"
         />
       </div>
@@ -39,8 +49,16 @@
             placeholder="Seleccione una máquina"
             [value]="maquinaId()"
             (selectionChange)="maquinaId.set($event.value)"
+            (openedChange)="$event ? null : searchMaquina.set('')"
           >
-            @for (maquina of maquinas(); track maquina.id) {
+            <mat-option>
+              <ngx-mat-select-search
+                [(ngModel)]="searchMaquina"
+                placeholderLabel="Buscar..."
+                noEntriesFoundLabel="No se encontraron máquinas"
+              ></ngx-mat-select-search>
+            </mat-option>
+            @for (maquina of maquinasFiltradas(); track maquina.id) {
             <mat-option [value]="maquina.id"> {{ maquina.nombre }} </mat-option>
             }
           </mat-select>
@@ -53,9 +71,17 @@
             placeholder="Seleccione un supervisor"
             [value]="supervisorId()"
             (selectionChange)="supervisorId.set($event.value)"
+            (openedChange)="$event ? null : searchSupervisor.set('')"
           >
+            <mat-option>
+              <ngx-mat-select-search
+                [(ngModel)]="searchSupervisor"
+                placeholderLabel="Buscar..."
+                noEntriesFoundLabel="No se encontraron usuarios"
+              ></ngx-mat-select-search>
+            </mat-option>
             <mat-option [value]="null">Ninguno</mat-option>
-            @for (usuario of usuarios(); track usuario.id) {
+            @for (usuario of usuariosFiltradosSupervisor(); track usuario.id) {
             <mat-option [value]="usuario.id"> {{ formatUsuario(usuario) }} </mat-option>
             }
           </mat-select>
@@ -67,10 +93,17 @@
           <mat-select
             placeholder="Seleccione técnicos"
             multiple
-            [value]="tecnicoIds()"
-            (selectionChange)="tecnicoIds.set($event.value)"
+            [(ngModel)]="tecnicoIds"
+            (openedChange)="$event ? null : searchTecnicos.set('')"
           >
-            @for (usuario of usuarios(); track usuario.id) {
+            <mat-option>
+              <ngx-mat-select-search
+                [(ngModel)]="searchTecnicos"
+                placeholderLabel="Buscar..."
+                noEntriesFoundLabel="No se encontraron usuarios"
+              ></ngx-mat-select-search>
+            </mat-option>
+            @for (usuario of usuariosFiltradosTecnicos(); track usuario.id) {
             <mat-option [value]="usuario.id"> {{ formatUsuario(usuario) }} </mat-option>
             }
           </mat-select>
