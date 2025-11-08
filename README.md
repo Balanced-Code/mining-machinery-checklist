@@ -206,11 +206,3 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 **Balanced Code**
 
 - GitHub: [@Balanced-Code](https://github.com/Balanced-Code)
-
----
-
-<div align="center">
-
-**[⬆ Volver arriba](#-mining-machinery-checklist)**
-
-</div>
