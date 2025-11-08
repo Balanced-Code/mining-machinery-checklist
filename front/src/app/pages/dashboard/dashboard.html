@@ -1,11 +1,90 @@
 <div class="dashboard">
-  <div class="dashboard-container">
-    <h2>Bienvenido, {{ authService.user()?.nombre }}!</h2>
-    <p>Cargo: {{ authService.currentCargo()?.nombre }}</p>
+  <!-- Header de bienvenida -->
+  <div class="welcome-section">
+    <div class="welcome-content">
+      <h1 class="welcome-title">{{ greeting() }}, {{ user()?.nombre }}!</h1>
+      <p class="welcome-subtitle">{{ currentCargo()?.nombre }} • Sistema de Gestión de Checklist</p>
+    </div>
+    <div class="welcome-icon">
+      <mat-icon>dashboard</mat-icon>
+    </div>
+  </div>
 
-    <div class="dashboard-cards">
-      <!-- Las tarjetas del dashboard se implementarán después -->
-      <p>Contenido del dashboard en construcción...</p>
+  <!-- Tarjetas de estadísticas -->
+  <div class="stats-grid">
+    @for (card of statsCards(); track card.title) {
+    <div
+      class="stat-card"
+      [class.clickable]="card.route"
+      (click)="card.route && navigateTo(card.route)"
+    >
+      <div class="stat-icon" [style.background-color]="card.color + '15'">
+        <mat-icon [style.color]="card.color">{{ card.icon }}</mat-icon>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">{{ card.title }}</p>
+        <h2 class="stat-value">{{ card.value }}</h2>
+        <p class="stat-description">{{ card.description }}</p>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- Acciones rápidas -->
+  <div class="quick-actions-section">
+    <h2 class="section-title">Acciones Rápidas</h2>
+    <div class="quick-actions-grid">
+      @for (action of quickActions(); track action.title) {
+      <div class="quick-action-card" (click)="navigateTo(action.route)">
+        <div class="action-icon" [style.background-color]="action.color">
+          <mat-icon>{{ action.icon }}</mat-icon>
+        </div>
+        <div class="action-content">
+          <h3 class="action-title">{{ action.title }}</h3>
+          <p class="action-description">{{ action.description }}</p>
+        </div>
+        <div class="action-arrow">
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- Información adicional -->
+  <div class="info-section">
+    <div class="info-card">
+      <div class="info-header">
+        <mat-icon>info</mat-icon>
+        <h3>Información</h3>
+      </div>
+      <div class="info-content">
+        <p>
+          Bienvenido al Sistema de Gestión de Checklist de Maquinaria. Desde aquí puedes acceder
+          rápidamente a todas las funcionalidades del sistema.
+        </p>
+        <ul>
+          <li>
+            <mat-icon>check</mat-icon>
+            <span>Consulta el historial de inspecciones</span>
+          </li>
+          <li>
+            <mat-icon>check</mat-icon>
+            <span>Gestiona las listas de verificación</span>
+          </li>
+          @if (currentCargo()?.nivel ?? 0 >= 2) {
+          <li>
+            <mat-icon>check</mat-icon>
+            <span>Crea nuevas inspecciones de maquinaria</span>
+          </li>
+          } @if (currentCargo()?.nivel ?? 0 >= 3) {
+          <li>
+            <mat-icon>check</mat-icon>
+            <span>Administra usuarios del sistema</span>
+          </li>
+          }
+        </ul>
+      </div>
     </div>
   </div>
 </div>

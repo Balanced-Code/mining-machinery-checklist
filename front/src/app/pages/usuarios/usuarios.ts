@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import {
   Cargo,
   CreateUsuarioRequest,
@@ -11,9 +12,18 @@ import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-di
 import { getCargoColors } from '../../shared/utils/cargo-colors.util';
 import { UserDialog } from './user-dialog/user-dialog';
 
+// Tipos para ordenamiento
+type ColumnaOrdenable = 'nombre' | 'correo' | 'cargo';
+type DireccionOrdenamiento = 'asc' | 'desc' | null;
+
+interface Ordenamiento {
+  columna: ColumnaOrdenable | null;
+  direccion: DireccionOrdenamiento;
+}
+
 @Component({
   selector: 'app-usuarios',
-  imports: [FormsModule, UserDialog, ConfirmDialog],
+  imports: [FormsModule, MatIconModule, UserDialog, ConfirmDialog],
   templateUrl: './usuarios.html',
   styleUrl: './usuarios.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,8 +32,12 @@ export class Usuarios {
   // Signals para estado
   protected users = signal<User[]>([]);
   protected loading = signal(false);
-  protected searchQuery = '';
+  protected searchQuery = signal('');
   protected selectedCargoId = signal<number | null>(null);
+  protected ordenamiento = signal<Ordenamiento>({
+    columna: null,
+    direccion: null,
+  });
 
   // Dialog state
   protected showDialog = signal(false);
@@ -45,18 +59,19 @@ export class Usuarios {
     { id: 5, nombre: 'Administrador', nivel: 4 },
   ]);
 
-  // Computed: usuarios filtrados por búsqueda y rol
+  // Computed: usuarios filtrados por búsqueda, rol y ordenamiento
   protected filteredUsers = computed(() => {
-    const query = this.searchQuery.toLowerCase().trim();
+    const query = this.searchQuery().toLowerCase().trim();
     const cargoId = this.selectedCargoId();
+    const { columna, direccion } = this.ordenamiento();
     let filtered = this.users();
 
-    // Filtrar por cargo si está seleccionado
+    // 1. Filtrar por cargo si está seleccionado
     if (cargoId !== null) {
       filtered = filtered.filter((user) => user.cargo.id === cargoId);
     }
 
-    // Filtrar por búsqueda
+    // 2. Filtrar por búsqueda
     if (query) {
       filtered = filtered.filter(
         (user) =>
@@ -64,7 +79,47 @@ export class Usuarios {
       );
     }
 
+    // 3. Ordenamiento
+    if (columna && direccion) {
+      filtered = [...filtered].sort((a, b) => {
+        let valorA: string | number;
+        let valorB: string | number;
+
+        switch (columna) {
+          case 'nombre':
+            valorA = a.nombre;
+            valorB = b.nombre;
+            break;
+          case 'correo':
+            valorA = a.correo;
+            valorB = b.correo;
+            break;
+          case 'cargo':
+            valorA = a.cargo.nombre;
+            valorB = b.cargo.nombre;
+            break;
+          default:
+            return 0;
+        }
+
+        if (typeof valorA === 'string' && typeof valorB === 'string') {
+          return direccion === 'asc' ? valorA.localeCompare(valorB) : valorB.localeCompare(valorA);
+        }
+
+        return 0;
+      });
+    }
+
     return filtered;
+  });
+
+  // Computed: verificar si hay filtros activos
+  protected hayFiltrosActivos = computed(() => {
+    return (
+      this.searchQuery().trim() !== '' ||
+      this.selectedCargoId() !== null ||
+      this.ordenamiento().columna !== null
+    );
   });
 
   constructor() {
@@ -124,15 +179,63 @@ export class Usuarios {
   /**
    * Handler para búsqueda
    */
-  protected onSearch(): void {
-    // La búsqueda es reactiva gracias al computed
+  protected onSearch(value: string): void {
+    this.searchQuery.set(value);
   }
 
   /**
    * Handler para cambio de filtro de cargo
    */
-  protected onFilterChange(): void {
-    // El filtro es reactivo gracias al computed
+  protected onFilterChange(cargoId: number | null): void {
+    this.selectedCargoId.set(cargoId);
+  }
+
+  /**
+   * Ordenar por columna
+   */
+  protected ordenarPor(columna: ColumnaOrdenable): void {
+    this.ordenamiento.update((current) => {
+      let nuevaDireccion: DireccionOrdenamiento;
+
+      if (current.columna === columna) {
+        // Misma columna: cambiar dirección (asc -> desc -> null)
+        if (current.direccion === 'asc') {
+          nuevaDireccion = 'desc';
+        } else if (current.direccion === 'desc') {
+          nuevaDireccion = null;
+        } else {
+          nuevaDireccion = 'asc';
+        }
+      } else {
+        // Nueva columna: empezar con asc
+        nuevaDireccion = 'asc';
+      }
+
+      return {
+        columna: nuevaDireccion ? columna : null,
+        direccion: nuevaDireccion,
+      };
+    });
+  }
+
+  /**
+   * Obtener dirección de ordenamiento para una columna
+   */
+  protected getDireccionOrdenamiento(columna: ColumnaOrdenable): DireccionOrdenamiento {
+    const { columna: columnaActual, direccion } = this.ordenamiento();
+    return columnaActual === columna ? direccion : null;
+  }
+
+  /**
+   * Limpiar todos los filtros, búsqueda y ordenamiento
+   */
+  protected limpiarFiltros(): void {
+    this.searchQuery.set('');
+    this.selectedCargoId.set(null);
+    this.ordenamiento.set({
+      columna: null,
+      direccion: null,
+    });
   }
 
   /**

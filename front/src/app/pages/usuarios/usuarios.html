@@ -8,22 +8,34 @@
         type="text"
         class="search-input"
         placeholder="Buscar por nombre o email"
-        [(ngModel)]="searchQuery"
-        (input)="onSearch()"
+        [value]="searchQuery()"
+        (input)="onSearch($any($event.target).value)"
       />
     </div>
 
     <!-- Filtro por Rol -->
     <div class="filter-container">
       <span class="material-icons filter-icon">filter_list</span>
-      <select class="filter-select" [(ngModel)]="selectedCargoId" (change)="onFilterChange()">
-        <option [ngValue]="null">Todos los roles</option>
+      <select
+        class="filter-select"
+        [value]="selectedCargoId() ?? ''"
+        (change)="onFilterChange($any($event.target).value ? +$any($event.target).value : null)"
+      >
+        <option value="">Todos los roles</option>
         @for (cargo of cargos(); track cargo.id) {
-        <option [ngValue]="cargo.id">{{ cargo.nombre }}</option>
+        <option [value]="cargo.id">{{ cargo.nombre }}</option>
         }
       </select>
       <span class="material-icons select-arrow">expand_more</span>
     </div>
+
+    <!-- Botón limpiar filtros -->
+    @if (hayFiltrosActivos()) {
+    <button class="btn-clear" (click)="limpiarFiltros()" title="Limpiar filtros" type="button">
+      <span class="material-icons">clear</span>
+      <span>Limpiar</span>
+    </button>
+    }
 
     <!-- Botón crear usuario -->
     <button class="btn-create" (click)="openCreateDialog()" type="button">
@@ -38,9 +50,36 @@
       <thead>
         <tr>
           <th class="col-id">#</th>
-          <th class="col-name">Nombre</th>
-          <th class="col-email">Email</th>
-          <th class="col-role">Rol</th>
+          <th class="col-name sortable" (click)="ordenarPor('nombre')">
+            <div class="th-content">
+              <span>Nombre</span>
+              @if (getDireccionOrdenamiento('nombre') === 'asc') {
+              <span class="material-icons sort-icon">arrow_upward</span>
+              } @else if (getDireccionOrdenamiento('nombre') === 'desc') {
+              <span class="material-icons sort-icon">arrow_downward</span>
+              }
+            </div>
+          </th>
+          <th class="col-email sortable" (click)="ordenarPor('correo')">
+            <div class="th-content">
+              <span>Email</span>
+              @if (getDireccionOrdenamiento('correo') === 'asc') {
+              <span class="material-icons sort-icon">arrow_upward</span>
+              } @else if (getDireccionOrdenamiento('correo') === 'desc') {
+              <span class="material-icons sort-icon">arrow_downward</span>
+              }
+            </div>
+          </th>
+          <th class="col-role sortable" (click)="ordenarPor('cargo')">
+            <div class="th-content">
+              <span>Rol</span>
+              @if (getDireccionOrdenamiento('cargo') === 'asc') {
+              <span class="material-icons sort-icon">arrow_upward</span>
+              } @else if (getDireccionOrdenamiento('cargo') === 'desc') {
+              <span class="material-icons sort-icon">arrow_downward</span>
+              }
+            </div>
+          </th>
           <th class="col-actions">Acciones</th>
         </tr>
       </thead>
@@ -55,9 +94,19 @@
         } @else if (filteredUsers().length === 0) {
         <tr>
           <td colspan="5" class="empty-cell">
-            <span>{{
-              searchQuery ? 'No se encontraron usuarios' : 'No hay usuarios registrados'
-            }}</span>
+            <div class="empty-state">
+              <span class="material-icons">search_off</span>
+              <p>
+                {{
+                  searchQuery() || selectedCargoId()
+                    ? 'No se encontraron usuarios'
+                    : 'No hay usuarios registrados'
+                }}
+              </p>
+              @if (hayFiltrosActivos()) {
+              <button class="btn-clear-filters" (click)="limpiarFiltros()">Limpiar filtros</button>
+              }
+            </div>
           </td>
         </tr>
         } @else { @for (user of filteredUsers(); track user.id) {

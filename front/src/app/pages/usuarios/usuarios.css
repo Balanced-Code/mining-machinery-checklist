@@ -119,6 +119,42 @@
   font-size: 20px;
 }
 
+/* Botón limpiar filtros */
+.btn-clear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  background: white;
+  color: rgb(100 116 139);
+  border: 1px solid rgb(226 232 240);
+  border-radius: 10px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-clear .material-icons {
+  font-size: 20px;
+}
+
+.btn-clear:hover {
+  background: rgb(248 250 252);
+  border-color: rgb(203 213 225);
+  color: rgb(71 85 105);
+}
+
+.btn-clear:active {
+  transform: translateY(0);
+  background: rgb(241 245 249);
+}
+
 /* Botón crear usuario */
 .btn-create {
   display: flex;
@@ -188,6 +224,29 @@
 .users-table th.col-id,
 .users-table th.col-actions {
   text-align: center;
+}
+
+/* Columnas ordenables */
+.users-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.users-table th.sortable:hover {
+  background: rgb(0 0 0 / 5%);
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-start;
+}
+
+.sort-icon {
+  font-size: 18px;
+  color: #ed1b2e;
 }
 
 .users-table td {
@@ -306,6 +365,45 @@
   color: rgb(0 0 0 / 60%);
 }
 
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-state .material-icons {
+  font-size: 48px;
+  color: rgb(0 0 0 / 20%);
+}
+
+.empty-state p {
+  margin: 0;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: rgb(0 0 0 / 60%);
+}
+
+.btn-clear-filters {
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: #ed1b2e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-clear-filters:hover {
+  background: #d01828;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgb(237 27 46 / 20%);
+}
+
 .loading-spinner {
   display: inline-block;
   width: 20px;
@@ -370,10 +468,16 @@
     order: 2;
   }
 
-  .btn-create {
+  .btn-clear {
     width: 100%;
     justify-content: center;
     order: 3;
+  }
+
+  .btn-create {
+    width: 100%;
+    justify-content: center;
+    order: 4;
   }
 
   /* Rediseño completo de tabla para mobile */
