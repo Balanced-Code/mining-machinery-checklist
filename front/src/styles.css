@@ -61,10 +61,6 @@ body {
   background: rgb(237 27 46 / 15%) !important;
 }
 
-.mat-pseudo-checkbox-checked::after {
-  color: #ed1b2e !important;
-}
-
 /* stylelint-disable-next-line selector-class-pattern */
 .mat-mdc-option .mdc-list-item__primary-text {
   color: inherit !important;

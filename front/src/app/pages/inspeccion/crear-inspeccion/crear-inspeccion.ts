@@ -1,10 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
+import { DatePicker } from 'primeng/datepicker';
 import { filter } from 'rxjs';
 import { ChecklistTemplate } from '../../../core/models/checklist.model';
 import {
@@ -20,7 +29,14 @@ import { ObservacionDialog } from '../../../shared/components/observacion-dialog
 
 @Component({
   selector: 'app-crear-inspeccion',
-  imports: [FormsModule, MatIconModule, MatSelectModule, MatFormFieldModule, ConfirmDialog],
+  imports: [
+    FormsModule,
+    MatIconModule,
+    MatSelectModule,
+    MatFormFieldModule,
+    DatePicker,
+    ConfirmDialog,
+  ],
   templateUrl: './crear-inspeccion.html',
   styleUrl: './crear-inspeccion.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,7 +48,7 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
 
   // Estados del formulario
-  protected readonly fechaInicio = signal(new Date().toISOString().slice(0, 16));
+  protected readonly fechaInicio = signal<Date>(new Date());
   protected readonly numSerie = signal('');
   protected readonly maquinaId = signal<number | null>(null);
   protected readonly supervisorId = signal<number | null>(null);
@@ -65,7 +81,7 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   // Validaciones
   protected readonly formularioValido = computed(() => {
     return (
-      this.fechaInicio().trim().length > 0 &&
+      this.fechaInicio() !== null &&
       this.numSerie().trim().length > 0 &&
       this.maquinaId() !== null &&
       this.checklists().length > 0 &&
@@ -81,7 +97,6 @@ export class CrearInspeccion implements OnInit, OnDestroy {
     this.inspeccionService.limpiarEstado();
     await this.cargarDatos();
   }
-
   ngOnDestroy() {
     this.inspeccionService.limpiarEstado();
   }
@@ -220,7 +235,7 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
     // TODO: Guardar en backend
     console.log('Guardando inspección...', {
-      fechaInicio: this.fechaInicio(),
+      fechaInicio: this.fechaInicio().toISOString(),
       numSerie: this.numSerie(),
       maquinaId: this.maquinaId(),
       supervisorId: this.supervisorId(),
@@ -237,5 +252,14 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
   protected requiereObservacion(item: InspeccionItemDTO): boolean {
     return item.cumple === false;
+  }
+
+  protected formatUsuario(usuario: UsuarioInspeccion): string {
+    return `${usuario.nombre} (${usuario.correo})`;
+  }
+
+  protected get inspectorNombre(): string {
+    const user = this.inspector();
+    return user ? this.formatUsuario(user) : 'Cargando...';
   }
 }

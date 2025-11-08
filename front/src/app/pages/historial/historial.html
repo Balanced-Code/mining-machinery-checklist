@@ -120,7 +120,12 @@
               <div class="fecha-hora">{{ formatearFechaHora(inspeccion.fechaFinalizacion) }}</div>
             </div>
           </td>
-          <td>{{ inspeccion.inspector?.nombre }}</td>
+          <td>
+            <div class="inspector-container">
+              <div class="inspector-nombre">{{ inspeccion.inspector?.nombre }}</div>
+              <div class="inspector-correo">{{ inspeccion.inspector?.correo }}</div>
+            </div>
+          </td>
           <td class="acciones-cell">
             <div class="acciones-container">
               <!-- Ver -->

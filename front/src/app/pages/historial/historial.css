@@ -290,6 +290,25 @@
   color: #6b7280;
 }
 
+/* Contenedor de inspector con nombre y correo en vertical */
+.inspector-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+.inspector-nombre {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.inspector-correo {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
 /* Acciones */
 .acciones-cell {
   text-align: center;

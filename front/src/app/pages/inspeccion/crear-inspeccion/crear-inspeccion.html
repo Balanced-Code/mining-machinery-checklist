@@ -9,12 +9,17 @@
     </div>
     <div class="form-grid">
       <div class="form-field">
-        <label class="field-label"> Fecha de Inicio <span class="required">*</span> </label>
-        <input
-          type="datetime-local"
-          class="field-input"
-          [value]="fechaInicio()"
-          (input)="fechaInicio.set($any($event.target).value)"
+        <label class="field-label"> Fecha y Hora de Inicio <span class="required">*</span> </label>
+        <p-datepicker
+          [(ngModel)]="fechaInicio"
+          [showTime]="true"
+          hourFormat="24"
+          dateFormat="dd/mm/yy"
+          placeholder="Seleccione fecha y hora"
+          [showIcon]="true"
+          iconDisplay="input"
+          [readonlyInput]="true"
+          styleClass="w-full"
         />
       </div>
       <div class="form-field">
@@ -51,7 +56,7 @@
           >
             <mat-option [value]="null">Ninguno</mat-option>
             @for (usuario of usuarios(); track usuario.id) {
-            <mat-option [value]="usuario.id"> {{ usuario.nombre }} </mat-option>
+            <mat-option [value]="usuario.id"> {{ formatUsuario(usuario) }} </mat-option>
             }
           </mat-select>
         </mat-form-field>
@@ -66,7 +71,7 @@
             (selectionChange)="tecnicoIds.set($event.value)"
           >
             @for (usuario of usuarios(); track usuario.id) {
-            <mat-option [value]="usuario.id"> {{ usuario.nombre }} </mat-option>
+            <mat-option [value]="usuario.id"> {{ formatUsuario(usuario) }} </mat-option>
             }
           </mat-select>
         </mat-form-field>
@@ -75,9 +80,10 @@
         <label class="field-label">Inspector</label>
         <input
           type="text"
-          class="field-input"
-          [value]="inspector()?.nombre || 'Cargando...'"
+          class="field-input field-input-readonly"
+          [value]="inspectorNombre"
           readonly
+          tabindex="-1"
         />
       </div>
     </div>
