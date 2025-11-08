@@ -46,6 +46,37 @@ export const routes: Routes = [
           nivel: 3, // Solo accesible para nivel 3 o superior (Inspector, Administrador)
         },
       },
+      {
+        path: 'checklist',
+        loadComponent: () => import('./pages/checklist/checklist').then((m) => m.Checklist),
+        data: {
+          title: 'Checklists',
+          description: 'Gestiona y supervisa todas las listas de verificación de maquinaria',
+        },
+        // Accesible para todos los usuarios autenticados (vista limitada según nivel)
+      },
+      {
+        path: 'historial',
+        loadComponent: () => import('./pages/historial/historial').then((m) => m.Historial),
+        data: {
+          title: 'Historial',
+          description:
+            'Gestiona y supervisa todas las listas de verificación de equipos y maquinaria',
+        },
+        // Accesible para todos los usuarios autenticados (acciones limitadas según nivel)
+      },
+      {
+        path: 'inspeccion/crear',
+        loadComponent: () =>
+          import('./pages/inspeccion/crear-inspeccion/crear-inspeccion').then(
+            (m) => m.CrearInspeccion
+          ),
+        data: {
+          title: 'Nueva Inspección',
+          description: 'Crear una nueva inspección de maquinaria',
+          nivel: 2, // Inspector o superior
+        },
+      },
     ],
   },
   {

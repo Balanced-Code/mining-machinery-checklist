@@ -1,0 +1,623 @@
+/* Contenedor principal */
+.checklist-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ========== BARRA DE ACCIONES ========== */
+.actions-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: white;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+/* Buscador */
+.search-container {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgb(100 116 139);
+  pointer-events: none;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.search-input {
+  width: 100%;
+  height: 40px;
+  padding: 8px 16px 8px 46px;
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  border-radius: 10px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: rgb(15 23 42);
+  transition: all 0.2s;
+}
+
+.search-input::placeholder {
+  color: rgb(148 163 184);
+}
+
+.search-input:hover {
+  border-color: rgb(203 213 225);
+  background: white;
+}
+
+.search-input:focus {
+  outline: none;
+  background: white;
+  border-color: #ed1b2e;
+  box-shadow: 0 0 0 3px rgb(237 27 46 / 10%);
+}
+
+/* Botón crear */
+.btn-create {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  background: #ed1b2e;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-create:hover {
+  background: #d11828;
+  box-shadow: 0 4px 12px rgb(237 27 46 / 20%);
+}
+
+.btn-create:active {
+  transform: scale(0.98);
+}
+
+.btn-create mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* ========== LISTA DE TEMPLATES ========== */
+.templates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ========== TEMPLATE CARD ========== */
+.template-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+  transition: box-shadow 0.2s;
+}
+
+.template-card:hover {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+}
+
+/* Header del template */
+.template-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #d1d5db;
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+  min-height: 57px;
+}
+
+.template-title-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.template-number {
+  font-size: 14px;
+  color: rgb(0 0 0 / 70%);
+  font-weight: 400;
+  min-width: 20px;
+}
+
+.template-title {
+  font-size: 14px;
+  color: black;
+  font-weight: 400;
+}
+
+.title-input {
+  height: 28px;
+  padding: 4px 8px;
+  background: white;
+  border: 1px solid #ed1b2e;
+  border-radius: 4px;
+  font-size: 14px;
+  color: black;
+  outline: none;
+  min-width: 150px;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgb(0 0 0 / 60%);
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.btn-icon:hover {
+  background: rgb(0 0 0 / 5%);
+  color: black;
+}
+
+.btn-icon mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.btn-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgb(0 0 0 / 60%);
+  transition: all 0.2s;
+  margin-left: auto;
+  padding: 0;
+}
+
+.btn-toggle:hover {
+  background: rgb(0 0 0 / 5%);
+  color: black;
+}
+
+.btn-toggle mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.2s;
+}
+
+.btn-toggle.expanded mat-icon {
+  transform: rotate(180deg);
+}
+
+.btn-delete-template {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgb(0 0 0 / 60%);
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.btn-delete-template:hover {
+  background: rgb(237 27 46 / 10%);
+  color: #ed1b2e;
+}
+
+.btn-delete-template mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Contenido del template */
+.template-content {
+  padding: 16px 24px;
+}
+
+/* ========== LISTA DE ÍTEMS ========== */
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+/* Fila de ítem */
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  min-height: 44px;
+  transition: all 0.2s;
+  position: relative;
+  touch-action: manipulation;
+}
+
+.item-row:hover {
+  background: #ececec;
+}
+
+.item-row.cdk-drag-preview {
+  background: white;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+  border-radius: 4px;
+  opacity: 0.9;
+}
+
+.item-row.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.items-list.cdk-drop-list-dragging .item-row:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.4;
+  background: rgb(0 0 0 / 5%);
+}
+
+/* Handle de arrastre */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: rgb(0 0 0 / 40%);
+  cursor: grab;
+  flex-shrink: 0;
+  padding: 0;
+  touch-action: none;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.item-number {
+  font-size: 14px;
+  color: rgb(0 0 0 / 60%);
+  min-width: 20px;
+  flex-shrink: 0;
+}
+
+.item-description {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-text {
+  font-size: 14px;
+  color: rgb(0 0 0 / 80%);
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+.item-input {
+  width: 100%;
+  padding: 4px 8px;
+  background: white;
+  border: 1px solid #ed1b2e;
+  border-radius: 4px;
+  font-size: 14px;
+  color: rgb(0 0 0 / 80%);
+  outline: none;
+}
+
+/* Botones de acción del ítem */
+.item-actions {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.item-row:hover .item-actions {
+  display: flex;
+}
+
+.btn-icon-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgb(0 0 0 / 60%);
+  transition: all 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.btn-icon-small:hover {
+  background: rgb(0 0 0 / 10%);
+  color: black;
+}
+
+.btn-icon-small mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Botón agregar ítem */
+.btn-add-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  background: white;
+  color: black;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add-item:hover {
+  background: rgb(0 0 0 / 5%);
+  border-color: rgb(0 0 0 / 20%);
+}
+
+.btn-add-item mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* ========== PAGINACIÓN ========== */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: rgb(0 0 0 / 60%);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-page {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  background: white;
+  color: black;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-page:hover:not(:disabled) {
+  background: rgb(0 0 0 / 5%);
+  border-color: rgb(0 0 0 / 20%);
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-page mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-page-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 12px;
+  background: white;
+  color: black;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-page-number:hover {
+  background: rgb(0 0 0 / 5%);
+  border-color: rgb(0 0 0 / 20%);
+}
+
+.btn-page-number.active {
+  background: #ed1b2e;
+  color: white;
+  border-color: #ed1b2e;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (width <= 1024px) {
+  .actions-bar {
+    flex-wrap: wrap;
+  }
+
+  .search-container {
+    flex: 1 1 100%;
+    max-width: 100%;
+    order: 1;
+  }
+
+  .btn-create {
+    flex: 1 1 auto;
+    order: 2;
+    justify-content: center;
+  }
+}
+
+@media (width <= 768px) {
+  .checklist-container {
+    gap: 16px;
+  }
+
+  .actions-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .search-container {
+    max-width: 100%;
+    order: 1;
+  }
+
+  .btn-create {
+    width: 100%;
+    justify-content: center;
+    order: 2;
+  }
+
+  .template-header {
+    padding: 12px 16px;
+  }
+
+  .template-title-section {
+    gap: 8px;
+  }
+
+  .template-content {
+    padding: 12px 16px;
+  }
+
+  .item-row {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  /* Hacer el drag handle más visible y táctil en móviles */
+  .drag-handle {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    margin: 0;
+    color: rgb(0 0 0 / 60%);
+    touch-action: none;
+  }
+
+  .drag-handle mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pagination-controls {
+    flex-direction: column;
+  }
+
+  .btn-page {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .page-numbers {
+    justify-content: center;
+  }
+}
+
+@media (width <= 480px) {
+  .template-title {
+    font-size: 13px;
+  }
+
+  .item-text {
+    font-size: 13px;
+  }
+
+  .btn-icon,
+  .btn-icon-small {
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-icon mat-icon,
+  .btn-icon-small mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}

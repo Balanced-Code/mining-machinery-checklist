@@ -1,0 +1,147 @@
+<!-- Backdrop -->
+<div class="dialog-backdrop" (click)="cancelar()"></div>
+
+<!-- Dialog Wrapper -->
+<div class="dialog-wrapper">
+  <!-- Dialog Container -->
+  <div class="dialog-container" role="dialog" aria-modal="true">
+    <!-- Header -->
+    <div class="dialog-header">
+      <h2 class="dialog-title">{{ getTitulo() }}</h2>
+      <button class="dialog-close" (click)="cancelar()" type="button" aria-label="Cerrar">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="dialog-content">
+      <!-- Item a revisar -->
+      <div class="form-field">
+        <label class="field-label">Item a revisar</label>
+        <div class="field-value readonly">
+          {{ itemDescripcion() }}
+        </div>
+      </div>
+
+      <!-- Observaciones -->
+      <div class="form-field">
+        <div class="field-label-row">
+          <label class="field-label">Observaciones</label>
+          @if (requiereObservacion() && esEditable()) {
+          <span class="field-required">* Obligatorio</span>
+          }
+        </div>
+
+        @if (esEditable()) {
+        <textarea
+          class="field-textarea"
+          [class.required]="requiereObservacion()"
+          [class.invalid]="!descripcionValida()"
+          placeholder="Las observaciones son obligatorias para items marcados como NO..."
+          [value]="descripcion()"
+          (input)="updateDescripcion($any($event.target).value)"
+          rows="6"
+        ></textarea>
+
+        @if (requiereObservacion() && !descripcionValida()) {
+        <p class="field-warning">
+          <mat-icon class="warning-icon">warning</mat-icon>
+          Debes completar las observaciones antes de guardar
+        </p>
+        } } @else {
+        <div class="field-value">
+          {{ descripcion() || 'Sin observaciones' }}
+        </div>
+        }
+      </div>
+
+      <!-- Imágenes -->
+      <div class="form-field">
+        <div class="field-label-row">
+          <label class="field-label">Imágenes</label>
+          @if (esEditable()) {
+          <span class="field-optional">(opcional)</span>
+          }
+        </div>
+
+        <!-- Upload (solo si es editable) -->
+        @if (esEditable()) {
+        <label class="file-upload-label" for="file-upload">
+          <mat-icon class="upload-icon">cloud_upload</mat-icon>
+          <span class="upload-text">
+            Haz clic para subir imágenes (puedes seleccionar múltiples)
+          </span>
+          <input
+            type="file"
+            id="file-upload"
+            accept="image/*"
+            multiple
+            (change)="onFileSelect($event)"
+            hidden
+          />
+        </label>
+        }
+
+        <!-- Lista de imágenes -->
+        <div class="images-container">
+          <!-- Imágenes existentes -->
+          @for (archivo of archivosExistentes(); track archivo.id; let i = $index) {
+          <div class="image-item">
+            <img [src]="archivo.ruta" [alt]="archivo.nombre" class="image-preview" />
+            @if (esEditable()) {
+            <button
+              class="image-remove-btn"
+              (click)="eliminarArchivoExistente(i)"
+              type="button"
+              aria-label="Eliminar imagen"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+            }
+            <div class="image-name">{{ archivo.nombre }}</div>
+          </div>
+          }
+
+          <!-- Imágenes nuevas (preview) -->
+          @for (preview of imagenesPreview(); track $index; let i = $index) {
+          <div class="image-item">
+            <img [src]="preview" alt="Preview" class="image-preview" />
+            @if (esEditable()) {
+            <button
+              class="image-remove-btn"
+              (click)="eliminarArchivoNuevo(i)"
+              type="button"
+              aria-label="Eliminar imagen"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+            }
+            <div class="image-name">{{ archivosNuevos()[i]?.name }}</div>
+          </div>
+          }
+
+          <!-- Estado vacío -->
+          @if (archivosExistentes().length === 0 && imagenesPreview().length === 0) {
+          <div class="empty-images">
+            <p class="empty-text">No hay imágenes cargadas</p>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="dialog-footer">
+      <div class="dialog-actions">
+        @if (esEditable()) {
+        <button class="btn-cancel" (click)="cancelar()" type="button">Cancelar</button>
+        <button class="btn-confirm" (click)="guardar()" type="button" [disabled]="!puedeGuardar()">
+          Guardar
+        </button>
+        } @else {
+        <button class="btn-confirm" (click)="cancelar()" type="button">Cerrar</button>
+        }
+      </div>
+    </div>
+  </div>
+</div>

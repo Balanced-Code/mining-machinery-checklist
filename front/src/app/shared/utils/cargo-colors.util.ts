@@ -11,17 +11,17 @@ export interface CargoColors {
  * Paleta de colores por nivel (1-4)
  */
 const COLOR_PALETTE: CargoColors[] = [
-  // Nivel 1 - Operador (Rojo)
-  {
-    background: '#fee2e2',
-    text: '#dc2626',
-    border: '#fca5a5',
-  },
-  // Nivel 2 - Supervisor (Ámbar)
+  // Nivel 1 - Operador (Ámbar/Naranja)
   {
     background: '#fef3c7',
     text: '#f59e0b',
     border: '#fcd34d',
+  },
+  // Nivel 2 - Supervisor (Azul)
+  {
+    background: '#dbeafe',
+    text: '#2563eb',
+    border: '#93c5fd',
   },
   // Nivel 3 - Inspector (Verde)
   {

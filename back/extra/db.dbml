@@ -115,8 +115,8 @@ Table template_seccion [note: 'Atributos del checklist - Ejemplo: "1. Puesta en 
 
 Table inspeccion {
   id bigint [pk, increment]
-  fecha_inicio date [not null]
-  fecha_finalizacion date [null, note: "NULL si aún está en proceso"]
+  fecha_inicio timestamp [not null]
+  fecha_finalizacion timestamp [null, note: "NULL si aún está en proceso"]
 
   // Datos específicos de la máquina inspeccionada
   maquina_id int [ref: > maquina.id, not null]

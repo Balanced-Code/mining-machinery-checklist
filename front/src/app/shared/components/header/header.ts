@@ -51,6 +51,11 @@ export class Header {
     return this.user()?.nombre || '';
   }
 
+  // Obtener el email del usuario
+  protected get userEmail(): string {
+    return this.user()?.correo || '';
+  }
+
   /**
    * Alterna el sidebar (para mobile)
    */

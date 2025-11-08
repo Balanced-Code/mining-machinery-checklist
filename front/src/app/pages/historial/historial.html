@@ -1,0 +1,231 @@
+<div class="historial-container">
+  <!-- Barra de acciones superior -->
+  <div class="actions-bar">
+    <!-- Buscador -->
+    <div class="search-container">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Buscar por ID, título, modelo o inspector..."
+        [value]="filtros().busqueda"
+        (input)="actualizarBusqueda($any($event.target).value)"
+      />
+    </div>
+
+    <!-- Filtro de estado -->
+    <div class="filter-container">
+      <mat-icon class="filter-icon">filter_list</mat-icon>
+      <select
+        class="filter-select"
+        [value]="filtros().estado"
+        (change)="cambiarEstado($any($event.target).value)"
+      >
+        <option value="todas">Todos los estados</option>
+        <option value="completadas">Completadas</option>
+        <option value="en_progreso">En progreso</option>
+      </select>
+      <mat-icon class="dropdown-icon">expand_more</mat-icon>
+    </div>
+
+    <!-- Botón limpiar filtros -->
+    @if (hayFiltrosActivos()) {
+    <button class="btn-clear" (click)="limpiarFiltros()" title="Limpiar filtros">
+      <mat-icon>clear</mat-icon>
+      <span>Limpiar</span>
+    </button>
+    }
+
+    <!-- Botón crear revisión -->
+    @if (canEdit()) {
+    <button class="btn-create" (click)="crearRevision()">
+      <mat-icon>add</mat-icon>
+      <span>Crear Revisión</span>
+    </button>
+    }
+  </div>
+
+  <!-- Tabla de inspecciones -->
+  <div class="table-container">
+    <table class="inspecciones-table">
+      <thead>
+        <tr>
+          <th (click)="ordenarPor('numSerie')" class="sortable">
+            <div class="th-content">
+              <span>SERIE</span>
+              @if (getDireccionOrdenamiento('numSerie') === 'asc') {
+              <mat-icon class="sort-icon">arrow_upward</mat-icon>
+              } @else if (getDireccionOrdenamiento('numSerie') === 'desc') {
+              <mat-icon class="sort-icon">arrow_downward</mat-icon>
+              }
+            </div>
+          </th>
+          <th (click)="ordenarPor('maquina')" class="sortable">
+            <div class="th-content">
+              <span>MÁQUINA</span>
+              @if (getDireccionOrdenamiento('maquina') === 'asc') {
+              <mat-icon class="sort-icon">arrow_upward</mat-icon>
+              } @else if (getDireccionOrdenamiento('maquina') === 'desc') {
+              <mat-icon class="sort-icon">arrow_downward</mat-icon>
+              }
+            </div>
+          </th>
+          <th (click)="ordenarPor('fechaInicio')" class="sortable">
+            <div class="th-content">
+              <span>FECHA INICIO</span>
+              @if (getDireccionOrdenamiento('fechaInicio') === 'asc') {
+              <mat-icon class="sort-icon">arrow_upward</mat-icon>
+              } @else if (getDireccionOrdenamiento('fechaInicio') === 'desc') {
+              <mat-icon class="sort-icon">arrow_downward</mat-icon>
+              }
+            </div>
+          </th>
+          <th (click)="ordenarPor('fechaFinalizacion')" class="sortable">
+            <div class="th-content">
+              <span>FECHA FIN</span>
+              @if (getDireccionOrdenamiento('fechaFinalizacion') === 'asc') {
+              <mat-icon class="sort-icon">arrow_upward</mat-icon>
+              } @else if (getDireccionOrdenamiento('fechaFinalizacion') === 'desc') {
+              <mat-icon class="sort-icon">arrow_downward</mat-icon>
+              }
+            </div>
+          </th>
+          <th (click)="ordenarPor('inspector')" class="sortable">
+            <div class="th-content">
+              <span>INSPECTOR</span>
+              @if (getDireccionOrdenamiento('inspector') === 'asc') {
+              <mat-icon class="sort-icon">arrow_upward</mat-icon>
+              } @else if (getDireccionOrdenamiento('inspector') === 'desc') {
+              <mat-icon class="sort-icon">arrow_downward</mat-icon>
+              }
+            </div>
+          </th>
+          <th class="acciones-header">ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (inspeccion of inspeccionesPaginadas(); track inspeccion.id) {
+        <tr class="table-row">
+          <td>{{ inspeccion.numSerie }}</td>
+          <td>{{ inspeccion.maquina?.nombre }}</td>
+          <td>
+            <div class="fecha-container">
+              <div class="fecha-dia">{{ formatearFechaDia(inspeccion.fechaInicio) }}</div>
+              <div class="fecha-hora">{{ formatearFechaHora(inspeccion.fechaInicio) }}</div>
+            </div>
+          </td>
+          <td>
+            <div class="fecha-container">
+              <div class="fecha-dia">{{ formatearFechaDia(inspeccion.fechaFinalizacion) }}</div>
+              <div class="fecha-hora">{{ formatearFechaHora(inspeccion.fechaFinalizacion) }}</div>
+            </div>
+          </td>
+          <td>{{ inspeccion.inspector?.nombre }}</td>
+          <td class="acciones-cell">
+            <div class="acciones-container">
+              <!-- Ver -->
+              <button class="btn-icon" (click)="verInspeccion(inspeccion)" title="Ver inspección">
+                <mat-icon>visibility</mat-icon>
+              </button>
+
+              <!-- Editar (solo nivel 3+) -->
+              @if (canEdit()) {
+              <button
+                class="btn-icon"
+                (click)="editarInspeccion(inspeccion)"
+                title="Editar inspección"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              }
+
+              <!-- Descargar -->
+              <button
+                class="btn-icon"
+                (click)="descargarInspeccion(inspeccion)"
+                title="Descargar reporte"
+              >
+                <mat-icon>download</mat-icon>
+              </button>
+
+              <!-- Eliminar (solo nivel 3+) -->
+              @if (canEdit()) {
+              <button
+                class="btn-icon btn-delete"
+                (click)="eliminarInspeccion(inspeccion)"
+                title="Eliminar inspección"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+              }
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr class="empty-row">
+          <td colspan="6">
+            <div class="empty-state">
+              <mat-icon>search_off</mat-icon>
+              <p>No se encontraron inspecciones</p>
+              @if (hayFiltrosActivos()) {
+              <button class="btn-clear-filters" (click)="limpiarFiltros()">Limpiar filtros</button>
+              }
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  @if (inspeccionesFiltradas().length > itemsPorPagina) {
+  <div class="pagination">
+    <!-- Botón anterior -->
+    <button class="btn-page" [disabled]="paginaActual() === 1" (click)="paginaAnterior()">
+      <mat-icon>chevron_left</mat-icon>
+      <span>Anterior</span>
+    </button>
+
+    <!-- Números de página -->
+    <div class="page-numbers">
+      @for (pagina of paginasVisibles(); track pagina) {
+      <button
+        class="btn-page-number"
+        [class.active]="paginaActual() === pagina"
+        (click)="irAPagina(pagina)"
+      >
+        {{ pagina }}
+      </button>
+      }
+    </div>
+
+    <!-- Botón siguiente -->
+    <button
+      class="btn-page"
+      [disabled]="paginaActual() === totalPaginas()"
+      (click)="paginaSiguiente()"
+    >
+      <span>Siguiente</span>
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+  }
+</div>
+
+<!-- Diálogo de confirmación para eliminar -->
+@if (showDeleteConfirm()) {
+<app-confirm-dialog
+  [title]="'Eliminar Inspección'"
+  [message]="
+    '¿Estás seguro de que deseas eliminar la inspección ' +
+    inspeccionToDelete()?.numSerie +
+    '? Esta acción no se puede deshacer.'
+  "
+  [confirmText]="'Eliminar'"
+  [cancelText]="'Cancelar'"
+  [type]="'danger'"
+  (onConfirm)="confirmDelete()"
+  (onCancel)="cancelDelete()"
+/>
+}

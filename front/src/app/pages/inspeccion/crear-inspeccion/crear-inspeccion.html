@@ -1,0 +1,293 @@
+<div class="crear-inspeccion-container">
+  <!-- Información General -->
+  <div class="form-section">
+    <div class="section-header">
+      <div class="section-header-left">
+        <mat-icon>info</mat-icon>
+        <h2 class="section-title">Información General</h2>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="field-label"> Fecha de Inicio <span class="required">*</span> </label>
+        <input
+          type="datetime-local"
+          class="field-input"
+          [value]="fechaInicio()"
+          (input)="fechaInicio.set($any($event.target).value)"
+        />
+      </div>
+      <div class="form-field">
+        <label class="field-label"> Número de Serie <span class="required">*</span> </label>
+        <input
+          type="text"
+          class="field-input"
+          placeholder="Ej: EQA-0332"
+          [value]="numSerie()"
+          (input)="numSerie.set($any($event.target).value)"
+        />
+      </div>
+      <div class="form-field">
+        <label class="field-label"> Máquina <span class="required">*</span> </label>
+        <mat-form-field class="field-select">
+          <mat-select
+            placeholder="Seleccione una máquina"
+            [value]="maquinaId()"
+            (selectionChange)="maquinaId.set($event.value)"
+          >
+            @for (maquina of maquinas(); track maquina.id) {
+            <mat-option [value]="maquina.id"> {{ maquina.nombre }} </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Supervisor</label>
+        <mat-form-field class="field-select">
+          <mat-select
+            placeholder="Seleccione un supervisor"
+            [value]="supervisorId()"
+            (selectionChange)="supervisorId.set($event.value)"
+          >
+            <mat-option [value]="null">Ninguno</mat-option>
+            @for (usuario of usuarios(); track usuario.id) {
+            <mat-option [value]="usuario.id"> {{ usuario.nombre }} </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Técnicos</label>
+        <mat-form-field class="field-select">
+          <mat-select
+            placeholder="Seleccione técnicos"
+            multiple
+            [value]="tecnicoIds()"
+            (selectionChange)="tecnicoIds.set($event.value)"
+          >
+            @for (usuario of usuarios(); track usuario.id) {
+            <mat-option [value]="usuario.id"> {{ usuario.nombre }} </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Inspector</label>
+        <input type="text" class="field-input" [value]="inspector()?.nombre || 'Cargando...'" readonly />
+      </div>
+    </div>
+  </div>
+
+  <!-- Checklists -->
+  <div class="checklists-section">
+    <div class="section-header">
+      <div class="section-header-left">
+        <mat-icon>checklist</mat-icon>
+        <h2 class="section-title">Checklists de la Inspección</h2>
+        <span class="section-badge">{{ checklists().length }}</span>
+      </div>
+      <button class="btn-primary" (click)="agregarChecklist()">
+        <mat-icon>add</mat-icon>
+        Agregar Checklist
+      </button>
+    </div>
+
+    @if (checklists().length > 0) {
+    <div class="progress-summary">
+      <div class="progress-bar-container">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="resumen().porcentajeCompletado"></div>
+        </div>
+        <span class="progress-text">{{ resumen().porcentajeCompletado.toFixed(0) }}%</span>
+      </div>
+      <div class="progress-stats">
+        <div class="stat-item stat-si">
+          <mat-icon>check_circle</mat-icon>
+          <span>{{ resumen().itemsSI }} SÍ</span>
+        </div>
+        <div class="stat-item stat-no">
+          <mat-icon>cancel</mat-icon>
+          <span>{{ resumen().itemsNO }} NO</span>
+        </div>
+        <div class="stat-item stat-na">
+          <mat-icon>remove_circle</mat-icon>
+          <span>{{ resumen().itemsNA }} N/A</span>
+        </div>
+        <div class="stat-item stat-pending">
+          <mat-icon>pending</mat-icon>
+          <span>{{ resumen().itemsIncompletos }} Pendientes</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="checklists-list">
+      @for (checklist of checklists(); track checklist.templateId; let checklistIndex = $index) {
+      <div class="checklist-card">
+        @if (checklist.templateId < 0) {
+        <!-- Placeholder para seleccionar un checklist -->
+        <div class="checklist-placeholder">
+          <mat-form-field class="field-select">
+            <mat-select
+              placeholder="Seleccione un checklist para agregar"
+              (selectionChange)="seleccionarTemplate(checklistIndex, $event.value)"
+            >
+              @for (template of templatesDisponibles(); track template.id) {
+              <mat-option [value]="template" [disabled]="isChecklistSelected(template.id)">
+                {{ template.titulo }}
+              </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button
+            class="btn-delete-checklist"
+            (click)="eliminarChecklist(checklistIndex)"
+            title="Eliminar"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        } @else {
+        <!-- Checklist seleccionado -->
+        <div class="checklist-header">
+          <div class="checklist-title-section">
+            <span class="checklist-number">#{{ checklistIndex + 1 }}</span>
+            <span class="checklist-title">{{ checklist.nombreTemplate }}</span>
+            <span
+              class="checklist-badge"
+              [class.badge-complete]="checklist.completado"
+              [class.badge-progress]="
+                !checklist.completado &&
+                (checklist.progresoSI > 0 || checklist.progresoNO > 0 || checklist.progresoNA > 0)
+              "
+            >
+              {{
+                checklist.progresoSI + checklist.progresoNO + checklist.progresoNA
+              }}
+              /
+              {{ checklist.progresoTotal }}
+            </span>
+          </div>
+          <button
+            class="btn-delete-checklist"
+            (click)="eliminarChecklist(checklistIndex)"
+            title="Eliminar checklist"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="checklist-items">
+          @for (item of checklist.items; track item.templateSeccionId; let itemIndex = $index) {
+          <div
+            class="item-row"
+            [class.item-si]="item.cumple === true"
+            [class.item-no]="item.cumple === false"
+            [class.item-na]="item.cumple === null && item.eleccionRespuestaId"
+          >
+            <span class="item-number">{{ item.orden }}</span>
+            <div class="item-description">
+              <span class="item-text">{{ item.descripcion }}</span>
+              @if (item.observacion) {
+              <button
+                class="btn-observacion-indicator"
+                (click)="abrirObservacion(checklistIndex, itemIndex)"
+                title="Ver observación"
+              >
+                <mat-icon>comment</mat-icon>
+                <span>Observación</span>
+              </button>
+              }
+            </div>
+            <div class="item-actions">
+              <button
+                class="btn-response btn-si"
+                [class.active]="item.cumple === true"
+                (click)="onRespuestaChange(checklistIndex, itemIndex, true)"
+                title="Cumple"
+              >
+                <mat-icon>check</mat-icon>
+                SÍ
+              </button>
+              <button
+                class="btn-response btn-no"
+                [class.active]="item.cumple === false"
+                (click)="onRespuestaChange(checklistIndex, itemIndex, false)"
+                title="No cumple"
+              >
+                <mat-icon>close</mat-icon>
+                NO
+              </button>
+              <button
+                class="btn-response btn-na"
+                [class.active]="item.cumple === null && item.eleccionRespuestaId"
+                (click)="onRespuestaChange(checklistIndex, itemIndex, null)"
+                title="No aplica"
+              >
+                <mat-icon>remove</mat-icon>
+                N/A
+              </button>
+              @if (requiereObservacion(item) || item.observacion) {
+              <button
+                class="btn-observacion"
+                [class.required]="requiereObservacion(item) && !item.observacion"
+                (click)="abrirObservacion(checklistIndex, itemIndex)"
+                [title]="
+                  requiereObservacion(item) && !item.observacion
+                    ? 'Observación requerida'
+                    : 'Agregar/editar observación'
+                "
+              >
+                <mat-icon>{{ item.observacion ? 'edit_note' : 'add_comment' }}</mat-icon>
+              </button>
+              }
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+    } @else {
+    <div class="empty-state-templates">
+      <mat-icon class="empty-icon">playlist_add</mat-icon>
+      <p class="empty-message">Aún no has agregado ningún checklist a la inspección.</p>
+      <p class="empty-message">Haz clic en "Agregar Checklist" para comenzar.</p>
+    </div>
+    }
+  </div>
+
+  <div class="end-actions">
+    <button
+      class="btn-primary"
+      (click)="intentarTerminar()"
+      [disabled]="!puedeTerminar()"
+      [title]="
+        puedeTerminar() ? 'Guardar inspección' : 'Complete todos los campos requeridos'
+      "
+    >
+      Terminar Inspección
+    </button>
+  </div>
+</div>
+
+@if (showConfirmSalir()) {
+<app-confirm-dialog
+  [title]="'Salir sin guardar'"
+  [message]="'¿Está seguro de que desea salir? Los cambios no guardados se perderán.'"
+  [confirmText]="'Salir'"
+  [cancelText]="'Continuar editando'"
+  [type]="'warning'"
+  (onConfirm)="confirmarSalir()"
+  (onCancel)="cancelarSalir()"
+/>
+} @if (showConfirmTerminar()) {
+<app-confirm-dialog
+  [title]="'Terminar inspección'"
+  [message]="'¿Está seguro de que desea finalizar esta inspección?\n\nTodos los checklists han sido completados y la inspección quedará registrada.'"
+  [confirmText]="'Finalizar'"
+  [cancelText]="'Continuar editando'"
+  [type]="'info'"
+  (onConfirm)="confirmarTerminar()"
+  (onCancel)="cancelarTerminar()"
+/>
+}

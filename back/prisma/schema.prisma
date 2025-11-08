@@ -189,9 +189,9 @@ model TemplateSeccion {
 /// CHECK: fecha_finalizacion IS NULL OR fecha_finalizacion >= fecha_inicio
 model Inspeccion {
   id                BigInt    @id @default(autoincrement())
-  fechaInicio       DateTime  @map("fecha_inicio") @db.Date
+  fechaInicio       DateTime  @map("fecha_inicio") @db.Timestamp()
   /// NULL si aún está en proceso
-  fechaFinalizacion DateTime? @map("fecha_finalizacion") @db.Date
+  fechaFinalizacion DateTime? @map("fecha_finalizacion") @db.Timestamp()
   maquinaId         Int       @map("maquina_id")
   numSerie          String    @map("num_serie") @db.VarChar(50)
   nSerieMotor       String?   @map("n_serie_motor") @db.VarChar(50)

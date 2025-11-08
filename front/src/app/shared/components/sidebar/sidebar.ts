@@ -26,7 +26,7 @@ export class Sidebar {
     { icon: 'users', label: 'Usuarios', route: '/usuarios', minLevel: 3 },
     { icon: 'checklist', label: 'Checklist', route: '/checklist' },
     { icon: 'history', label: 'Historial', route: '/historial' },
-    { icon: 'clipboard', label: 'Crear revisión', route: '/revision' },
+    { icon: 'clipboard', label: 'Crear revisión', route: '/inspeccion/crear', minLevel: 2 },
   ];
 
   // Filtrar items del menú según el nivel del cargo del usuario

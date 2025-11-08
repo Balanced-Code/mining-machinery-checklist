@@ -72,6 +72,7 @@
           @if (sidebarService.isMobile()) {
           <div class="dropdown-user-info">
             <p class="dropdown-user-name">{{ fullName }}</p>
+            <p class="dropdown-user-email">{{ userEmail }}</p>
             <p
               class="dropdown-user-role"
               [style.background-color]="badgeColors().background"
@@ -80,6 +81,12 @@
             >
               {{ currentCargo()?.nombre }}
             </p>
+          </div>
+          <div class="dropdown-divider"></div>
+          } @else {
+          <!-- Solo email en desktop/tablet -->
+          <div class="dropdown-email-section">
+            <p class="dropdown-email-text">{{ userEmail }}</p>
           </div>
           <div class="dropdown-divider"></div>
           }

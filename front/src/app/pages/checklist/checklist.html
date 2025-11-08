@@ -1,0 +1,225 @@
+<div class="checklist-container">
+  <!-- Barra de acciones superior -->
+  <div class="actions-bar">
+    <!-- Buscador -->
+    <div class="search-container">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Buscar por título de Checklist o ítems"
+        [value]="searchQuery()"
+        (input)="updateSearch($any($event.target).value)"
+      />
+    </div>
+
+    <!-- Botón crear checklist -->
+    @if (canEdit()) {
+    <button class="btn-create" (click)="createTemplate()">
+      <mat-icon>add</mat-icon>
+      <span>Crear Checklist</span>
+    </button>
+    }
+  </div>
+
+  <!-- Lista de templates -->
+  <div class="templates-list">
+    @for (template of paginatedTemplates(); track template.id) {
+    <div class="template-card">
+      <!-- Header del template -->
+      <div class="template-header">
+        <div class="template-title-section">
+          <span class="template-number">#</span>
+
+          @if (editingTemplateId() === template.id) {
+          <!-- Modo edición del título -->
+          <input
+            type="text"
+            class="title-input"
+            [(ngModel)]="editingTitleValue"
+            (keydown.enter)="saveTitle(template.id)"
+            (keydown.escape)="cancelEditingTitle()"
+            (blur)="saveTitle(template.id)"
+            autofocus
+          />
+          } @else {
+          <!-- Modo visualización del título -->
+          <span class="template-title">{{ template.titulo }}</span>
+
+          @if (canEdit()) {
+          <button
+            class="btn-icon"
+            (click)="startEditingTitle(template.id, template.titulo)"
+            title="Editar título"
+          >
+            <mat-icon>edit</mat-icon>
+          </button>
+          } }
+
+          <!-- Botón toggle expandir/colapsar -->
+          <button
+            class="btn-toggle"
+            [class.expanded]="isExpanded(template.id)"
+            (click)="toggleTemplate(template.id)"
+            title="Expandir/Colapsar"
+          >
+            <mat-icon>expand_more</mat-icon>
+          </button>
+        </div>
+
+        @if (canEdit()) {
+        <button
+          class="btn-delete-template"
+          (click)="deleteTemplate(template)"
+          title="Eliminar checklist"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+        }
+      </div>
+
+      <!-- Contenido expandible del template -->
+      @if (isExpanded(template.id)) {
+      <div class="template-content">
+        <!-- Lista de ítems con drag & drop -->
+        <div
+          class="items-list"
+          cdkDropList
+          [cdkDropListDisabled]="!canEdit()"
+          (cdkDropListDropped)="onItemDrop($event, template.id)"
+        >
+          @for (item of template.items; track item.id) {
+          <div
+            class="item-row"
+            cdkDrag
+            [cdkDragDisabled]="!canEdit() || editingItemId() === item.id"
+          >
+            <!-- Indicador de drag -->
+            @if (canEdit()) {
+            <div class="drag-handle" cdkDragHandle>
+              <mat-icon>drag_indicator</mat-icon>
+            </div>
+            }
+
+            <!-- Número de orden -->
+            <span class="item-number">{{ item.orden }}</span>
+
+            <!-- Descripción del ítem -->
+            <div class="item-description">
+              @if (editingItemId() === item.id) {
+              <!-- Modo edición -->
+              <input
+                type="text"
+                class="item-input"
+                [(ngModel)]="editingItemValue"
+                (keydown.enter)="saveItem(template.id, item.id)"
+                (keydown.escape)="cancelEditingItem()"
+                (blur)="saveItem(template.id, item.id)"
+                autofocus
+              />
+              } @else {
+              <!-- Modo visualización -->
+              <span class="item-text">{{ item.descripcion }}</span>
+              }
+            </div>
+
+            <!-- Botones de acción (solo visible en hover y si puede editar) -->
+            @if (canEdit() && editingItemId() !== item.id) {
+            <div class="item-actions">
+              <button
+                class="btn-icon-small"
+                (click)="startEditingItem(item.id, item.descripcion)"
+                title="Editar ítem"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                class="btn-icon-small"
+                (click)="deleteItem(template.id, item)"
+                title="Eliminar ítem"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            }
+          </div>
+          }
+        </div>
+
+        <!-- Botón agregar ítem -->
+        @if (canEdit()) {
+        <button class="btn-add-item" (click)="addItem(template.id)">
+          <mat-icon>add</mat-icon>
+          Agregar Ítem
+        </button>
+        }
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+  <!-- Paginación -->
+  @if (filteredTemplates().length > itemsPerPage) {
+  <div class="pagination">
+    <div class="pagination-info">
+      Mostrando {{ showingFrom() }} a {{ showingTo() }} de {{ filteredTemplates().length }}
+      checklists
+    </div>
+
+    <div class="pagination-controls">
+      <button class="btn-page" [disabled]="currentPage() === 1" (click)="previousPage()">
+        <mat-icon>chevron_left</mat-icon>
+        Anterior
+      </button>
+
+      <div class="page-numbers">
+        @for (page of [].constructor(totalPages()); track $index; let i = $index) {
+        <button
+          class="btn-page-number"
+          [class.active]="currentPage() === i + 1"
+          (click)="goToPage(i + 1)"
+        >
+          {{ i + 1 }}
+        </button>
+        }
+      </div>
+
+      <button class="btn-page" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+        Siguiente
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </div>
+  }
+</div>
+
+<!-- Diálogo de confirmación para eliminar template -->
+@if (showDeleteTemplateConfirm()) {
+<app-confirm-dialog
+  [title]="'Eliminar Checklist'"
+  [message]="
+    '¿Estás seguro de que deseas eliminar el checklist &quot;' +
+    templateToDelete()?.titulo +
+    '&quot;? Esta acción no se puede deshacer.'
+  "
+  [confirmText]="'Eliminar'"
+  [cancelText]="'Cancelar'"
+  [type]="'danger'"
+  (onConfirm)="confirmDeleteTemplate()"
+  (onCancel)="cancelDeleteTemplate()"
+/>
+}
+
+<!-- Diálogo de confirmación para eliminar ítem -->
+@if (showDeleteItemConfirm()) {
+<app-confirm-dialog
+  [title]="'Eliminar Ítem'"
+  [message]="'¿Estás seguro de que deseas eliminar este ítem? Esta acción no se puede deshacer.'"
+  [confirmText]="'Eliminar'"
+  [cancelText]="'Cancelar'"
+  [type]="'danger'"
+  (onConfirm)="confirmDeleteItem()"
+  (onCancel)="cancelDeleteItem()"
+/>
+}
