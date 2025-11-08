@@ -1,0 +1,46 @@
+<!-- Backdrop -->
+<div class="confirm-backdrop" (click)="cancel()"></div>
+
+<!-- Dialog Wrapper -->
+<div class="confirm-wrapper">
+  <!-- Dialog -->
+  <div class="confirm-container" role="alertdialog" aria-modal="true">
+    <!-- Icon -->
+    <div
+      class="confirm-icon"
+      [class.icon-warning]="type() === 'warning'"
+      [class.icon-danger]="type() === 'danger'"
+      [class.icon-info]="type() === 'info'"
+    >
+      @if (type() === 'warning') {
+      <span class="material-icons">warning</span>
+      } @else if (type() === 'danger') {
+      <span class="material-icons">error</span>
+      } @else {
+      <span class="material-icons">info</span>
+      }
+    </div>
+
+    <!-- Content -->
+    <div class="confirm-content">
+      <h3 class="confirm-title">{{ title() }}</h3>
+      <p class="confirm-message">{{ message() }}</p>
+    </div>
+
+    <!-- Actions -->
+    <div class="confirm-actions">
+      <button class="btn-cancel" (click)="cancel()" type="button">
+        {{ cancelText() }}
+      </button>
+      <button
+        class="btn-confirm"
+        [class.btn-danger]="type() === 'danger'"
+        [class.btn-warning]="type() === 'warning'"
+        (click)="confirm()"
+        type="button"
+      >
+        {{ confirmText() }}
+      </button>
+    </div>
+  </div>
+</div>

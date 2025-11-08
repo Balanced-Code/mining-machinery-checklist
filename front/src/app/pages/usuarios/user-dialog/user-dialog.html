@@ -1,0 +1,149 @@
+<!-- Backdrop -->
+<div class="dialog-backdrop" (click)="close()"></div>
+
+<!-- Dialog Wrapper -->
+<div class="dialog-wrapper">
+  <!-- Dialog -->
+  <div class="dialog-container" role="dialog" aria-modal="true">
+    <!-- Header -->
+    <div class="dialog-header">
+      <div>
+        <h2>{{ mode() === 'create' ? 'Crear Usuario' : 'Editar Usuario' }}</h2>
+        <p>
+          {{
+            mode() === 'create'
+              ? 'Ingresa la información del nuevo usuario'
+              : 'Modifica la información del usuario existente'
+          }}
+        </p>
+      </div>
+      <button class="close-btn" (click)="close()" type="button" aria-label="Cerrar">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <!-- Form -->
+    <form class="dialog-form" (ngSubmit)="save()" #userForm="ngForm">
+      <!-- Nombre Completo -->
+      <div class="form-field">
+        <label for="nombre">
+          Nombre Completo
+          <span class="required">*</span>
+        </label>
+        <input
+          id="nombre"
+          type="text"
+          class="form-input"
+          placeholder="Juan Pérez"
+          [(ngModel)]="formData.nombre"
+          name="nombre"
+          required
+          [class.error]="nombreInput.invalid && nombreInput.touched"
+          #nombreInput="ngModel"
+        />
+      </div>
+
+      <!-- Correo Electrónico Corporativo -->
+      <div class="form-field">
+        <label for="correo">
+          Correo Electrónico Corporativo
+          <span class="required">*</span>
+        </label>
+        <input
+          id="correo"
+          type="email"
+          class="form-input"
+          placeholder="juan.perez@normet.com"
+          [(ngModel)]="formData.correo"
+          name="correo"
+          required
+          email
+          [class.error]="correoInput.invalid && correoInput.touched"
+          #correoInput="ngModel"
+        />
+      </div>
+
+      <!-- Rol del Usuario -->
+      <div class="form-field">
+        <label for="cargo">
+          Rol del Usuario
+          <span class="required">*</span>
+        </label>
+        <div class="select-wrapper">
+          <select
+            id="cargo"
+            class="form-select"
+            [(ngModel)]="formData.cargoId"
+            name="cargoId"
+            required
+            #cargoInput="ngModel"
+          >
+            <option [ngValue]="null" disabled>Seleccionar rol</option>
+            @for (cargo of cargos(); track cargo.id) {
+            <option [ngValue]="cargo.id">{{ cargo.nombre }}</option>
+            }
+          </select>
+          <span class="material-icons select-icon">expand_more</span>
+        </div>
+      </div>
+
+      <!-- Sección de Contraseña (solo en edición) -->
+      @if (mode() === 'edit') {
+      <div class="password-section">
+        <div class="password-header">
+          <span class="material-icons">lock</span>
+          <label>Restablecer Contraseña</label>
+        </div>
+        <button class="reset-password-btn" (click)="resetPasswordClick()" type="button">
+          <span class="material-icons">lock_reset</span>
+          Restablecer Contraseña
+        </button>
+      </div>
+      }
+
+      <!-- Sección de Contraseña (solo en creación) -->
+      @if (mode() === 'create') {
+      <div class="password-section">
+        <div class="password-header">
+          <span class="material-icons">lock</span>
+          <label>Contraseña</label>
+        </div>
+        <div
+          class="password-display"
+          (click)="copyPassword()"
+          [class.copied]="passwordCopied()"
+          title="Click para copiar"
+        >
+          <span class="material-icons copy-icon">{{
+            passwordCopied() ? 'check' : 'content_copy'
+          }}</span>
+          <span class="password-text">{{ generatedPassword }}</span>
+        </div>
+      </div>
+      }
+
+      <!-- Footer -->
+      <div class="dialog-footer">
+        <button class="btn-cancel" (click)="close()" type="button">Cancelar</button>
+        <button class="btn-save" type="submit" [disabled]="!userForm.valid || saving()">
+          {{ mode() === 'create' ? 'Crear' : 'Guardar Cambios' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Diálogo de confirmación para restablecer contraseña -->
+@if (showResetConfirm()) {
+<app-confirm-dialog
+  [title]="'Restablecer contraseña'"
+  [message]="
+    '¿Estás seguro de restablecer la contraseña de este usuario?\n\nLa nueva contraseña será: Password123?'
+  "
+  [confirmText]="'Restablecer'"
+  [cancelText]="'Cancelar'"
+  [type]="'warning'"
+  (onConfirm)="confirmResetPassword()"
+  (onCancel)="cancelResetPassword()"
+/>
+}

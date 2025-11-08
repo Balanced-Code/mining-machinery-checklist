@@ -1,0 +1,191 @@
+<div class="ver-inspeccion-container">
+  <!-- Header con estado -->
+  <div class="header-section">
+    <div class="header-content">
+      <div class="header-left">
+        <mat-icon>visibility</mat-icon>
+        <h1 class="page-title">Detalles de la Inspección</h1>
+      </div>
+      <div class="header-right">
+        <span
+          class="estado-badge"
+          [class.estado-completada]="fechaFin() !== null"
+          [class.estado-progreso]="fechaFin() === null"
+        >
+          {{ estadoInspeccion() }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información General -->
+  <div class="form-section">
+    <div class="section-header">
+      <div class="section-header-left">
+        <mat-icon>info</mat-icon>
+        <h2 class="section-title">Información General</h2>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="field-label">Fecha de Inicio</label>
+        <div class="field-value">{{ fechaInicioFormateada() }}</div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Fecha de Fin</label>
+        <div class="field-value">{{ fechaFinFormateada() }}</div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Número de Serie</label>
+        <div class="field-value">{{ numSerie() }}</div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Máquina</label>
+        <div class="field-value">{{ maquinaNombre() || '-' }}</div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Supervisor</label>
+        <div class="field-value">{{ supervisorNombre() || '-' }}</div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Técnicos</label>
+        <div class="field-value">
+          @if (tecnicosNombres().length > 0) {
+          <div class="tecnicos-list">
+            @for (tecnico of tecnicosNombres(); track tecnico) {
+            <span class="tecnico-badge">{{ tecnico }}</span>
+            }
+          </div>
+          } @else { - }
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Inspector</label>
+        <div class="field-value">{{ inspectorNombre() }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checklists -->
+  <div class="checklists-section">
+    <div class="section-header">
+      <div class="section-header-left">
+        <mat-icon>checklist</mat-icon>
+        <h2 class="section-title">Checklists de la Inspección</h2>
+      </div>
+    </div>
+
+    @if (checklists().length > 0) {
+    <div class="progress-summary">
+      <div class="summary-header">
+        <span class="summary-count">
+          {{ checklists().length }}
+          {{ checklists().length === 1 ? 'checklist' : 'checklists' }}
+        </span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="resumen().porcentajeCompletado"></div>
+        </div>
+        <span class="progress-text">{{ resumen().porcentajeCompletado.toFixed(0) }}%</span>
+      </div>
+      <div class="progress-stats-compact">
+        <span class="stat-text stat-si">{{ resumen().itemsSI }} SÍ</span>
+        <span class="stat-text stat-no">{{ resumen().itemsNO }} NO</span>
+        <span class="stat-text stat-na">{{ resumen().itemsNA }} N/A</span>
+        @if (resumen().itemsIncompletos > 0) {
+        <span class="stat-text stat-pending">{{ resumen().itemsIncompletos }} Pendientes</span>
+        }
+      </div>
+    </div>
+
+    <div class="checklists-list">
+      @for (checklist of checklists(); track checklist.templateId; let checklistIndex = $index) {
+      <div class="checklist-card">
+        <div class="checklist-header">
+          <div class="checklist-title-section">
+            <span class="checklist-number">#{{ checklistIndex + 1 }}</span>
+            <span class="checklist-title">{{ checklist.nombreTemplate }}</span>
+            <span
+              class="checklist-badge"
+              [class.badge-complete]="checklist.completado"
+              [class.badge-progress]="
+                !checklist.completado &&
+                (checklist.progresoSI > 0 || checklist.progresoNO > 0 || checklist.progresoNA > 0)
+              "
+            >
+              {{ checklist.progresoSI + checklist.progresoNO + checklist.progresoNA }}
+              /
+              {{ checklist.progresoTotal }}
+            </span>
+          </div>
+        </div>
+        <div class="checklist-items">
+          @for (item of checklist.items; track item.templateSeccionId; let itemIndex = $index) {
+          <div
+            class="item-row"
+            [class.item-si]="item.cumple === true"
+            [class.item-no]="item.cumple === false"
+            [class.item-na]="item.cumple === null && item.eleccionRespuestaId"
+            [class.item-pending]="!item.eleccionRespuestaId"
+          >
+            <span class="item-number">{{ item.orden }}</span>
+            <div class="item-description">
+              <span class="item-text">{{ item.descripcion }}</span>
+              @if (item.observacion) {
+              <div class="observacion-preview">
+                <mat-icon class="observacion-icon">comment</mat-icon>
+                <span class="observacion-text">{{ item.observacion.descripcion }}</span>
+              </div>
+              @if (item.observacion.archivos && item.observacion.archivos.length > 0) {
+              <div class="archivos-preview">
+                <mat-icon class="archivo-icon">attach_file</mat-icon>
+                <span class="archivos-count"
+                  >{{ item.observacion.archivos.length }}
+                  {{ item.observacion.archivos.length === 1 ? 'archivo' : 'archivos' }}</span
+                >
+              </div>
+              } }
+            </div>
+            <div class="item-status">
+              @if (item.cumple === true) {
+              <span class="status-badge badge-si">
+                <mat-icon>check</mat-icon>
+                SÍ
+              </span>
+              } @else if (item.cumple === false) {
+              <span class="status-badge badge-no">
+                <mat-icon>close</mat-icon>
+                NO
+              </span>
+              } @else if (item.cumple === null && item.eleccionRespuestaId) {
+              <span class="status-badge badge-na">
+                <mat-icon>remove</mat-icon>
+                N/A
+              </span>
+              } @else {
+              <span class="status-badge badge-pending"> Pendiente </span>
+              }
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+      }
+    </div>
+    } @else {
+    <div class="empty-state-templates">
+      <mat-icon class="empty-icon">playlist_add</mat-icon>
+      <p class="empty-message">No hay checklists asociados a esta inspección.</p>
+    </div>
+    }
+  </div>
+
+  <!-- Acciones -->
+  <div class="end-actions">
+    <button class="btn-secondary" (click)="salir()">
+      <mat-icon>arrow_back</mat-icon>
+      Salir
+    </button>
+  </div>
+</div>

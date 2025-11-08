@@ -68,9 +68,11 @@ export const cargosConfigResponseSchema = {
       description: 'Mapa de nombre de cargo a nivel jerárquico',
       examples: [
         {
+          invitado: 1,
           operador: 1,
+          'tecnico mecanico': 2,
           supervisor: 2,
-          gerente: 3,
+          inspector: 3,
           administrador: 4,
         },
       ],
@@ -119,4 +121,17 @@ export const notFoundResponseSchema = {
     message: { type: 'string' },
     statusCode: { type: 'number' },
   },
+} as const;
+
+/**
+ * Schema de respuesta exitosa de cambio de contraseña (200)
+ */
+export const changePasswordSuccessResponseSchema = {
+  description: 'Contraseña cambiada exitosamente',
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+  },
+  required: ['success', 'message'],
 } as const;

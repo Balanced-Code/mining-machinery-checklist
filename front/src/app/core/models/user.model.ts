@@ -22,7 +22,6 @@ export interface Cargo {
  * Configuración de cargos desde el backend
  */
 export interface CargosConfig {
-  cargos: Cargo[];
   hierarchy: Record<string, number>; // { "operador": 1, "supervisor": 2, ... }
 }
 
@@ -41,4 +40,78 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   user?: User;
+}
+
+/**
+ * Request para cambio de contraseña
+ */
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+/**
+ * Respuesta del cambio de contraseña
+ */
+export interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+/**
+ * Datos para crear un nuevo usuario
+ */
+export interface CreateUsuarioRequest {
+  nombre: string;
+  correo: string;
+  cargoId: number;
+}
+
+/**
+ * Datos para actualizar un usuario existente
+ */
+export interface UpdateUsuarioRequest {
+  nombre?: string;
+  correo?: string;
+  cargoId?: number;
+}
+
+/**
+ * Respuesta al crear/actualizar usuario
+ */
+export interface UsuarioResponse {
+  success: boolean;
+  message: string;
+  user?: User;
+}
+
+/**
+ * Respuesta de listado de usuarios
+ */
+export interface UsuariosListResponse {
+  users: User[];
+  total: number;
+}
+
+/**
+ * Modo del diálogo (crear o editar)
+ */
+export type UserDialogMode = 'create' | 'edit';
+
+/**
+ * Configuración del diálogo de usuario
+ */
+export interface UserDialogData {
+  mode: UserDialogMode;
+  user?: User;
+}
+
+/**
+ * Respuesta al restablecer contraseña
+ */
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+  newPassword?: string;
 }

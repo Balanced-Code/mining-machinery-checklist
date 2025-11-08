@@ -10,19 +10,22 @@ import { loginSchema, logoutSchema } from '../../schemas/auth';
  * Rutas POST de autenticación
  */
 
-export const loginRoute: FastifyPluginAsync = async (
+export const postAuthRoute: FastifyPluginAsync = async (
   fastify: FastifyInstance
 ) => {
   /**
    * POST /auth/login - Iniciar sesión
+   *
+   * config.requiresAuth: false → Evita que el plugin global ejecute requireAuth()
+   * preHandler: requireNotAuth → Verifica que NO haya una sesión activa ya
    */
   fastify.post<{ Body: LoginRequest; Reply: LoginResponse }>(
     '/login',
     {
       config: {
-        requiresAuth: false, // No requiere autenticación
+        requiresAuth: false, // Deshabilitar autenticación automática del plugin global
       },
-      preHandler: requireNotAuth, // Verificar que no esté ya autenticado
+      preHandler: requireNotAuth, // Rechazar si ya hay sesión activa
       schema: loginSchema,
     },
     async (request, reply) => {
@@ -87,6 +90,7 @@ export const loginRoute: FastifyPluginAsync = async (
             correo: usuario.correo,
             cargoId: usuario.cargoId,
             cargoNombre: usuario.cargo.nombre,
+            cargoNivel: usuario.cargo.nivel,
             jti: jti,
           },
           {
@@ -130,7 +134,7 @@ export const loginRoute: FastifyPluginAsync = async (
     },
     async (request, reply) => {
       try {
-        // El usuario ya está autenticado gracias al plugin global
+        // Verificación de seguridad adicional (no debería ser necesario)
         if (!request.currentUser) {
           return reply.unauthorized('Usuario no autenticado');
         }

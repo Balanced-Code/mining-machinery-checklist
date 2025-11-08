@@ -1,0 +1,239 @@
+<div class="profile-container">
+  <div class="profile-card">
+    <!-- Sección: Información Personal -->
+    <section class="profile-section">
+      <div class="section-header">
+        <span class="material-icons section-icon">person</span>
+        <h2 class="section-title">Información Personal</h2>
+      </div>
+
+      <div class="info-grid">
+        <!-- Campo: Nombre Completo -->
+        <div class="form-field">
+          <label class="field-label">NOMBRE COMPLETO</label>
+          <div class="input-container">
+            <div class="input-wrapper readonly">
+              <span class="material-icons input-icon">person</span>
+              <span class="input-value">{{ user()?.nombre }}</span>
+              <span class="input-badge">Solo admin</span>
+            </div>
+          </div>
+          <p class="field-hint">Contacta al administrador para cambiar tu nombre</p>
+        </div>
+
+        <!-- Campo: Correo Electrónico -->
+        <div class="form-field">
+          <label class="field-label">CORREO ELECTRÓNICO</label>
+          <div class="input-container">
+            <div class="input-wrapper readonly">
+              <span class="material-icons input-icon">email</span>
+              <span class="input-value">{{ user()?.correo }}</span>
+              <span class="input-badge">No editable</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cargo del usuario -->
+      <div class="cargo-container">
+        <label class="field-label">CARGO</label>
+        <div class="cargo-info">
+          <div
+            class="cargo-badge"
+            [style.background-color]="badgeColors().background"
+            [style.color]="badgeColors().text"
+            [style.border-color]="badgeColors().border"
+          >
+            <span class="material-icons cargo-icon">group</span>
+            <span>{{ currentCargo()?.nombre }}</span>
+          </div>
+          <span class="cargo-company">• Normet</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección: Seguridad de la Cuenta -->
+    <section class="profile-section">
+      <div class="section-header">
+        <span class="material-icons section-icon">lock</span>
+        <h2 class="section-title">Seguridad de la Cuenta</h2>
+      </div>
+
+      <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()" class="password-form">
+        <!-- Campo: Contraseña Actual -->
+        <div class="form-field">
+          <label class="field-label">CONTRASEÑA ACTUAL</label>
+          <div class="input-container">
+            <div
+              class="input-wrapper"
+              [class.input-error]="
+                (passwordForm.get('currentPassword')?.invalid &&
+                  passwordForm.get('currentPassword')?.touched) ||
+                currentPasswordError()
+              "
+            >
+              <span class="material-icons input-icon">lock</span>
+              <input
+                [type]="showCurrentPassword() ? 'text' : 'password'"
+                formControlName="currentPassword"
+                placeholder="Ingresa tu contraseña actual"
+                class="input-field"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                (click)="toggleCurrentPassword()"
+                aria-label="Mostrar/ocultar contraseña"
+              >
+                <span class="material-icons">{{
+                  showCurrentPassword() ? 'visibility_off' : 'visibility'
+                }}</span>
+              </button>
+            </div>
+          </div>
+          <!-- Mensaje de validación para contraseña actual -->
+          @if ( passwordForm.get('currentPassword')?.hasError('required') &&
+          passwordForm.get('currentPassword')?.touched ) {
+          <p class="field-error">Campo requerido</p>
+          } @else if ( passwordForm.get('currentPassword')?.hasError('minlength') &&
+          passwordForm.get('currentPassword')?.touched ) {
+          <p class="field-error">Debe tener al menos 8 caracteres</p>
+          } @else if (currentPasswordError()) {
+          <p class="field-error">{{ currentPasswordError() }}</p>
+          }
+        </div>
+
+        <!-- Campo: Nueva Contraseña -->
+        <div class="form-field">
+          <label class="field-label"
+            >NUEVA CONTRASEÑA <span class="field-hint-inline">(Mínimo 8 caracteres)</span></label
+          >
+          <div class="input-container">
+            <div
+              class="input-wrapper"
+              [class.input-error]="
+                ((passwordForm.get('newPassword')?.invalid ||
+                  passwordForm.hasError('passwordSame')) &&
+                  passwordForm.get('newPassword')?.touched) ||
+                newPasswordError()
+              "
+            >
+              <span class="material-icons input-icon">lock</span>
+              <input
+                [type]="showNewPassword() ? 'text' : 'password'"
+                formControlName="newPassword"
+                placeholder="Ingresa tu nueva contraseña"
+                class="input-field"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                (click)="toggleNewPassword()"
+                aria-label="Mostrar/ocultar contraseña"
+              >
+                <span class="material-icons">{{
+                  showNewPassword() ? 'visibility_off' : 'visibility'
+                }}</span>
+              </button>
+            </div>
+          </div>
+          <!-- Mensajes de validación para nueva contraseña -->
+          @if ( passwordForm.get('newPassword')?.hasError('required') &&
+          passwordForm.get('newPassword')?.touched ) {
+          <p class="field-error">Campo requerido</p>
+          } @else if ( passwordForm.get('newPassword')?.hasError('minlength') &&
+          passwordForm.get('newPassword')?.touched ) {
+          <p class="field-error">Debe tener al menos 8 caracteres</p>
+          } @else if ( passwordForm.get('newPassword')?.hasError('passwordStrength') &&
+          passwordForm.get('newPassword')?.touched ) {
+          <p class="field-error">
+            La contraseña debe contener:<br />
+            @if (!passwordForm.get('newPassword')?.errors?.['passwordStrength']?.hasUpperCase) { -
+            Mayúscula<br />
+            } @if (!passwordForm.get('newPassword')?.errors?.['passwordStrength']?.hasLowerCase) { -
+            Minúscula<br />
+            } @if (!passwordForm.get('newPassword')?.errors?.['passwordStrength']?.hasNumber) { -
+            Número<br />
+            } @if (!passwordForm.get('newPassword')?.errors?.['passwordStrength']?.hasSpecialChar) {
+            - Símbolo especial }
+          </p>
+          } @else if ( passwordForm.hasError('passwordSame') &&
+          passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.value ) {
+          <p class="field-error">La nueva contraseña debe ser diferente de la actual</p>
+          } @else if (newPasswordError()) {
+          <p class="field-error">{{ newPasswordError() }}</p>
+          }
+        </div>
+
+        <!-- Campo: Confirmar Nueva Contraseña -->
+        <div class="form-field">
+          <label class="field-label">CONFIRMAR NUEVA CONTRASEÑA</label>
+          <div class="input-container">
+            <div
+              class="input-wrapper"
+              [class.input-error]="
+                ((passwordForm.get('confirmPassword')?.invalid ||
+                  passwordForm.hasError('passwordMismatch')) &&
+                  passwordForm.get('confirmPassword')?.touched) ||
+                confirmPasswordError()
+              "
+            >
+              <span class="material-icons input-icon">lock</span>
+              <input
+                [type]="showConfirmPassword() ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                placeholder="Confirma tu nueva contraseña"
+                class="input-field"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                (click)="toggleConfirmPassword()"
+                aria-label="Mostrar/ocultar contraseña"
+              >
+                <span class="material-icons">{{
+                  showConfirmPassword() ? 'visibility_off' : 'visibility'
+                }}</span>
+              </button>
+            </div>
+          </div>
+          <!-- Mensaje de validación para confirmar contraseña -->
+          @if ( passwordForm.get('confirmPassword')?.hasError('required') &&
+          passwordForm.get('confirmPassword')?.touched ) {
+          <p class="field-error">Campo requerido</p>
+          } @else if ( passwordForm.hasError('passwordMismatch') &&
+          passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.value
+          ) {
+          <p class="field-error">Las contraseñas no coinciden</p>
+          } @else if (confirmPasswordError()) {
+          <p class="field-error">{{ confirmPasswordError() }}</p>
+          }
+        </div>
+
+        <!-- Mensaje de éxito -->
+        @if (successMessage()) {
+        <div class="message success-message">{{ successMessage() }}</div>
+        }
+
+        <!-- Botón de envío -->
+        <button type="submit" class="submit-button" [disabled]="isLoading()">
+          @if (isLoading()) {
+          <span>Actualizando...</span>
+          } @else {
+          <span class="material-icons">save</span>
+          <span>Actualizar Contraseña</span>
+          }
+        </button>
+
+        <!-- Mensaje informativo -->
+        <div class="info-box">
+          <span class="material-icons info-icon">info</span>
+          <p class="info-text">
+            Por seguridad, se recomienda usar una contraseña única que combine letras mayúsculas,
+            minúsculas, números y símbolos especiales.
+          </p>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>

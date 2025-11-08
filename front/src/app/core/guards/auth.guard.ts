@@ -5,7 +5,7 @@ import { AuthService } from '../services/auth.service';
 /**
  * Lógica compartida para validar autenticación y roles
  */
-const checkAuthAndRole = (route: ActivatedRouteSnapshot): boolean => {
+const checkAuthAndRole = async (route: ActivatedRouteSnapshot): Promise<boolean> => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
@@ -15,7 +15,30 @@ const checkAuthAndRole = (route: ActivatedRouteSnapshot): boolean => {
     return false;
   }
 
-  // 2. Verificar cargo si está definido en la ruta
+  // 2. Esperar a que la configuración de cargos esté cargada
+  if (!authService.configLoaded()) {
+    console.log('⏳ Esperando carga de configuración de cargos...');
+
+    // Esperar hasta 5 segundos máximo
+    const timeout = 5000;
+    const startTime = Date.now();
+
+    while (!authService.configLoaded() && Date.now() - startTime < timeout) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
+    if (!authService.configLoaded()) {
+      console.error('Timeout esperando configuración de cargos');
+      // Si hay error de configuración, usar fallback
+      if (authService.configError()) {
+        console.warn('⚠ando configuración fallback');
+      }
+    } else {
+      console.log('nfiguración de cargos lista');
+    }
+  }
+
+  // 3. Verificar cargo si está definido en la ruta
   const requiredCargo = route.data['cargo'] as string;
   const requiredLevel = route.data['nivel'] as number;
 
@@ -24,7 +47,7 @@ const checkAuthAndRole = (route: ActivatedRouteSnapshot): boolean => {
     return true;
   }
 
-  // 3. Validar jerarquía de cargos
+  // 4. Validar jerarquía de cargos
   let hasAccess = false;
 
   if (requiredCargo) {
@@ -38,9 +61,7 @@ const checkAuthAndRole = (route: ActivatedRouteSnapshot): boolean => {
   } else {
     // Si no cumple, redirigir al dashboard
     console.warn(
-      `Acceso denegado. Se requiere cargo '${
-        requiredCargo || `nivel ${requiredLevel}`
-      }' o superior.`
+      `eso denegado. Se requiere cargo '${requiredCargo || `nivel ${requiredLevel}`}' o superior.`
     );
     router.navigate(['/dashboard']);
     return false;

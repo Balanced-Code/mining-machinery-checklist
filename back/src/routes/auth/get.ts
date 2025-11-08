@@ -11,13 +11,12 @@ export const getAuthRoutes: FastifyPluginAsync = async (
 ) => {
   /**
    * GET /auth/cargos - Obtener jerarquía de cargos
-   * Endpoint público que retorna la configuración de niveles de cargos
    */
   fastify.get<{ Reply: CargosConfigResponse }>(
     '/cargos',
     {
       config: {
-        requiresAuth: false, // Público, no requiere autenticación
+        requiresAuth: false, // Deshabilitar autenticación automática (endpoint público)
       },
       schema: cargosConfigSchema,
     },
@@ -64,7 +63,6 @@ export const getAuthRoutes: FastifyPluginAsync = async (
 
   /**
    * GET /auth/profile/me - Obtener perfil del usuario actual
-   * Requiere autenticación
    */
   fastify.get(
     '/profile/me',
@@ -73,7 +71,8 @@ export const getAuthRoutes: FastifyPluginAsync = async (
     },
     async (request, reply) => {
       try {
-        // El usuario ya está autenticado gracias al plugin global
+        // El usuario YA está autenticado gracias al plugin global (requireAuth)
+        // Verificación de seguridad adicional (no debería ser necesario)
         if (!request.currentUser) {
           return reply.unauthorized('Usuario no autenticado');
         }

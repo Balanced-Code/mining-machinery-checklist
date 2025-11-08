@@ -1,5 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -17,9 +24,28 @@ export class Login {
 
   constructor() {
     this.loginForm = this.fb.group({
-      correo: ['', [Validators.required, Validators.email]],
+      correo: ['', [Validators.required, Validators.email, this.normetEmailValidator]],
       contrasena: ['', [Validators.required, Validators.minLength(6)]],
     });
+  }
+
+  /**
+   * Validador personalizado para correos @normet.com
+   */
+  private normetEmailValidator(control: AbstractControl): ValidationErrors | null {
+    const email = control.value;
+
+    if (!email) {
+      return null; // Si está vacío, lo maneja el validator 'required'
+    }
+
+    const isNormetEmail = /^[a-zA-Z0-9._%+-]+@normet\.com$/.test(email);
+
+    if (!isNormetEmail) {
+      return { normetDomain: true };
+    }
+
+    return null;
   }
 
   async onSubmit(): Promise<void> {

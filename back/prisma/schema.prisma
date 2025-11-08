@@ -90,7 +90,7 @@ model Token {
 model Cargo {
   id             Int       @id @default(autoincrement())
   nombre         String    @unique @db.VarChar(100)
-  nivel          Int       @unique
+  nivel          Int
   creadoPor      Int?      @map("creado_por")
   creadoEn       DateTime  @default(now()) @map("creado_en") @db.Timestamp()
   actualizadoPor Int?      @map("actualizado_por")
@@ -102,6 +102,7 @@ model Cargo {
   creador      Usuario?  @relation("CargoCreador", fields: [creadoPor], references: [id])
   actualizador Usuario?  @relation("CargoActualizador", fields: [actualizadoPor], references: [id])
 
+  @@index([nivel])
   @@index([eliminadoEn])
   @@map("cargo")
 }
@@ -188,9 +189,9 @@ model TemplateSeccion {
 /// CHECK: fecha_finalizacion IS NULL OR fecha_finalizacion >= fecha_inicio
 model Inspeccion {
   id                BigInt    @id @default(autoincrement())
-  fechaInicio       DateTime  @map("fecha_inicio") @db.Date
+  fechaInicio       DateTime  @map("fecha_inicio") @db.Timestamp()
   /// NULL si aún está en proceso
-  fechaFinalizacion DateTime? @map("fecha_finalizacion") @db.Date
+  fechaFinalizacion DateTime? @map("fecha_finalizacion") @db.Timestamp()
   maquinaId         Int       @map("maquina_id")
   numSerie          String    @map("num_serie") @db.VarChar(50)
   nSerieMotor       String?   @map("n_serie_motor") @db.VarChar(50)

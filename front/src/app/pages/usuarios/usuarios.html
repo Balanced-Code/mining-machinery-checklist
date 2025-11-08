@@ -1,0 +1,216 @@
+<div class="usuarios-page">
+  <!-- Barra de acciones superior -->
+  <div class="actions-bar">
+    <!-- Buscador -->
+    <div class="search-container">
+      <span class="material-icons search-icon">search</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Buscar por nombre o email"
+        [value]="searchQuery()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </div>
+
+    <!-- Filtro por Rol -->
+    <div class="filter-container">
+      <span class="material-icons filter-icon">filter_list</span>
+      <select
+        class="filter-select"
+        [value]="selectedCargoId() ?? ''"
+        (change)="onFilterChange($any($event.target).value ? +$any($event.target).value : null)"
+      >
+        <option value="">Todos los roles</option>
+        @for (cargo of cargos(); track cargo.id) {
+        <option [value]="cargo.id">{{ cargo.nombre }}</option>
+        }
+      </select>
+      <span class="material-icons select-arrow">expand_more</span>
+    </div>
+
+    <!-- Botón limpiar filtros -->
+    @if (hayFiltrosActivos()) {
+    <button class="btn-clear" (click)="limpiarFiltros()" title="Limpiar filtros" type="button">
+      <span class="material-icons">clear</span>
+      <span>Limpiar</span>
+    </button>
+    }
+
+    <!-- Botón crear usuario -->
+    <button class="btn-create" (click)="openCreateDialog()" type="button">
+      <span class="material-icons">add</span>
+      <span>Crear usuario</span>
+    </button>
+  </div>
+
+  <!-- Tabla de usuarios -->
+  <div class="table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th class="col-id">#</th>
+          <th class="col-name sortable" (click)="ordenarPor('nombre')">
+            <div class="th-content">
+              <span>Nombre</span>
+              @if (getDireccionOrdenamiento('nombre') === 'asc') {
+              <span class="material-icons sort-icon">arrow_upward</span>
+              } @else if (getDireccionOrdenamiento('nombre') === 'desc') {
+              <span class="material-icons sort-icon">arrow_downward</span>
+              }
+            </div>
+          </th>
+          <th class="col-email sortable" (click)="ordenarPor('correo')">
+            <div class="th-content">
+              <span>Email</span>
+              @if (getDireccionOrdenamiento('correo') === 'asc') {
+              <span class="material-icons sort-icon">arrow_upward</span>
+              } @else if (getDireccionOrdenamiento('correo') === 'desc') {
+              <span class="material-icons sort-icon">arrow_downward</span>
+              }
+            </div>
+          </th>
+          <th class="col-role sortable" (click)="ordenarPor('cargo')">
+            <div class="th-content">
+              <span>Rol</span>
+              @if (getDireccionOrdenamiento('cargo') === 'asc') {
+              <span class="material-icons sort-icon">arrow_upward</span>
+              } @else if (getDireccionOrdenamiento('cargo') === 'desc') {
+              <span class="material-icons sort-icon">arrow_downward</span>
+              }
+            </div>
+          </th>
+          <th class="col-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+        <tr>
+          <td colspan="5" class="loading-cell">
+            <div class="loading-spinner"></div>
+            <span>Cargando usuarios...</span>
+          </td>
+        </tr>
+        } @else if (filteredUsers().length === 0) {
+        <tr>
+          <td colspan="5" class="empty-cell">
+            <div class="empty-state">
+              <span class="material-icons">search_off</span>
+              <p>
+                {{
+                  searchQuery() || selectedCargoId()
+                    ? 'No se encontraron usuarios'
+                    : 'No hay usuarios registrados'
+                }}
+              </p>
+              @if (hayFiltrosActivos()) {
+              <button class="btn-clear-filters" (click)="limpiarFiltros()">Limpiar filtros</button>
+              }
+            </div>
+          </td>
+        </tr>
+        } @else { @for (user of filteredUsers(); track user.id) {
+        <tr>
+          <td class="col-id" data-label="ID">{{ $index + 1 }}</td>
+          <td class="col-name" data-label="Nombre">{{ user.nombre }}</td>
+          <td class="col-email" data-label="Email">{{ user.correo }}</td>
+          <td class="col-role" data-label="Rol">
+            <span
+              class="role-badge"
+              [style.background]="getCargoColors(user.cargo.nivel).background"
+              [style.color]="getCargoColors(user.cargo.nivel).text"
+            >
+              {{ user.cargo.nombre }}
+            </span>
+          </td>
+          <td class="col-actions" data-label="Acciones">
+            <div class="action-buttons">
+              <!-- Botón restablecer contraseña -->
+              <button
+                class="action-btn"
+                (click)="resetPassword(user)"
+                type="button"
+                title="Restablecer contraseña"
+              >
+                <span class="material-icons">lock_reset</span>
+              </button>
+
+              <!-- Botón editar -->
+              <button
+                class="action-btn"
+                (click)="openEditDialog(user)"
+                type="button"
+                title="Editar usuario"
+              >
+                <span class="material-icons">edit</span>
+              </button>
+
+              <!-- Botón eliminar -->
+              <button
+                class="action-btn btn-delete"
+                (click)="deleteUser(user)"
+                type="button"
+                title="Eliminar usuario"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } }
+      </tbody>
+    </table>
+
+    <!-- Footer con total -->
+    <div class="table-footer">
+      <p>
+        Total de usuarios: <strong>{{ users().length }}</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- Diálogo de crear/editar usuario -->
+  @if (showDialog()) {
+  <app-user-dialog
+    [mode]="dialogMode()"
+    [user]="selectedUser()"
+    [cargos]="cargos()"
+    (onClose)="closeDialog()"
+    (onSave)="handleSave($event)"
+  />
+  }
+
+  <!-- Diálogo de confirmación para restablecer contraseña -->
+  @if (showResetConfirm()) {
+  <app-confirm-dialog
+    [title]="'Restablecer contraseña'"
+    [message]="
+      '¿Estás seguro de restablecer la contraseña de ' +
+      userToReset()?.nombre +
+      '?\n\nLa nueva contraseña será: Password123?'
+    "
+    [confirmText]="'Restablecer'"
+    [cancelText]="'Cancelar'"
+    [type]="'warning'"
+    (onConfirm)="confirmResetPassword()"
+    (onCancel)="cancelResetPassword()"
+  />
+  }
+
+  <!-- Diálogo de confirmación para eliminar usuario -->
+  @if (showDeleteConfirm()) {
+  <app-confirm-dialog
+    [title]="'Eliminar usuario'"
+    [message]="
+      '¿Estás seguro de eliminar a ' +
+      userToDelete()?.nombre +
+      '?\n\nEsta acción no se puede deshacer.'
+    "
+    [confirmText]="'Eliminar'"
+    [cancelText]="'Cancelar'"
+    [type]="'danger'"
+    (onConfirm)="confirmDeleteUser()"
+    (onCancel)="cancelDeleteUser()"
+  />
+  }
+</div>

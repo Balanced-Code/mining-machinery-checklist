@@ -1,0 +1,717 @@
+/* ========== CONTENEDOR PRINCIPAL ========== */
+.ver-inspeccion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ========== HEADER CON ESTADO ========== */
+.header-section {
+  background: white;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-left mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  color: #ed1b2e;
+}
+
+.page-title {
+  font-family: Inter, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: black;
+  margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.estado-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 16px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.estado-completada {
+  background: rgb(16 185 129 / 15%);
+  color: #059669;
+}
+
+.estado-progreso {
+  background: rgb(245 158 11 / 15%);
+  color: #d97706;
+}
+
+/* ========== SECCIONES DEL FORMULARIO ========== */
+.form-section {
+  background: white;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 10px;
+  overflow: visible;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgb(0 0 0 / 2%);
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+}
+
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-header mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #ed1b2e;
+}
+
+.section-title {
+  font-family: Inter, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: black;
+  margin: 0;
+}
+
+/* ========== FORMULARIO (READONLY) ========== */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 24px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label {
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(0 0 0 / 60%);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.field-value {
+  font-family: Inter, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: rgb(0 0 0 / 90%);
+  padding: 10px 0;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.tecnicos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tecnico-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 12px;
+  background: rgb(59 130 246 / 10%);
+  color: #2563eb;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ========== CHECKLISTS ========== */
+.checklists-section {
+  background: white;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 10px;
+  overflow: visible;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+/* ========== RESUMEN DE PROGRESO ========== */
+.progress-summary {
+  padding: 20px 24px;
+  background: rgb(0 0 0 / 2%);
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+}
+
+.summary-header {
+  margin-bottom: 12px;
+}
+
+.summary-count {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(0 0 0 / 70%);
+}
+
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgb(0 0 0 / 10%);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ed1b2e 0%, #f34 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ed1b2e;
+  min-width: 45px;
+  text-align: right;
+}
+
+.progress-stats-compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-text {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(0 0 0 / 70%);
+}
+
+.stat-text.stat-si {
+  color: #10b981;
+}
+
+.stat-text.stat-no {
+  color: #ef4444;
+}
+
+.stat-text.stat-na {
+  color: #6b7280;
+}
+
+.stat-text.stat-pending {
+  color: #f59e0b;
+}
+
+/* ========== LISTA DE CHECKLISTS ========== */
+.checklists-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ========== TARJETA DE CHECKLIST ========== */
+.checklist-card {
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+}
+
+.checklist-card:last-child {
+  border-bottom: none;
+}
+
+/* Header del checklist */
+.checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #d1d5db;
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+}
+
+.checklist-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.checklist-number {
+  font-size: 14px;
+  color: rgb(0 0 0 / 70%);
+  font-weight: 500;
+  min-width: 30px;
+}
+
+.checklist-title {
+  font-size: 14px;
+  color: black;
+  font-weight: 500;
+}
+
+.checklist-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 50px;
+  height: 20px;
+  padding: 0 8px;
+  background: rgb(0 0 0 / 10%);
+  color: rgb(0 0 0 / 60%);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.checklist-badge.badge-complete {
+  background: #10b981;
+  color: white;
+}
+
+.checklist-badge.badge-progress {
+  background: #f59e0b;
+  color: white;
+}
+
+/* ========== ITEMS DEL CHECKLIST ========== */
+.checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgb(0 0 0 / 5%);
+  transition: background 0.2s;
+}
+
+.item-row:hover {
+  background: rgb(0 0 0 / 2%);
+}
+
+.item-row:last-child {
+  border-bottom: none;
+}
+
+.item-row.item-si {
+  background: rgb(16 185 129 / 5%);
+}
+
+.item-row.item-no {
+  background: rgb(239 68 68 / 5%);
+}
+
+.item-row.item-na {
+  background: rgb(107 114 128 / 5%);
+}
+
+.item-row.item-pending {
+  background: rgb(245 158 11 / 5%);
+}
+
+.item-number {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(0 0 0 / 60%);
+  min-width: 30px;
+  margin-top: 2px;
+}
+
+.item-description {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.item-text {
+  font-size: 14px;
+  color: rgb(0 0 0 / 80%);
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+.observacion-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgb(59 130 246 / 10%);
+  border-left: 3px solid #3b82f6;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+
+.observacion-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #3b82f6;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.observacion-text {
+  font-size: 13px;
+  color: rgb(0 0 0 / 80%);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.archivos-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgb(107 114 128 / 10%);
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.archivo-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+}
+
+.archivos-count {
+  font-size: 12px;
+  color: rgb(0 0 0 / 70%);
+  font-weight: 500;
+}
+
+/* ========== ESTADO DEL ITEM ========== */
+.item-status {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-badge mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.status-badge.badge-si {
+  background: #10b981;
+  color: white;
+}
+
+.status-badge.badge-no {
+  background: #ef4444;
+  color: white;
+}
+
+.status-badge.badge-na {
+  background: #6b7280;
+  color: white;
+}
+
+.status-badge.badge-pending {
+  background: rgb(245 158 11 / 15%);
+  color: #d97706;
+  font-weight: 500;
+}
+
+.empty-state-templates {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: rgb(0 0 0 / 40%);
+}
+
+.empty-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: rgb(0 0 0 / 20%);
+}
+
+.empty-message {
+  margin: 0;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: rgb(0 0 0 / 60%);
+  text-align: center;
+}
+
+/* ========== ACCIONES FINALES ========== */
+.end-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px 0;
+}
+
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 32px;
+  background: white;
+  color: #ed1b2e;
+  border: 2px solid #ed1b2e;
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: rgb(237 27 46 / 5%);
+  border-color: #d11828;
+  color: #d11828;
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (width <= 1024px) {
+  .form-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    padding: 20px;
+  }
+}
+
+@media (width <= 768px) {
+  .ver-inspeccion-container {
+    gap: 16px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .section-header {
+    padding: 12px 16px;
+  }
+
+  .section-title {
+    font-size: 15px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .progress-summary {
+    padding: 16px;
+  }
+
+  .progress-stats-compact {
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .checklist-header {
+    padding: 12px 16px;
+  }
+
+  .item-row {
+    padding: 12px 16px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .item-number {
+    min-width: 24px;
+  }
+
+  .item-description {
+    flex: 1 1 100%;
+    order: 1;
+  }
+
+  .item-status {
+    flex: 1 1 100%;
+    order: 2;
+    margin-top: 8px;
+  }
+
+  .status-badge {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .end-actions {
+    padding: 16px 0;
+  }
+
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (width <= 480px) {
+  .header-left mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .section-header-left {
+    gap: 8px;
+  }
+
+  .section-header mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .section-title {
+    font-size: 14px;
+  }
+
+  .progress-summary {
+    padding: 12px 16px;
+  }
+
+  .progress-bar-container {
+    margin-bottom: 12px;
+  }
+
+  .progress-stats-compact {
+    gap: 8px;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+
+  .stat-text {
+    font-size: 12px;
+  }
+
+  .checklist-header {
+    padding: 10px 12px;
+  }
+
+  .checklist-title-section {
+    gap: 8px;
+  }
+
+  .checklist-title {
+    font-size: 13px;
+  }
+
+  .item-row {
+    padding: 12px;
+  }
+
+  .item-number {
+    display: none;
+  }
+
+  .item-text {
+    font-size: 13px;
+  }
+
+  .observacion-text {
+    font-size: 12px;
+  }
+
+  .archivos-count {
+    font-size: 11px;
+  }
+
+  .status-badge {
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .btn-secondary {
+    height: 48px;
+  }
+}
