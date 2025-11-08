@@ -20,3 +20,57 @@ body {
 .material-icons {
   user-select: none;
 }
+
+/* ========== ESTILOS GLOBALES PARA MAT-SELECT DROPDOWN ========== */
+
+/* Panel desplegable (dropdown) */
+.mat-mdc-select-panel {
+  background: white !important;
+  border: 1px solid rgb(0 0 0 / 10%) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%) !important;
+  margin-top: 4px !important;
+  max-height: 280px !important;
+}
+
+/* Opciones del dropdown */
+.mat-mdc-option {
+  font-family: Inter, sans-serif !important;
+  font-size: 14px !important;
+  min-height: 40px !important;
+  padding: 0 16px !important;
+  color: rgb(15 23 42) !important;
+}
+
+.mat-mdc-option:hover {
+  background: rgb(0 0 0 / 5%) !important;
+}
+
+.mat-mdc-option.mat-mdc-option-active {
+  background: rgb(0 0 0 / 5%) !important;
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+.mat-mdc-option.mdc-list-item--selected {
+  background: rgb(237 27 46 / 10%) !important;
+  color: #ed1b2e !important;
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+.mat-mdc-option.mdc-list-item--selected:hover {
+  background: rgb(237 27 46 / 15%) !important;
+}
+
+.mat-pseudo-checkbox-checked::after {
+  color: #ed1b2e !important;
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+.mat-mdc-option .mdc-list-item__primary-text {
+  color: inherit !important;
+}
+
+/* Disabled option */
+.mat-mdc-option.mat-mdc-option-disabled {
+  opacity: 0.5 !important;
+}
