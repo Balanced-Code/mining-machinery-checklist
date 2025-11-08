@@ -1,0 +1,1238 @@
+/* ========== CONTENEDOR PRINCIPAL ========== */
+.editar-inspeccion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ========== SECCIONES DEL FORMULARIO ========== */
+.form-section {
+  background: white;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 10px;
+  overflow: visible;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgb(0 0 0 / 2%);
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+}
+
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-header mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #ed1b2e;
+}
+
+.section-title {
+  font-family: Inter, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: black;
+  margin: 0;
+}
+
+.section-count {
+  font-family: Inter, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: rgb(0 0 0 / 50%);
+  margin-left: 4px;
+}
+
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: #ed1b2e;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+/* ========== FORMULARIO ========== */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 24px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(0 0 0 / 80%);
+}
+
+.field-label .required {
+  color: #ed1b2e;
+  margin-left: 2px;
+}
+
+.field-input {
+  height: 40px;
+  padding: 8px 12px;
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: rgb(15 23 42);
+  transition: all 0.2s;
+}
+
+.field-input:hover {
+  border-color: rgb(203 213 225);
+  background: white;
+}
+
+.field-input:focus {
+  outline: none;
+  background: white;
+  border-color: #ed1b2e;
+  box-shadow: 0 0 0 3px rgb(237 27 46 / 10%);
+}
+
+.field-input::placeholder {
+  color: rgb(148 163 184);
+}
+
+.field-input[readonly] {
+  background: rgb(0 0 0 / 5%);
+  color: rgb(0 0 0 / 60%);
+  cursor: not-allowed;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ========== PRIMENG DATEPICKER ========== */
+
+/* Sobrescribir colores de selección de PrimeNG */
+:host ::ng-deep .p-datepicker-day-selected,
+:host ::ng-deep .p-datepicker .p-datepicker-day-selected {
+  background: #ed1b2e !important;
+  color: #fff !important;
+}
+
+:host ::ng-deep .p-datepicker-day-selected:hover,
+:host ::ng-deep .p-datepicker .p-datepicker-day-selected:hover {
+  background: #d11828 !important;
+  color: #fff !important;
+}
+
+:host ::ng-deep .p-datepicker-year-selected,
+:host ::ng-deep .p-datepicker .p-datepicker-year-selected {
+  background: #ed1b2e !important;
+  color: #fff !important;
+}
+
+:host ::ng-deep .p-datepicker-year-selected:hover,
+:host ::ng-deep .p-datepicker .p-datepicker-year-selected:hover {
+  background: #d11828 !important;
+  color: #fff !important;
+}
+
+/* Input del datepicker */
+:host ::ng-deep p-datepicker input,
+:host ::ng-deep p-datepicker .p-inputtext,
+:host ::ng-deep p-datepicker input.p-inputtext,
+:host ::ng-deep .p-datepicker-input-icon-container input,
+:host ::ng-deep .p-datepicker-input-icon-container .p-inputtext {
+  display: block !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 8px 40px 8px 12px !important;
+  background: rgb(248 250 252) !important;
+  border: 1px solid rgb(226 232 240) !important;
+  border-radius: 8px !important;
+  font-family: Inter, sans-serif !important;
+  font-size: 14px !important;
+  line-height: normal !important;
+  color: rgb(15 23 42) !important;
+  transition: all 0.2s !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+
+/* Icono del calendario - dentro del input */
+:host ::ng-deep .p-datepicker-input-icon-container svg,
+:host ::ng-deep .p-datepicker-input-icon-container i {
+  right: 12px !important;
+  width: 20px !important;
+  color: #ed1b2e !important;
+  fill: #ed1b2e !important;
+}
+
+/* Panel del datepicker */
+:host ::ng-deep .p-datepicker {
+  border: 1px solid rgb(226 232 240) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%) !important;
+  font-family: Inter, sans-serif !important;
+}
+
+/* Header del datepicker (mes y año) */
+:host ::ng-deep .p-datepicker .p-datepicker-header {
+  padding: 12px !important;
+  background: white !important;
+  border-bottom: 1px solid rgb(0 0 0 / 10%) !important;
+}
+
+/* Botones de navegación (anterior/siguiente) */
+:host ::ng-deep .p-datepicker .p-datepicker-header .p-datepicker-prev,
+:host ::ng-deep .p-datepicker .p-datepicker-header .p-datepicker-next {
+  color: #ed1b2e !important;
+  transition: all 0.2s !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-header .p-datepicker-prev:hover,
+:host ::ng-deep .p-datepicker .p-datepicker-header .p-datepicker-next:hover {
+  background: rgb(237 27 46 / 10%) !important;
+  color: #ed1b2e !important;
+}
+
+/* Título del mes/año */
+:host ::ng-deep .p-datepicker .p-datepicker-title {
+  color: rgb(15 23 42) !important;
+  font-weight: 600 !important;
+}
+
+/* Días de la semana (L, M, X, J, V, S, D) */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar thead tr th {
+  padding: 8px !important;
+  font-weight: 600 !important;
+  color: rgb(0 0 0 / 60%) !important;
+  font-size: 12px !important;
+}
+
+/* Celdas de días */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td {
+  padding: 4px !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > span {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  color: rgb(15 23 42) !important;
+  transition: all 0.2s !important;
+}
+
+/* Día hover */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > span:hover {
+  background: rgb(237 27 46 / 10%) !important;
+  color: #ed1b2e !important;
+}
+
+/* Día seleccionado */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td.p-datepicker-today > span {
+  background: rgb(237 27 46 / 10%) !important;
+  color: #ed1b2e !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td.p-datepicker-today > span:hover {
+  background: rgb(237 27 46 / 20%) !important;
+}
+
+/* Día actualmente seleccionado (highlight) - todas las variantes */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > span.p-highlight,
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td.p-highlight > span,
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > .p-highlight,
+:host
+  ::ng-deep
+  .p-datepicker
+  .p-datepicker-calendar
+  tbody
+  td.p-datepicker-today.p-highlight
+  > span {
+  background: #ed1b2e !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > span.p-highlight:hover,
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td.p-highlight > span:hover,
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > .p-highlight:hover,
+:host
+  ::ng-deep
+  .p-datepicker
+  .p-datepicker-calendar
+  tbody
+  td.p-datepicker-today.p-highlight
+  > span:hover {
+  background: #d11828 !important;
+}
+
+/* Días de otros meses */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td.p-datepicker-other-month > span {
+  color: rgb(0 0 0 / 30%) !important;
+}
+
+/* Selector de mes */
+:host ::ng-deep .p-datepicker .p-monthpicker .p-monthpicker-month {
+  padding: 8px !important;
+  border-radius: 6px !important;
+  color: rgb(15 23 42) !important;
+  font-size: 14px !important;
+  transition: all 0.2s !important;
+}
+
+:host ::ng-deep .p-datepicker .p-monthpicker .p-monthpicker-month:hover {
+  background: rgb(237 27 46 / 10%) !important;
+  color: #ed1b2e !important;
+}
+
+:host ::ng-deep .p-datepicker .p-monthpicker .p-monthpicker-month.p-highlight {
+  background: #ed1b2e !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .p-datepicker .p-monthpicker .p-monthpicker-month.p-highlight:hover {
+  background: #d11828 !important;
+}
+
+/* Selector de año */
+:host ::ng-deep .p-datepicker .p-yearpicker .p-yearpicker-year {
+  padding: 8px !important;
+  border-radius: 6px !important;
+  color: rgb(15 23 42) !important;
+  font-size: 14px !important;
+  transition: all 0.2s !important;
+}
+
+:host ::ng-deep .p-datepicker .p-yearpicker .p-yearpicker-year:hover {
+  background: rgb(237 27 46 / 10%) !important;
+  color: #ed1b2e !important;
+}
+
+:host ::ng-deep .p-datepicker .p-yearpicker .p-yearpicker-year.p-highlight {
+  background: #ed1b2e !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .p-datepicker .p-yearpicker .p-yearpicker-year.p-highlight:hover {
+  background: #d11828 !important;
+}
+
+.field-input-readonly {
+  user-select: text !important;
+  pointer-events: auto !important;
+  cursor: text !important;
+}
+
+.field-select {
+  width: 100%;
+}
+
+/* Estilos para mat-form-field */
+.field-select ::ng-deep .mat-mdc-form-field {
+  width: 100%;
+}
+
+.field-select ::ng-deep .mat-mdc-text-field-wrapper {
+  height: 40px;
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  border-radius: 8px;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.field-select ::ng-deep .mat-mdc-form-field-flex {
+  height: 40px;
+  align-items: center;
+  padding: 0 12px;
+}
+
+.field-select ::ng-deep .mat-mdc-form-field-infix {
+  padding: 0;
+  border: 0;
+  min-height: auto;
+}
+
+.field-select ::ng-deep .mat-mdc-select {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: rgb(15 23 42);
+}
+
+.field-select ::ng-deep .mat-mdc-select-placeholder {
+  color: rgb(148 163 184);
+}
+
+.field-select ::ng-deep .mat-mdc-select-value {
+  color: rgb(15 23 42);
+}
+
+.field-select ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.field-select ::ng-deep .mat-mdc-form-field-underline {
+  display: none;
+}
+
+.field-select ::ng-deep .mdc-line-ripple {
+  display: none;
+}
+
+.field-select ::ng-deep .mat-mdc-form-field-focus-overlay {
+  background: transparent;
+}
+
+.field-select ::ng-deep .mat-mdc-text-field-wrapper:hover {
+  background: white;
+  border-color: rgb(203 213 225);
+}
+
+.field-select ::ng-deep .mat-focused .mat-mdc-text-field-wrapper {
+  background: white;
+  border-color: #ed1b2e;
+  box-shadow: 0 0 0 3px rgb(237 27 46 / 10%);
+}
+
+/* Estilos para el panel desplegable (dropdown) */
+::ng-deep .mat-mdc-select-panel {
+  background: white;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+  margin-top: 4px;
+  max-height: 400px;
+}
+
+::ng-deep .mat-mdc-option {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  min-height: 40px;
+  padding: 0 16px;
+  color: rgb(15 23 42);
+}
+
+::ng-deep .mat-mdc-option:hover {
+  background: rgb(0 0 0 / 5%);
+}
+
+::ng-deep .mat-mdc-option.mat-mdc-option-active {
+  background: rgb(0 0 0 / 5%);
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+::ng-deep .mat-mdc-option.mdc-list-item--selected {
+  background: rgb(237 27 46 / 10%);
+  color: #ed1b2e;
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+::ng-deep .mat-mdc-option.mdc-list-item--selected:hover {
+  background: rgb(237 27 46 / 15%);
+}
+
+::ng-deep .mat-pseudo-checkbox-checked::after {
+  color: #ed1b2e;
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+::ng-deep .mat-mdc-option .mdc-list-item__primary-text {
+  color: inherit;
+}
+
+.checklists-section {
+  background: white;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 10px;
+  overflow: visible;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  background: #ed1b2e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #d11828;
+  box-shadow: 0 4px 12px rgb(237 27 46 / 20%);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: white;
+}
+
+/* ========== RESUMEN DE PROGRESO ========== */
+.progress-summary {
+  padding: 20px 24px;
+  background: rgb(0 0 0 / 2%);
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+}
+
+.summary-header {
+  margin-bottom: 12px;
+}
+
+.summary-count {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(0 0 0 / 70%);
+}
+
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgb(0 0 0 / 10%);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ed1b2e 0%, #f34 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ed1b2e;
+  min-width: 45px;
+  text-align: right;
+}
+
+.progress-stats-compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-text {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(0 0 0 / 70%);
+}
+
+.stat-text.stat-si {
+  color: #10b981;
+}
+
+.stat-text.stat-no {
+  color: #ef4444;
+}
+
+.stat-text.stat-na {
+  color: #6b7280;
+}
+
+.stat-text.stat-pending {
+  color: #f59e0b;
+}
+
+.progress-stats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stat-item mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.stat-si {
+  color: #10b981;
+}
+
+.stat-no {
+  color: #ef4444;
+}
+
+.stat-na {
+  color: #6b7280;
+}
+
+.stat-pending {
+  color: #f59e0b;
+}
+
+/* ========== LISTA DE CHECKLISTS ========== */
+.checklists-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ========== TARJETA DE CHECKLIST ========== */
+.checklist-card {
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+}
+
+.checklist-card:last-child {
+  border-bottom: none;
+}
+
+/* Placeholder para seleccionar checklist */
+.checklist-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: rgb(248 250 252);
+}
+
+.checklist-placeholder .field-select {
+  flex: 1;
+}
+
+.btn-delete-checklist {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgb(0 0 0 / 60%);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-delete-checklist:hover {
+  background: rgb(237 27 46 / 10%);
+  color: #ed1b2e;
+}
+
+.btn-delete-checklist mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Header del checklist */
+.checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #d1d5db;
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
+}
+
+.checklist-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.checklist-number {
+  font-size: 14px;
+  color: rgb(0 0 0 / 70%);
+  font-weight: 500;
+  min-width: 30px;
+}
+
+.checklist-title {
+  font-size: 14px;
+  color: black;
+  font-weight: 500;
+}
+
+.checklist-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 50px;
+  height: 20px;
+  padding: 0 8px;
+  background: rgb(0 0 0 / 10%);
+  color: rgb(0 0 0 / 60%);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.checklist-badge.badge-complete {
+  background: #10b981;
+  color: white;
+}
+
+.checklist-badge.badge-progress {
+  background: #f59e0b;
+  color: white;
+}
+
+/* ========== ITEMS DEL CHECKLIST ========== */
+.checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  border-bottom: 1px solid rgb(0 0 0 / 5%);
+  transition: background 0.2s;
+}
+
+.item-row:hover {
+  background: rgb(0 0 0 / 2%);
+}
+
+.item-row:last-child {
+  border-bottom: none;
+}
+
+.item-row.item-si {
+  background: rgb(16 185 129 / 5%);
+}
+
+.item-row.item-no {
+  background: rgb(239 68 68 / 5%);
+}
+
+.item-row.item-na {
+  background: rgb(107 114 128 / 5%);
+}
+
+.item-number {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(0 0 0 / 60%);
+  min-width: 30px;
+}
+
+.item-description {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.item-text {
+  font-size: 14px;
+  color: rgb(0 0 0 / 80%);
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+.btn-observacion-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  background: rgb(59 130 246 / 10%);
+  color: #3b82f6;
+  border: none;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-observacion-indicator:hover {
+  background: rgb(59 130 246 / 20%);
+}
+
+.btn-observacion-indicator mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+/* ========== ACCIONES DE ITEM ========== */
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-response {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 12px;
+  background: white;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-response:hover {
+  border-color: rgb(0 0 0 / 20%);
+  background: rgb(0 0 0 / 5%);
+}
+
+.btn-response mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.btn-response.btn-si {
+  color: #10b981;
+  border-color: rgb(16 185 129 / 30%);
+}
+
+.btn-response.btn-si:hover {
+  background: rgb(16 185 129 / 10%);
+  border-color: rgb(16 185 129 / 50%);
+}
+
+.btn-response.btn-si.active {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.btn-response.btn-no {
+  color: #ef4444;
+  border-color: rgb(239 68 68 / 30%);
+}
+
+.btn-response.btn-no:hover {
+  background: rgb(239 68 68 / 10%);
+  border-color: rgb(239 68 68 / 50%);
+}
+
+.btn-response.btn-no.active {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+.btn-response.btn-na {
+  color: #6b7280;
+  border-color: rgb(107 114 128 / 30%);
+}
+
+.btn-response.btn-na:hover {
+  background: rgb(107 114 128 / 10%);
+  border-color: rgb(107 114 128 / 50%);
+}
+
+.btn-response.btn-na.active {
+  background: #6b7280;
+  color: white;
+  border-color: #6b7280;
+}
+
+.btn-observacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: white;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 8px;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-observacion:hover {
+  background: rgb(59 130 246 / 10%);
+  border-color: #3b82f6;
+}
+
+.btn-observacion.required {
+  border-color: #ef4444;
+  color: #ef4444;
+  animation: pulse 2s infinite;
+}
+
+.btn-observacion.required:hover {
+  background: rgb(239 68 68 / 10%);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.btn-observacion mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.empty-state-templates {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: rgb(0 0 0 / 40%);
+}
+
+.empty-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: rgb(0 0 0 / 20%);
+}
+
+.empty-message {
+  margin: 0;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: rgb(0 0 0 / 60%);
+  text-align: center;
+}
+
+/* ========== ACCIONES FINALES ========== */
+.end-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px 0;
+}
+
+.end-actions .btn-primary {
+  height: 44px;
+  padding: 0 32px;
+  font-size: 15px;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (width <= 1024px) {
+  .form-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    padding: 20px;
+  }
+}
+
+@media (width <= 768px) {
+  .editar-inspeccion-container {
+    gap: 16px;
+  }
+
+  .section-header {
+    padding: 12px 16px;
+  }
+
+  .section-title {
+    font-size: 15px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  /* Reducir tamaño de texto en selects para móvil */
+  .field-select ::ng-deep .mat-mdc-select {
+    font-size: 13px;
+  }
+
+  .field-select ::ng-deep .mat-mdc-select-value {
+    font-size: 13px;
+  }
+
+  .progress-summary {
+    padding: 16px;
+  }
+
+  .progress-stats-compact {
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .checklist-header,
+  .checklist-placeholder {
+    padding: 12px 16px;
+  }
+
+  .item-row {
+    padding: 12px 16px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .item-number {
+    min-width: 24px;
+  }
+
+  .item-description {
+    flex: 1 1 100%;
+    order: 1;
+  }
+
+  .item-actions {
+    flex: 1 1 100%;
+    order: 2;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .btn-response {
+    flex: 1;
+    height: 36px;
+    padding: 0 8px;
+    font-size: 13px;
+    justify-content: center;
+  }
+
+  .btn-response mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .btn-observacion {
+    width: 36px;
+    height: 36px;
+  }
+
+  .btn-observacion mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .end-actions {
+    padding: 16px 0;
+  }
+}
+
+@media (width <= 480px) {
+  .section-header-left {
+    gap: 8px;
+  }
+
+  .section-header mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .section-title {
+    font-size: 14px;
+  }
+
+  /* Reducir más el tamaño de texto en selects para pantallas pequeñas */
+  .field-select ::ng-deep .mat-mdc-select {
+    font-size: 11px;
+  }
+
+  .field-select ::ng-deep .mat-mdc-select-value {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .field-select ::ng-deep .mat-mdc-select-placeholder {
+    font-size: 11px;
+  }
+
+  .checklists-section .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .checklists-section .section-header-left {
+    justify-content: flex-start;
+  }
+
+  .checklists-section .btn-primary {
+    width: 100%;
+    height: 40px;
+    justify-content: center;
+  }
+
+  .btn-primary {
+    justify-content: center;
+  }
+
+  .progress-summary {
+    padding: 12px 16px;
+  }
+
+  .progress-bar-container {
+    margin-bottom: 12px;
+  }
+
+  .progress-stats-compact {
+    gap: 8px;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+
+  .stat-text {
+    font-size: 12px;
+  }
+
+  .checklist-header,
+  .checklist-placeholder {
+    padding: 10px 12px;
+  }
+
+  .checklist-title-section {
+    gap: 8px;
+  }
+
+  .checklist-title {
+    font-size: 13px;
+  }
+
+  .item-row {
+    padding: 10px 12px;
+  }
+
+  .item-number {
+    display: none;
+  }
+
+  .item-text {
+    font-size: 13px;
+  }
+
+  .btn-observacion-indicator {
+    font-size: 10px;
+    padding: 0 6px;
+    height: 20px;
+  }
+
+  .btn-observacion-indicator mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+  }
+
+  .item-actions {
+    margin-top: 10px;
+    gap: 4px;
+  }
+
+  .btn-response {
+    height: 40px;
+    font-size: 12px;
+    gap: 2px;
+  }
+
+  .btn-response mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .btn-observacion {
+    width: 40px;
+    height: 40px;
+  }
+
+  .end-actions {
+    flex-direction: column;
+  }
+
+  .end-actions .btn-primary {
+    height: 48px;
+    width: 100%;
+    justify-content: center;
+  }
+}

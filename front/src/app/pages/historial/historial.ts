@@ -202,9 +202,7 @@ export class Historial {
    * Ver detalles de una inspección (solo lectura)
    */
   protected verInspeccion(inspeccion: Inspeccion): void {
-    console.log('Ver inspección:', inspeccion);
-    // TODO: Navegar a página de visualización
-    // this.router.navigate(['/inspeccion', inspeccion.id, 'ver']);
+    this.router.navigate(['/inspeccion/ver', inspeccion.id]);
   }
 
   /**
@@ -212,9 +210,7 @@ export class Historial {
    */
   protected editarInspeccion(inspeccion: Inspeccion): void {
     if (!this.canEdit()) return;
-    console.log('Editar inspección:', inspeccion);
-    // TODO: Navegar a página de edición
-    // this.router.navigate(['/inspeccion', inspeccion.id, 'editar']);
+    this.router.navigate(['/inspeccion/editar', inspeccion.id]);
   }
 
   /**
@@ -452,7 +448,7 @@ export class Historial {
         maquinaId: 3,
         maquina: { id: 3, nombre: 'GROVE RT530E' },
         fechaInicio: '2025-01-21T07:15:00',
-        fechaFinalizacion: '2025-01-21T15:20:00',
+        fechaFinalizacion: null, // En progreso - para probar edición
         inspector: { id: 3, nombre: 'Carlos Ramírez', correo: 'carlos@example.com' },
         creadoPor: 3,
         creadoEn: new Date('2025-01-21T07:15:00'),

@@ -9,43 +9,42 @@
 /* ========== BARRA DE ACCIONES ========== */
 .actions-bar {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 16px 24px;
+  gap: 16px;
+  padding: 20px 24px;
   background: white;
   border: 1px solid rgb(0 0 0 / 10%);
   border-radius: 10px;
   box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
-  flex-wrap: wrap;
 }
 
 /* Buscador */
 .search-container {
   position: relative;
   flex: 1;
-  min-width: 280px;
-  max-width: 448px;
+  max-width: 400px;
 }
 
 .search-icon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
   color: rgb(100 116 139);
   pointer-events: none;
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
 }
 
 .search-input {
   width: 100%;
-  height: 36px;
-  padding: 4px 12px 4px 40px;
-  background: rgb(0 0 0 / 5%);
-  border: 1px solid transparent;
-  border-radius: 8px;
+  height: 40px;
+  padding: 8px 16px 8px 46px;
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  border-radius: 10px;
   font-family: Inter, sans-serif;
   font-size: 14px;
   line-height: 20px;
@@ -54,11 +53,12 @@
 }
 
 .search-input::placeholder {
-  color: rgb(0 0 0 / 60%);
+  color: rgb(148 163 184);
 }
 
 .search-input:hover {
-  background: rgb(0 0 0 / 8%);
+  border-color: rgb(203 213 225);
+  background: white;
 }
 
 .search-input:focus {
@@ -71,80 +71,87 @@
 /* Filtro de estado */
 .filter-container {
   position: relative;
-  display: flex;
-  align-items: center;
-  height: 36px;
-  padding: 0 12px;
-  background: rgb(0 0 0 / 5%);
-  border: 1px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.filter-container:hover {
-  background: rgb(0 0 0 / 8%);
+  flex: 0 0 220px;
 }
 
 .filter-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-  color: rgb(0 0 0 / 60%);
-  margin-right: 8px;
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgb(100 116 139);
+  pointer-events: none;
+  font-size: 20px;
+  z-index: 1;
 }
 
 .filter-select {
-  height: 100%;
-  padding: 0;
-  background: transparent;
-  border: none;
+  width: 100%;
+  height: 40px;
+  padding: 8px 40px 8px 46px;
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  border-radius: 10px;
   font-family: Inter, sans-serif;
   font-size: 14px;
-  font-weight: 400;
-  color: black;
+  line-height: 20px;
+  color: rgb(15 23 42);
   cursor: pointer;
   appearance: none;
+  transition: all 0.2s;
+}
+
+.filter-select:hover {
+  border-color: rgb(203 213 225);
+  background: white;
+}
+
+.filter-select:focus {
   outline: none;
-  min-width: 140px;
+  background: white;
+  border-color: #ed1b2e;
+  box-shadow: 0 0 0 3px rgb(237 27 46 / 10%);
 }
 
 .dropdown-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-  color: rgb(0 0 0 / 60%);
-  margin-left: 8px;
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgb(100 116 139);
   pointer-events: none;
+  font-size: 20px;
 }
 
 /* Botón limpiar */
 .btn-clear {
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  background: rgb(0 0 0 / 5%);
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  background: rgb(248 250 252);
   color: rgb(0 0 0 / 80%);
-  border: 1px solid transparent;
-  border-radius: 8px;
+  border: 1px solid rgb(226 232 240);
+  border-radius: 10px;
   font-family: Inter, sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-clear:hover {
-  background: rgb(0 0 0 / 10%);
+  background: white;
+  border-color: rgb(203 213 225);
 }
 
 .btn-clear mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
 }
 
 /* Botón crear */
@@ -152,34 +159,37 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 36px;
-  padding: 0 16px;
+  height: 40px;
+  padding: 0 20px;
   background: #ed1b2e;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-family: Inter, sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  margin-left: auto;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgb(237 27 46 / 20%);
 }
 
 .btn-create:hover {
-  background: #d11828;
-  box-shadow: 0 4px 12px rgb(237 27 46 / 20%);
+  background: #d01828;
+  box-shadow: 0 4px 6px rgb(237 27 46 / 25%);
+  transform: translateY(-1px);
 }
 
 .btn-create:active {
-  transform: scale(0.98);
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgb(237 27 46 / 20%);
 }
 
 .btn-create mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
 }
 
 /* ========== TABLA ========== */
@@ -475,22 +485,31 @@
 
 /* ========== RESPONSIVE ========== */
 
-@media (width <= 1200px) {
+@media (width <= 1024px) {
   .actions-bar {
-    gap: 10px;
+    flex-wrap: wrap;
   }
 
   .search-container {
     flex: 1 1 100%;
     max-width: 100%;
+    order: 1;
   }
 
   .filter-container {
-    flex: 1;
+    flex: 1 1 auto;
+    order: 2;
+  }
+
+  .btn-clear {
+    flex: 1 1 auto;
+    order: 3;
   }
 
   .btn-create {
-    margin-left: 0;
+    flex: 1 1 auto;
+    order: 4;
+    justify-content: center;
   }
 }
 
@@ -500,14 +519,32 @@
   }
 
   .actions-bar {
-    padding: 12px 16px;
-    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
   }
 
-  .btn-create,
-  .btn-clear {
+  .search-container {
+    max-width: 100%;
+    order: 1;
+  }
+
+  .filter-container {
     flex: 1;
+    order: 2;
+  }
+
+  .btn-clear {
+    width: 100%;
     justify-content: center;
+    order: 3;
+  }
+
+  .btn-create {
+    width: 100%;
+    justify-content: center;
+    order: 4;
   }
 
   /* Tabla con scroll horizontal en móvil */
@@ -552,34 +589,12 @@
 }
 
 @media (width <= 480px) {
-  .actions-bar {
-    padding: 10px 12px;
-  }
-
   .search-input {
     font-size: 13px;
   }
 
   .filter-select {
     font-size: 13px;
-    min-width: 120px;
-  }
-
-  .btn-create mat-icon,
-  .btn-clear mat-icon {
-    margin: 0;
-  }
-
-  .btn-create span,
-  .btn-clear span {
-    display: none;
-  }
-
-  .btn-create,
-  .btn-clear {
-    width: 36px;
-    padding: 0;
-    justify-content: center;
   }
 
   .page-numbers {

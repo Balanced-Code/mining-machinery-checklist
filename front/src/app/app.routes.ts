@@ -77,6 +77,27 @@ export const routes: Routes = [
           nivel: 2, // Inspector o superior
         },
       },
+      {
+        path: 'inspeccion/editar/:id',
+        loadComponent: () =>
+          import('./pages/inspeccion/editar-inspeccion/editar-inspeccion').then(
+            (m) => m.EditarInspeccion
+          ),
+        data: {
+          title: 'Editar Inspección',
+          description: 'Editar una inspección de maquinaria existente',
+          nivel: 2, // Inspector o superior
+        },
+      },
+      {
+        path: 'inspeccion/ver/:id',
+        loadComponent: () =>
+          import('./pages/inspeccion/ver-inspeccion/ver-inspeccion').then((m) => m.VerInspeccion),
+        data: {
+          title: 'Ver Inspección',
+          description: 'Visualizar detalles de una inspección',
+        },
+      },
     ],
   },
   {
