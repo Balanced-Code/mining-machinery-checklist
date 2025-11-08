@@ -130,6 +130,31 @@
 
 /* ========== PRIMENG DATEPICKER ========== */
 
+/* Sobrescribir colores de selección de PrimeNG */
+:host ::ng-deep .p-datepicker-day-selected,
+:host ::ng-deep .p-datepicker .p-datepicker-day-selected {
+  background: #ed1b2e !important;
+  color: #fff !important;
+}
+
+:host ::ng-deep .p-datepicker-day-selected:hover,
+:host ::ng-deep .p-datepicker .p-datepicker-day-selected:hover {
+  background: #d11828 !important;
+  color: #fff !important;
+}
+
+:host ::ng-deep .p-datepicker-year-selected,
+:host ::ng-deep .p-datepicker .p-datepicker-year-selected {
+  background: #ed1b2e !important;
+  color: #fff !important;
+}
+
+:host ::ng-deep .p-datepicker-year-selected:hover,
+:host ::ng-deep .p-datepicker .p-datepicker-year-selected:hover {
+  background: #d11828 !important;
+  color: #fff !important;
+}
+
 /* Input del datepicker */
 :host ::ng-deep p-datepicker input,
 :host ::ng-deep p-datepicker .p-inputtext,
@@ -165,6 +190,161 @@
   width: 20px !important;
   color: #ed1b2e !important;
   fill: #ed1b2e !important;
+}
+
+/* Panel del datepicker */
+:host ::ng-deep .p-datepicker {
+  border: 1px solid rgb(226 232 240) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%) !important;
+  font-family: Inter, sans-serif !important;
+}
+
+/* Header del datepicker (mes y año) */
+:host ::ng-deep .p-datepicker .p-datepicker-header {
+  padding: 12px !important;
+  background: white !important;
+  border-bottom: 1px solid rgb(0 0 0 / 10%) !important;
+}
+
+/* Botones de navegación (anterior/siguiente) */
+:host ::ng-deep .p-datepicker .p-datepicker-header .p-datepicker-prev,
+:host ::ng-deep .p-datepicker .p-datepicker-header .p-datepicker-next {
+  color: #ed1b2e !important;
+  transition: all 0.2s !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-header .p-datepicker-prev:hover,
+:host ::ng-deep .p-datepicker .p-datepicker-header .p-datepicker-next:hover {
+  background: rgb(237 27 46 / 10%) !important;
+  color: #ed1b2e !important;
+}
+
+/* Título del mes/año */
+:host ::ng-deep .p-datepicker .p-datepicker-title {
+  color: rgb(15 23 42) !important;
+  font-weight: 600 !important;
+}
+
+/* Días de la semana (L, M, X, J, V, S, D) */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar thead tr th {
+  padding: 8px !important;
+  font-weight: 600 !important;
+  color: rgb(0 0 0 / 60%) !important;
+  font-size: 12px !important;
+}
+
+/* Celdas de días */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td {
+  padding: 4px !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > span {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  color: rgb(15 23 42) !important;
+  transition: all 0.2s !important;
+}
+
+/* Día hover */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > span:hover {
+  background: rgb(237 27 46 / 10%) !important;
+  color: #ed1b2e !important;
+}
+
+/* Día seleccionado */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td.p-datepicker-today > span {
+  background: rgb(237 27 46 / 10%) !important;
+  color: #ed1b2e !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td.p-datepicker-today > span:hover {
+  background: rgb(237 27 46 / 20%) !important;
+}
+
+/* Día actualmente seleccionado (highlight) - todas las variantes */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > span.p-highlight,
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td.p-highlight > span,
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > .p-highlight,
+:host
+  ::ng-deep
+  .p-datepicker
+  .p-datepicker-calendar
+  tbody
+  td.p-datepicker-today.p-highlight
+  > span {
+  background: #ed1b2e !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > span.p-highlight:hover,
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td.p-highlight > span:hover,
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td > .p-highlight:hover,
+:host
+  ::ng-deep
+  .p-datepicker
+  .p-datepicker-calendar
+  tbody
+  td.p-datepicker-today.p-highlight
+  > span:hover {
+  background: #d11828 !important;
+}
+
+/* Días de otros meses */
+:host ::ng-deep .p-datepicker .p-datepicker-calendar tbody td.p-datepicker-other-month > span {
+  color: rgb(0 0 0 / 30%) !important;
+}
+
+/* Selector de mes */
+:host ::ng-deep .p-datepicker .p-monthpicker .p-monthpicker-month {
+  padding: 8px !important;
+  border-radius: 6px !important;
+  color: rgb(15 23 42) !important;
+  font-size: 14px !important;
+  transition: all 0.2s !important;
+}
+
+:host ::ng-deep .p-datepicker .p-monthpicker .p-monthpicker-month:hover {
+  background: rgb(237 27 46 / 10%) !important;
+  color: #ed1b2e !important;
+}
+
+:host ::ng-deep .p-datepicker .p-monthpicker .p-monthpicker-month.p-highlight {
+  background: #ed1b2e !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .p-datepicker .p-monthpicker .p-monthpicker-month.p-highlight:hover {
+  background: #d11828 !important;
+}
+
+/* Selector de año */
+:host ::ng-deep .p-datepicker .p-yearpicker .p-yearpicker-year {
+  padding: 8px !important;
+  border-radius: 6px !important;
+  color: rgb(15 23 42) !important;
+  font-size: 14px !important;
+  transition: all 0.2s !important;
+}
+
+:host ::ng-deep .p-datepicker .p-yearpicker .p-yearpicker-year:hover {
+  background: rgb(237 27 46 / 10%) !important;
+  color: #ed1b2e !important;
+}
+
+:host ::ng-deep .p-datepicker .p-yearpicker .p-yearpicker-year.p-highlight {
+  background: #ed1b2e !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .p-datepicker .p-yearpicker .p-yearpicker-year.p-highlight:hover {
+  background: #d11828 !important;
 }
 
 .field-input-readonly {
