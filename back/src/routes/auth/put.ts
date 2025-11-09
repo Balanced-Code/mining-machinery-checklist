@@ -1,11 +1,11 @@
-import bcrypt from 'bcrypt';
-import { type FastifyInstance, type FastifyPluginAsync } from 'fastify';
-import { revokeUserTokens } from '../../middlewares/auth';
+import { revokeUserTokens } from '@/middlewares/auth';
 import type {
   ChangePasswordRequest,
   ChangePasswordResponse,
-} from '../../models/auth';
-import { changePasswordSchema } from '../../schemas/auth';
+} from '@/models/auth';
+import { changePasswordSchema } from '@/schemas/auth';
+import bcrypt from 'bcrypt';
+import { type FastifyInstance, type FastifyPluginAsync } from 'fastify';
 
 /**
  * Rutas PUT de autenticación

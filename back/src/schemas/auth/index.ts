@@ -1,8 +1,8 @@
 /**
  * Barrel export para schemas de autenticación
+ * Solo exporta los schemas completos que se usan en routes
  */
 
-// Schemas completos (los más usados)
 export {
   cargosConfigSchema,
   changePasswordSchema,
@@ -10,17 +10,3 @@ export {
   logoutSchema,
   profileMeSchema,
 } from './schemas';
-
-// Schemas individuales de request
-export { changePasswordBodySchema, loginBodySchema } from './request';
-
-// Schemas individuales de response
-export {
-  cargosConfigResponseSchema,
-  changePasswordSuccessResponseSchema,
-  loginSuccessResponseSchema,
-  logoutSuccessResponseSchema,
-  notFoundResponseSchema,
-  profileMeResponseSchema,
-  unauthorizedResponseSchema,
-} from './response';

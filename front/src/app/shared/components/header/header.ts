@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
-import { SidebarService } from '../../services/sidebar';
-import { getAvatarBackground, getCargoColors } from '../../utils/cargo-colors.util';
+import { AuthService } from '@core/services/auth.service';
+import { SidebarService } from '@shared/services/sidebar';
+import { getAvatarBackground, getCargoColors } from '@shared/utils/cargo-colors.util';
 
 @Component({
   selector: 'app-header',

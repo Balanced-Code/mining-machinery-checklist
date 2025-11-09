@@ -44,7 +44,7 @@
       (click)="onNavigate()"
     >
       <!-- Icono -->
-      <span class="menu-icon" [attr.data-icon]="item.icon"></span>
+      <span class="material-icons menu-icon">{{ item.icon }}</span>
       <!-- Texto (solo visible cuando el sidebar está abierto) -->
       @if (sidebarService.isOpen()) {
       <span class="menu-label">{{ item.label }}</span>

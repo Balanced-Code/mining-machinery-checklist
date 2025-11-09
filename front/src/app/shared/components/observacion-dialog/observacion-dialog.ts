@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { Observacion } from '../../../core/models/inspeccion.model';
+import { Observacion } from '@core/models/inspeccion.model';
 
 export type ModoObservacion = 'crear' | 'editar' | 'ver';
 

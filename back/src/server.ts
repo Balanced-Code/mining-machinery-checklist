@@ -57,7 +57,8 @@ async function start() {
     );
 
     // 12. Rutas con prefijos
-    await app.register(authRoutes, { prefix: '/auth' }); // Gestión de Autenticación/Usuarios
+    await app.register(authRoutes, { prefix: '/auth' }); // Gestión de Autenticación/Perfil
+    //await app.register(usuariosRoutes, { prefix: '/usuarios' }); // Gestión de Usuarios
 
     // Iniciar servidor
     await app.listen({

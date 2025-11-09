@@ -13,20 +13,20 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
-import { DatePicker } from 'primeng/datepicker';
-import { filter } from 'rxjs';
-import { ChecklistTemplate } from '../../../core/models/checklist.model';
+import { ChecklistTemplate } from '@core/models/checklist.model';
 import {
   InspeccionItemDTO,
   Maquina,
   Observacion,
   UsuarioInspeccion,
-} from '../../../core/models/inspeccion.model';
-import { AuthService } from '../../../core/services/auth.service';
-import { InspeccionService } from '../../../core/services/inspeccion.service';
-import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
-import { ObservacionDialog } from '../../../shared/components/observacion-dialog/observacion-dialog';
+} from '@core/models/inspeccion.model';
+import { AuthService } from '@core/services/auth.service';
+import { InspeccionService } from '@core/services/inspeccion.service';
+import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
+import { ObservacionDialog } from '@shared/components/observacion-dialog/observacion-dialog';
+import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
+import { DatePicker } from 'primeng/datepicker';
+import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-editar-inspeccion',

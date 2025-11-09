@@ -7,9 +7,9 @@ import {
   UpdateUsuarioRequest,
   User,
   UserDialogMode,
-} from '../../core/models/user.model';
-import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog';
-import { getCargoColors } from '../../shared/utils/cargo-colors.util';
+} from '@core/models/user.model';
+import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
+import { getCargoColors } from '@shared/utils/cargo-colors.util';
 import { UserDialog } from './user-dialog/user-dialog';
 
 // Tipos para ordenamiento

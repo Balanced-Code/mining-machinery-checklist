@@ -1,6 +1,6 @@
+import type { CargosConfigResponse } from '@/models/auth';
+import { cargosConfigSchema, profileMeSchema } from '@/schemas/auth';
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
-import type { CargosConfigResponse } from '../../models/auth';
-import { cargosConfigSchema, profileMeSchema } from '../../schemas/auth';
 
 /**
  * Rutas GET de autenticación

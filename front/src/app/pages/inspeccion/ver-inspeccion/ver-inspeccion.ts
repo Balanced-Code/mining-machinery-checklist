@@ -9,9 +9,9 @@ import {
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Maquina, UsuarioInspeccion } from '../../../core/models/inspeccion.model';
-import { AuthService } from '../../../core/services/auth.service';
-import { InspeccionService } from '../../../core/services/inspeccion.service';
+import { Maquina, UsuarioInspeccion } from '@core/models/inspeccion.model';
+import { AuthService } from '@core/services/auth.service';
+import { InspeccionService } from '@core/services/inspeccion.service';
 
 @Component({
   selector: 'app-ver-inspeccion',

@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
-import { SidebarService } from '../../services/sidebar';
+import { AuthService } from '@core/services/auth.service';
+import { SidebarService } from '@shared/services/sidebar';
 
 interface MenuItem {
   icon: string;
@@ -22,11 +22,11 @@ export class Sidebar {
 
   // Menú de navegación
   private readonly allMenuItems: MenuItem[] = [
-    { icon: 'home', label: 'Home', route: '/dashboard' },
-    { icon: 'users', label: 'Usuarios', route: '/usuarios', minLevel: 3 },
+    { icon: 'dashboard', label: 'Dashboard', route: '/dashboard' },
+    { icon: 'people', label: 'Usuarios', route: '/usuarios', minLevel: 3 },
     { icon: 'checklist', label: 'Checklist', route: '/checklist' },
     { icon: 'history', label: 'Historial', route: '/historial' },
-    { icon: 'clipboard', label: 'Crear revisión', route: '/inspeccion/crear', minLevel: 2 },
+    { icon: 'assignment', label: 'Crear revisión', route: '/inspeccion/crear', minLevel: 2 },
   ];
 
   // Filtrar items del menú según el nivel del cargo del usuario
