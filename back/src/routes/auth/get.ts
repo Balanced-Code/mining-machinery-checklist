@@ -77,22 +77,10 @@ export const getAuthRoutes: FastifyPluginAsync = async (
           return reply.unauthorized('Usuario no autenticado');
         }
 
-        // 1. Obtener datos actualizados del usuario
-        const usuario = await fastify.prisma.usuario.findUnique({
-          where: {
-            id: request.currentUser.id,
-            eliminadoEn: null,
-          },
-          include: {
-            cargo: {
-              select: {
-                id: true,
-                nombre: true,
-                nivel: true,
-              },
-            },
-          },
-        });
+        // 1. Obtener datos actualizados del usuario usando el servicio registrado
+        const usuario = await fastify.services.auth.getUserByIdAuth(
+          request.currentUser.id
+        );
 
         if (!usuario) {
           return reply.notFound('Usuario no encontrado');

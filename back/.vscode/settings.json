@@ -1,4 +1,7 @@
 {
+  // Package Manager
+  "npm.packageManager": "pnpm",
+
   // TypeScript
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,

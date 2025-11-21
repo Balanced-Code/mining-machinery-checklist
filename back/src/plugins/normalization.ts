@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
-import { setupNormalizationHooks } from '../middlewares/normalization';
+import { setupNormalizationHooks } from '@/middlewares/normalization';
 
 /**
  * Plugin de normalización automática y serialización de fechas

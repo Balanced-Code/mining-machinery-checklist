@@ -61,6 +61,7 @@ export const logoutSuccessResponseSchema = {
 export const cargosConfigResponseSchema = {
   description: 'Configuración de jerarquía de cargos',
   type: 'object',
+  required: ['hierarchy'],
   properties: {
     hierarchy: {
       type: 'object',
@@ -78,7 +79,6 @@ export const cargosConfigResponseSchema = {
       ],
     },
   },
-  required: ['hierarchy'],
 } as const;
 
 /**
@@ -90,21 +90,21 @@ export const profileMeResponseSchema = {
   properties: {
     user: {
       type: 'object',
+      required: ['id', 'nombre', 'correo', 'cargo'],
       properties: {
         id: { type: 'number' },
         nombre: { type: 'string' },
         correo: { type: 'string' },
         cargo: {
           type: 'object',
+          required: ['id', 'nombre', 'nivel'],
           properties: {
             id: { type: 'number' },
             nombre: { type: 'string' },
             nivel: { type: 'number' },
           },
-          required: ['id', 'nombre', 'nivel'],
         },
       },
-      required: ['id', 'nombre', 'correo', 'cargo'],
     },
   },
   required: ['user'],

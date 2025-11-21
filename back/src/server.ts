@@ -10,6 +10,7 @@ import jwtPlugin from './plugins/jwt';
 import normalizationPlugin from './plugins/normalization';
 import prismaPlugin from './plugins/prisma';
 import rateLimitPlugin from './plugins/rateLimit';
+import servicesPlugin from './plugins/services';
 import swaggerPlugin from './plugins/swagger';
 import authRoutes from './routes/auth/index';
 
@@ -36,14 +37,15 @@ async function start() {
     await app.register(envPlugin); // 1. Variables de entorno
     await app.register(sensible); // 2. Manejo de errores HTTP
     await app.register(prismaPlugin); // 3. Base de datos (Prisma ORM)
-    await app.register(normalizationPlugin); // 4. Normalización automática de datos
-    await app.register(cookiePlugin); // 5. Cookies seguras
-    await app.register(rateLimitPlugin); // 6. Rate Limiting
-    await app.register(helmetPlugin); // 7. Seguridad HTTP
-    await app.register(corsPlugin); // 8. CORS
-    await app.register(jwtPlugin); // 9. Autenticación JWT
-    await app.register(authPlugin); // 10. Plugin de autenticación global
-    await app.register(swaggerPlugin); // 11. Swagger
+    await app.register(servicesPlugin); // 4. Servicios de la aplicación
+    await app.register(normalizationPlugin); // 5. Normalización automática de datos
+    await app.register(cookiePlugin); // 6. Cookies seguras
+    await app.register(rateLimitPlugin); // 7. Rate Limiting
+    await app.register(helmetPlugin); // 8. Seguridad HTTP
+    await app.register(corsPlugin); // 9. CORS
+    await app.register(jwtPlugin); // 10. Autenticación JWT
+    await app.register(authPlugin); // 11. Plugin de autenticación global
+    await app.register(swaggerPlugin); // 12. Swagger
 
     // Ruta raíz - Redirección a documentación (oculta de Swagger)
     app.get(
