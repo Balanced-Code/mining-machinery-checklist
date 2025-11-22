@@ -3,7 +3,7 @@
  */
 export const usuarioVistaSchema = {
   type: 'object',
-  required: ['id', 'nombre', 'correo', 'cargo'],
+  required: ['id', 'nombre', 'correo', 'cargo', 'creadoEn'],
   properties: {
     id: { type: 'number' },
     nombre: { type: 'string' },
@@ -20,6 +20,7 @@ export const usuarioVistaSchema = {
         nivel: { type: 'number' },
       },
     },
+    eliminadoEn: { type: 'string', format: 'date-time', nullable: true },
   },
 } as const;
 
@@ -29,12 +30,13 @@ export const usuarioVistaSchema = {
 export const usuariosListaResponseSchema = {
   description: 'Lista de usuarios del sistema',
   type: 'object',
-  required: ['users'],
+  required: ['users', 'total'],
   properties: {
     users: {
       type: 'array',
       items: usuarioVistaSchema,
     },
+    total: { type: 'number' },
   },
 } as const;
 

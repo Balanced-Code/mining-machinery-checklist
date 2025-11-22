@@ -1,4 +1,5 @@
 import { AuthService } from '@/services/authService';
+import { UsuariosService } from '@/services/usuariosService';
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 
@@ -16,8 +17,8 @@ declare module 'fastify' {
   interface FastifyInstance {
     services: {
       auth: AuthService;
+      usuarios: UsuariosService;
       // Aquí puedes agregar más servicios en el futuro:
-      // user: UserService;
       // checklist: ChecklistService;
     };
   }
@@ -37,10 +38,12 @@ async function servicesPlugin(fastify: FastifyInstance) {
 
   // Crear instancias singleton de los servicios
   const authService = new AuthService(fastify.prisma);
+  const usuariosService = new UsuariosService(fastify.prisma);
 
   // Decorar fastify con el objeto services
   fastify.decorate('services', {
     auth: authService,
+    usuarios: usuariosService,
     // Agregar más servicios aquí según sea necesario
   });
 

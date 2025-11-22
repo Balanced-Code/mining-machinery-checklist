@@ -1,10 +1,9 @@
 import type { Cargo, Usuario } from '@/generated/prisma';
 
 /**
- * Usuario público (sin datos sensibles)
- * Para respuestas de API
+ * Detalles de Usuarios (listado/no)
  */
-export interface UserDetails {
+export interface UsersDetails {
   id: number;
   nombre: string;
   correo: string;
@@ -13,7 +12,7 @@ export interface UserDetails {
     nombre: string;
     nivel: number;
   };
-  creadoEn: Date;
+  eliminadoEn: Date | null;
 }
 
 /**
