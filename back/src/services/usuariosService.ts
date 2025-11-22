@@ -33,4 +33,30 @@ export class UsuariosService {
 
     return { users, total };
   }
+
+  /**
+   * Obtener un usuario por ID
+   * @param id ID del usuario
+   * @returns Usuario encontrado
+   */
+  async getUsuarioById(id: number): Promise<UsersDetails | null> {
+    return this.prisma.usuario.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        nombre: true,
+        correo: true,
+        cargo: {
+          select: {
+            id: true,
+            nombre: true,
+            nivel: true,
+          },
+        },
+        eliminadoEn: true,
+      },
+    });
+  }
 }
