@@ -6,6 +6,7 @@ export interface User {
   nombre: string;
   correo: string;
   cargo: Cargo;
+  eliminadoEn: string | null;
 }
 
 /**
@@ -73,7 +74,6 @@ export interface CreateUsuarioRequest {
  */
 export interface UpdateUsuarioRequest {
   nombre?: string;
-  correo?: string;
   cargoId?: number;
 }
 

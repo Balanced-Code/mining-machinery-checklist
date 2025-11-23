@@ -76,7 +76,7 @@ export const getAuthRoutes: FastifyPluginAsync = async (
         }
 
         // 2. Retornar perfil del usuario
-        return reply.send(usuario);
+        return reply.send({ user: usuario });
       } catch (error) {
         fastify.log.error({ error }, 'Error al obtener perfil de usuario');
         return reply.internalServerError(

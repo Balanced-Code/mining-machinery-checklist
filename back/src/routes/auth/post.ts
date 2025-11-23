@@ -37,7 +37,7 @@ export const postAuthRoute: FastifyPluginAsync = async (
 
         // 2. Verificar que el usuario existe
         if (!usuario) {
-          return reply.unauthorized('Credenciales incorrectas');
+          return reply.unauthorized('Credenciales incorrectas o no existentes');
         }
 
         // 3. Verificar contraseña

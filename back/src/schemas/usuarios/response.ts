@@ -3,7 +3,7 @@
  */
 export const usuarioVistaSchema = {
   type: 'object',
-  required: ['id', 'nombre', 'correo', 'cargo', 'creadoEn'],
+  required: ['id', 'nombre', 'correo', 'cargo', 'eliminadoEn'],
   properties: {
     id: { type: 'number' },
     nombre: { type: 'string' },
@@ -21,6 +21,27 @@ export const usuarioVistaSchema = {
       },
     },
     eliminadoEn: { type: 'string', format: 'date-time', nullable: true },
+  },
+} as const;
+
+export const usuarioUpdateSchema = {
+  type: 'object',
+  required: ['id', 'nombre', 'cargo'],
+  properties: {
+    id: { type: 'number' },
+    nombre: { type: 'string' },
+    correo: {
+      type: 'string',
+      format: 'email',
+    },
+    contrasena: { type: 'string' },
+    cargo: {
+      type: 'object',
+      required: ['nombre'],
+      properties: {
+        nombre: { type: 'string' },
+      },
+    },
   },
 } as const;
 
@@ -53,6 +74,17 @@ export const usuarioOperationResponseSchema = {
   },
 } as const;
 
+export const updateUsuarioOperationResponseSchema = {
+  description: 'Usuario actualizado',
+  type: 'object',
+  required: ['success', 'message', 'user'],
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+    user: usuarioUpdateSchema,
+  },
+} as const;
+
 /**
  * Schema de respuesta de eliminación
  */
@@ -71,9 +103,37 @@ export const deleteUsuarioResponseSchema = {
 export const resetPasswordResponseSchema = {
   description: 'Contraseña restablecida',
   type: 'object',
+  required: ['success', 'message', 'user'],
   properties: {
     success: { type: 'boolean' },
     message: { type: 'string' },
-    temporaryPassword: { type: 'string' },
+    user: usuarioUpdateSchema,
+  },
+} as const;
+
+/**
+ * Schema de lista de cargos
+ */
+export const cargosListResponseSchema = {
+  description: 'Lista de cargos disponibles',
+  type: 'array',
+  items: {
+    type: 'object',
+    required: ['id', 'nombre', 'nivel'],
+    properties: {
+      id: { type: 'number' },
+      nombre: { type: 'string' },
+      nivel: { type: 'number' },
+    },
+  },
+} as const;
+
+export const reactiveUsuarioResponseSchema = {
+  description: 'Usuario reactivado',
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+    user: usuarioUpdateSchema,
   },
 } as const;

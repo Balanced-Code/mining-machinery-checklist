@@ -13,6 +13,7 @@ import rateLimitPlugin from './plugins/rateLimit';
 import servicesPlugin from './plugins/services';
 import swaggerPlugin from './plugins/swagger';
 import authRoutes from './routes/auth/index';
+import usuariosRoutes from './routes/usuarios';
 
 const app = Fastify({
   logger: {
@@ -60,7 +61,7 @@ async function start() {
 
     // 12. Rutas con prefijos
     await app.register(authRoutes, { prefix: '/auth' }); // Gestión de Autenticación/Perfil
-    //await app.register(usuariosRoutes, { prefix: '/usuarios' }); // Gestión de Usuarios
+    await app.register(usuariosRoutes, { prefix: '/usuarios' }); // Gestión de Usuarios
 
     // Iniciar servidor
     await app.listen({

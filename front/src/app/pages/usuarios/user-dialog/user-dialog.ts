@@ -36,11 +36,14 @@ export class UserDialog implements OnInit {
   // Outputs
   @Output() onClose = new EventEmitter<void>();
   @Output() onSave = new EventEmitter<CreateUsuarioRequest | UpdateUsuarioRequest>();
+  @Output() onResetPassword = new EventEmitter<void>();
+  @Output() onToggleStatus = new EventEmitter<void>();
 
   // State
   protected saving = signal(false);
   protected readonly generatedPassword = 'Password123?';
   protected showResetConfirm = signal(false);
+  protected showStatusConfirm = signal(false);
   protected passwordCopied = signal(false);
 
   // Form data
@@ -77,11 +80,23 @@ export class UserDialog implements OnInit {
 
     this.saving.set(true);
 
-    const data: CreateUsuarioRequest | UpdateUsuarioRequest = {
-      nombre: this.formData.nombre,
-      correo: this.formData.correo,
-      cargoId: this.formData.cargoId!,
-    };
+    let data: CreateUsuarioRequest | UpdateUsuarioRequest;
+
+    if (this.mode() === 'create') {
+      data = {
+        nombre: this.formData.nombre,
+        correo: this.formData.correo,
+        cargoId: this.formData.cargoId!,
+      };
+    } else {
+      // En modo edición, enviamos nombre y cargoId siempre.
+      // El backend se encarga de verificar si hubo cambios reales.
+      // No enviamos correo porque no es editable.
+      data = {
+        nombre: this.formData.nombre,
+        cargoId: Number(this.formData.cargoId!),
+      };
+    }
 
     this.onSave.emit(data);
     this.saving.set(false);
@@ -99,10 +114,7 @@ export class UserDialog implements OnInit {
    */
   protected confirmResetPassword(): void {
     this.showResetConfirm.set(false);
-    console.log('Restablecer contraseña desde diálogo');
-    // Aquí se llamaría al servicio para restablecer contraseña
-    // TODO: Mostrar toast de éxito en lugar de alert
-    alert('La contraseña ha sido restablecida a: Password123?');
+    this.onResetPassword.emit();
   }
 
   /**
@@ -122,5 +134,71 @@ export class UserDialog implements OnInit {
         this.passwordCopied.set(false);
       }, 2000);
     });
+  }
+
+  /**
+   * Verificar si el usuario está activo
+   */
+  protected isUserActive(): boolean {
+    return this.user()?.eliminadoEn === null;
+  }
+
+  /**
+   * Handler para cambiar estado del usuario
+   */
+  protected toggleStatusClick(): void {
+    this.showStatusConfirm.set(true);
+  }
+
+  /**
+   * Confirmar cambio de estado
+   */
+  protected confirmToggleStatus(): void {
+    this.showStatusConfirm.set(false);
+    this.onToggleStatus.emit();
+  }
+
+  /**
+   * Cancelar cambio de estado
+   */
+  protected cancelToggleStatus(): void {
+    this.showStatusConfirm.set(false);
+  }
+
+  /**
+   * Obtener mensaje de error para el campo nombre
+   */
+  protected getNombreError(): string {
+    const errors = this.formData.nombre ? null : {};
+    if (!errors) return '';
+
+    // Simular errores de validación basados en el valor
+    const nombre = this.formData.nombre || '';
+
+    if (!nombre) return 'El nombre es obligatorio.';
+    if (nombre.length < 3) return 'El nombre debe tener al menos 3 caracteres.';
+    if (nombre.length > 80) return 'El nombre no puede exceder 80 caracteres.';
+    if (!/^[A-Za-zÀ-ÿ\u00f1\u00d1\s]+$/.test(nombre)) {
+      return 'El nombre solo puede contener letras, espacios y acentos.';
+    }
+
+    return '';
+  }
+
+  /**
+   * Obtener mensaje de error para el campo correo
+   */
+  protected getCorreoError(): string {
+    const correo = this.formData.correo || '';
+
+    if (!correo) return 'El correo es obligatorio.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+      return 'Ingresa un correo electrónico válido.';
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@normet\.com$/.test(correo)) {
+      return 'El correo debe ser del dominio @normet.com';
+    }
+
+    return '';
   }
 }

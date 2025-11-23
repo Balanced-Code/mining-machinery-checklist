@@ -178,12 +178,27 @@
   background: rgb(255 0 0 / 5%);
 }
 
+.form-input:disabled {
+  background: rgb(0 0 0 / 3%);
+  color: rgb(0 0 0 / 50%);
+  cursor: not-allowed;
+}
+
 .form-hint {
   margin: 0;
   font-family: Inter, sans-serif;
   font-size: 12px;
   line-height: 16px;
   color: rgb(0 0 0 / 50%);
+}
+
+.error-message {
+  margin: -4px 0 0;
+  font-family: Inter, sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  color: rgb(239 68 68);
+  font-weight: 500;
 }
 
 /* Select wrapper */
@@ -274,6 +289,112 @@
 
 .reset-password-btn:hover {
   background: rgb(237 27 46 / 5%);
+}
+
+/* Status section */
+.status-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 17px;
+  border-top: 1px solid rgb(0 0 0 / 10%);
+}
+
+.status-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-header .material-icons {
+  font-size: 18px;
+}
+
+.status-header label {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 14px;
+  color: black;
+  margin: 0;
+}
+
+.status-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  background: rgb(0 0 0 / 5%);
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.status-display.active {
+  background: rgb(34 197 94 / 10%);
+  border-color: rgb(34 197 94 / 30%);
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(239 68 68);
+  flex-shrink: 0;
+}
+
+.status-display.active .status-indicator {
+  background: rgb(34 197 94);
+}
+
+.status-text {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(0 0 0 / 70%);
+}
+
+.status-display.active .status-text {
+  color: rgb(34 197 94);
+}
+
+.toggle-status-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  background: white;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-status-btn.deactivate {
+  border-color: rgb(239 68 68);
+  color: rgb(239 68 68);
+}
+
+.toggle-status-btn.deactivate:hover {
+  background: rgb(239 68 68 / 5%);
+}
+
+.toggle-status-btn.activate {
+  border-color: rgb(34 197 94);
+  color: rgb(34 197 94);
+}
+
+.toggle-status-btn.activate:hover {
+  background: rgb(34 197 94 / 5%);
+}
+
+.toggle-status-btn .material-icons {
+  font-size: 18px;
 }
 
 /* Password display (solo crear) */

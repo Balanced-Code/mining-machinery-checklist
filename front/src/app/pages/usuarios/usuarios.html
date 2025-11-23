@@ -110,7 +110,7 @@
           </td>
         </tr>
         } @else { @for (user of filteredUsers(); track user.id) {
-        <tr>
+        <tr [class.deleted-user]="user.eliminadoEn !== null">
           <td class="col-id" data-label="ID">{{ $index + 1 }}</td>
           <td class="col-name" data-label="Nombre">{{ user.nombre }}</td>
           <td class="col-email" data-label="Email">{{ user.correo }}</td>
@@ -130,7 +130,14 @@
                 class="action-btn"
                 (click)="resetPassword(user)"
                 type="button"
-                title="Restablecer contraseña"
+                [title]="
+                  !canEditUser(user)
+                    ? user.id === currentUserId()
+                      ? 'No puedes restablecer tu propia contraseña desde aquí'
+                      : 'No tienes permisos para restablecer la contraseña de este usuario'
+                    : 'Restablecer contraseña'
+                "
+                [disabled]="!canEditUser(user)"
               >
                 <span class="material-icons">lock_reset</span>
               </button>
@@ -140,20 +147,52 @@
                 class="action-btn"
                 (click)="openEditDialog(user)"
                 type="button"
-                title="Editar usuario"
+                [title]="
+                  !canEditUser(user)
+                    ? user.id === currentUserId()
+                      ? 'No puedes editar tu propio usuario desde aquí. Usa la página de perfil'
+                      : 'No tienes permisos para editar a este usuario'
+                    : 'Editar usuario'
+                "
+                [disabled]="!canEditUser(user)"
               >
                 <span class="material-icons">edit</span>
               </button>
 
-              <!-- Botón eliminar -->
+              <!-- Botón eliminar/reactivar -->
+              @if (user.eliminadoEn === null) {
+              <!-- Botón eliminar (usuario activo) -->
               <button
                 class="action-btn btn-delete"
                 (click)="deleteUser(user)"
                 type="button"
-                title="Eliminar usuario"
+                [title]="
+                  !canEditUser(user)
+                    ? user.id === currentUserId()
+                      ? 'No puedes eliminar tu propio usuario'
+                      : 'No tienes permisos para eliminar a este usuario'
+                    : 'Eliminar usuario'
+                "
+                [disabled]="!canEditUser(user)"
               >
                 <span class="material-icons">delete</span>
               </button>
+              } @else {
+              <!-- Botón reactivar (usuario eliminado) -->
+              <button
+                class="action-btn btn-reactivate"
+                (click)="reactivateUser(user)"
+                type="button"
+                [title]="
+                  !canEditUser(user)
+                    ? 'No tienes permisos para reactivar a este usuario'
+                    : 'Reactivar usuario'
+                "
+                [disabled]="!canEditUser(user)"
+              >
+                <span class="material-icons">restore</span>
+              </button>
+              }
             </div>
           </td>
         </tr>
@@ -177,6 +216,8 @@
     [cargos]="cargos()"
     (onClose)="closeDialog()"
     (onSave)="handleSave($event)"
+    (onResetPassword)="handleDialogResetPassword()"
+    (onToggleStatus)="handleDialogToggleStatus()"
   />
   }
 
@@ -211,6 +252,23 @@
     [type]="'danger'"
     (onConfirm)="confirmDeleteUser()"
     (onCancel)="cancelDeleteUser()"
+  />
+  }
+
+  <!-- Diálogo de confirmación para reactivar usuario -->
+  @if (showReactivateConfirm()) {
+  <app-confirm-dialog
+    [title]="'Reactivar usuario'"
+    [message]="
+      '¿Estás seguro de reactivar a ' +
+      userToReactivate()?.nombre +
+      '?\n\nEl usuario podrá volver a acceder al sistema.'
+    "
+    [confirmText]="'Reactivar'"
+    [cancelText]="'Cancelar'"
+    [type]="'info'"
+    (onConfirm)="confirmReactivateUser()"
+    (onCancel)="cancelReactivateUser()"
   />
   }
 </div>

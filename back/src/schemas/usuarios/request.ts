@@ -1,7 +1,6 @@
 import {
   CORREO_EMPRESA_PATTERN,
   NOMBRE_PATTERN,
-  PASSWORD_SEGURO_PATTERN,
 } from '@/schemas/common/patterns';
 
 /**
@@ -13,7 +12,7 @@ export const createUsuarioBodySchema = {
   properties: {
     nombre: {
       type: 'string',
-      minLenght: 3,
+      minLength: 3,
       maxLength: 80,
       pattern: NOMBRE_PATTERN,
     },
@@ -31,23 +30,16 @@ export const createUsuarioBodySchema = {
 
 /**
  * Schemas para actualizar usuarios
+ * Todos los campos son opcionales para permitir actualizaciones parciales
  */
-export const updateUsusarioBodySchema = {
+export const updateUsuarioBodySchema = {
   type: 'object',
-  required: ['nombre', 'correo', 'contrasena', 'cargoId'],
   properties: {
     nombre: {
       type: 'string',
-      minLenght: 3,
+      minLength: 3,
       maxLength: 80,
       pattern: NOMBRE_PATTERN,
-    },
-    correo: {},
-    contrasena: {
-      type: 'string',
-      format: 'password',
-      minLength: 8,
-      pattern: PASSWORD_SEGURO_PATTERN,
     },
     cargoId: {
       type: 'number',
@@ -61,9 +53,9 @@ export const updateUsusarioBodySchema = {
  */
 export const usuarioIdParamSchema = {
   type: 'object',
-  required: ['userId'],
+  required: ['id'],
   properties: {
-    userId: {
+    id: {
       type: 'number',
       minimum: 1,
     },
