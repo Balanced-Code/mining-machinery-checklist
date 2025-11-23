@@ -8,9 +8,9 @@ import {
   EstadoInspeccion,
   FiltrosInspeccion,
   Inspeccion,
-} from '../../core/models/inspeccion.model';
-import { AuthService } from '../../core/services/auth.service';
-import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog';
+} from '@core/models/inspeccion.model';
+import { AuthService } from '@core/services/auth.service';
+import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-historial',

@@ -1,6 +1,6 @@
+import type { CargosConfigResponse } from '@/models/auth';
+import { cargosConfigSchema, profileMeSchema } from '@/schemas/auth';
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
-import type { CargosConfigResponse } from '../../models/auth';
-import { cargosConfigSchema, profileMeSchema } from '../../schemas/auth';
 
 /**
  * Rutas GET de autenticación
@@ -22,19 +22,8 @@ export const getAuthRoutes: FastifyPluginAsync = async (
     },
     async (request, reply) => {
       try {
-        // 1. Obtener todos los cargos activos de la base de datos
-        const cargos = await fastify.prisma.cargo.findMany({
-          where: {
-            eliminadoEn: null, // Solo cargos activos
-          },
-          select: {
-            nombre: true,
-            nivel: true,
-          },
-          orderBy: {
-            nivel: 'asc', // Ordenar por nivel ascendente
-          },
-        });
+        // 1. Obtener todos los cargos activos usando el servicio
+        const cargos = await fastify.services.auth.getCargosHierarchy();
 
         // 2. Transformar a formato de jerarquía: { "operador": 1, "supervisor": 2, ... }
         const hierarchy = cargos.reduce<Record<string, number>>(
@@ -77,40 +66,17 @@ export const getAuthRoutes: FastifyPluginAsync = async (
           return reply.unauthorized('Usuario no autenticado');
         }
 
-        // 1. Obtener datos actualizados del usuario
-        const usuario = await fastify.prisma.usuario.findUnique({
-          where: {
-            id: request.currentUser.id,
-            eliminadoEn: null,
-          },
-          include: {
-            cargo: {
-              select: {
-                id: true,
-                nombre: true,
-                nivel: true,
-              },
-            },
-          },
-        });
+        // 1. Obtener datos actualizados del usuario usando el servicio registrado
+        const usuario = await fastify.services.auth.getUserByIdAuth(
+          request.currentUser.id
+        );
 
         if (!usuario) {
           return reply.notFound('Usuario no encontrado');
         }
 
         // 2. Retornar perfil del usuario
-        return reply.send({
-          user: {
-            id: usuario.id,
-            nombre: usuario.nombre,
-            correo: usuario.correo,
-            cargo: {
-              id: usuario.cargo.id,
-              nombre: usuario.cargo.nombre,
-              nivel: usuario.cargo.nivel,
-            },
-          },
-        });
+        return reply.send(usuario);
       } catch (error) {
         fastify.log.error({ error }, 'Error al obtener perfil de usuario');
         return reply.internalServerError(

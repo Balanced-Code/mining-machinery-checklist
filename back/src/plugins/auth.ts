@@ -5,8 +5,8 @@ import type {
   FastifyRequest,
 } from 'fastify';
 import fp from 'fastify-plugin';
-import { verifyJWTAndToken } from '../middlewares/auth';
-import '../models/fastify';
+import { verifyJWTAndToken } from '@/middlewares/auth';
+import '@/models/fastify';
 
 /**
  * Lógica de autenticación (movida desde middlewares/auth.ts)

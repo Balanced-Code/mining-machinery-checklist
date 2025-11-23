@@ -14,8 +14,8 @@ import {
   UpdateUsuarioRequest,
   User,
   UserDialogMode,
-} from '../../../core/models/user.model';
-import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
+} from '@core/models/user.model';
+import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-user-dialog',

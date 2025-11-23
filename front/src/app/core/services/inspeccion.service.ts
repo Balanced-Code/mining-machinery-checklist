@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { ChecklistTemplate } from '../models/checklist.model';
+import { ChecklistTemplate } from '@core/models/checklist.model';
 import {
   Inspeccion,
   InspeccionChecklistDTO,
@@ -10,7 +10,7 @@ import {
   RespuestaItemDTO,
   ResumenInspeccion,
   UsuarioInspeccion,
-} from '../models/inspeccion.model';
+} from '@core/models/inspeccion.model';
 
 @Injectable({
   providedIn: 'root',

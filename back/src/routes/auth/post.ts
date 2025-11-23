@@ -1,10 +1,10 @@
+import { getSetCookieOptions } from '@/config/jwt';
+import { requireNotAuth, revokeUserTokens } from '@/middlewares/auth';
+import type { LoginRequest, LoginResponse } from '@/models/auth';
+import { loginSchema, logoutSchema } from '@/schemas/auth';
 import bcrypt from 'bcrypt';
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { randomUUID } from 'node:crypto';
-import { getSetCookieOptions } from '../../config/jwt';
-import { requireNotAuth, revokeUserTokens } from '../../middlewares/auth';
-import type { LoginRequest, LoginResponse } from '../../models/auth';
-import { loginSchema, logoutSchema } from '../../schemas/auth';
 
 /**
  * Rutas POST de autenticación
@@ -33,21 +33,7 @@ export const postAuthRoute: FastifyPluginAsync = async (
 
       try {
         // 1. Buscar usuario por correo
-        const usuario = await fastify.prisma.usuario.findUnique({
-          where: {
-            correo: correo.toLowerCase().trim(),
-            eliminadoEn: null, // Solo usuarios activos
-          },
-          include: {
-            cargo: {
-              select: {
-                id: true,
-                nombre: true,
-                nivel: true,
-              },
-            },
-          },
-        });
+        const usuario = await fastify.services.auth.loginUser(correo);
 
         // 2. Verificar que el usuario existe
         if (!usuario) {

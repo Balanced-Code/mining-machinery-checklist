@@ -2,9 +2,9 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { ChecklistItem, ChecklistTemplate } from '../../core/models/checklist.model';
-import { AuthService } from '../../core/services/auth.service';
-import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog';
+import { ChecklistItem, ChecklistTemplate } from '@core/models/checklist.model';
+import { AuthService } from '@core/services/auth.service';
+import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-checklist',

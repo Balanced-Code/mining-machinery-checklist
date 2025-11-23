@@ -1,7 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 import {
   CargosConfig,
   ChangePasswordRequest,
@@ -9,7 +8,8 @@ import {
   LoginRequest,
   LoginResponse,
   User,
-} from '../models/user.model';
+} from '@core/models/user.model';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',

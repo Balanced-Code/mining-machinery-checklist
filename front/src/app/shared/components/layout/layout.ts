@@ -1,9 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { AuthService } from '@core/services/auth.service';
+import { Header } from '@shared/components/header/header';
+import { Sidebar } from '@shared/components/sidebar/sidebar';
 import { filter } from 'rxjs';
-import { AuthService } from '../../../core/services/auth.service';
-import { Header } from '../header/header';
-import { Sidebar } from '../sidebar/sidebar';
 
 @Component({
   selector: 'app-layout',

@@ -1,7 +1,7 @@
 import jwt from '@fastify/jwt';
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
-import { JWT_CONFIG } from '../config/jwt';
+import { JWT_CONFIG } from '@/config/jwt';
 
 async function jwtPlugin(app: FastifyInstance) {
   await app.register(jwt, {

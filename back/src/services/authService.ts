@@ -1,58 +1,57 @@
-import type { PrismaClient } from '../generated/prisma';
-import type { UserPublic, UserWithoutSensitive } from '../models/user';
+import type { PrismaClient } from '@/generated/prisma';
+import type { UserAuth } from '@/models/user';
 
-const PUBLIC_USER_SELECT_AUTH = {
-  id: true,
-  nombre: true,
-  correo: true,
-  cargoId: true,
-  cargo: {
-    select: {
-      id: true,
-      nombre: true,
-      nivel: true,
-    },
-  },
-  creadoEn: true,
-} as const;
-
-export class UserService {
+export class AuthService {
   constructor(private prisma: PrismaClient) {}
 
   /**
    * Obtiene un usuario por ID, solo campos públicos (sin password)
    * Útil para usar en la autenticación
+   * @returns El usuario encontrado o null si no se encuentra
    */
-  getUserByIdPublic(id: number): Promise<UserPublic | null> {
-    return this.prisma.usuario.findUnique({
-      where: { id, eliminadoEn: null },
-      select: PUBLIC_USER_SELECT_AUTH,
-    }) as Promise<UserPublic | null>;
-  }
-
-  /**
-   * Obtiene un usuario por ID, excluyendo eliminados lógicamente
-   */
-  getUserById(id: number): Promise<UserWithoutSensitive | null> {
+  getUserByIdAuth(id: number): Promise<UserAuth | null> {
     return this.prisma.usuario.findUnique({
       where: { id, eliminadoEn: null },
       select: {
         id: true,
         nombre: true,
         correo: true,
-        cargoId: true,
-        creadoEn: true,
-        actualizadoEn: true,
+        cargo: {
+          select: {
+            id: true,
+            nombre: true,
+            nivel: true,
+          },
+        },
       },
-    }) as Promise<UserWithoutSensitive | null>;
+    }) as Promise<UserAuth | null>;
   }
 
   /**
-   * Obtiene un usuario por correo, excluyendo eliminados lógicamente
+   * Obtiene la lista de cargos activos para configuración
+   * @returns Lista de cargos con nombre y nivel
    */
-  getUserByEmail(correo: string) {
+  getCargosHierarchy() {
+    return this.prisma.cargo.findMany({
+      where: {
+        eliminadoEn: null, // Solo cargos activos
+      },
+      select: {
+        nombre: true,
+        nivel: true,
+      },
+      orderBy: {
+        nivel: 'asc', // Ordenar por nivel ascendente
+      },
+    });
+  }
+
+  loginUser(email: string) {
     return this.prisma.usuario.findUnique({
-      where: { correo, eliminadoEn: null },
+      where: {
+        correo: email.toLowerCase().trim(),
+        eliminadoEn: null, // Solo usuarios activos
+      },
       include: {
         cargo: {
           select: {
@@ -62,6 +61,26 @@ export class UserService {
           },
         },
       },
+    });
+  }
+
+  changePassword(userId: number) {
+    return this.prisma.usuario.findUnique({
+      where: {
+        id: userId,
+        eliminadoEn: null,
+      },
+      select: {
+        id: true,
+        contrasena: true,
+      },
+    });
+  }
+
+  updatePassword(userId: number, newPassword: string) {
+    return this.prisma.usuario.update({
+      where: { id: userId },
+      data: { contrasena: newPassword },
     });
   }
 }

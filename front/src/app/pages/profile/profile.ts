@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService } from '../../core/services/auth.service';
-import { getCargoColors } from '../../shared/utils/cargo-colors.util';
+import { AuthService } from '@core/services/auth.service';
+import { getCargoColors } from '@shared/utils/cargo-colors.util';
 
 @Component({
   selector: 'app-profile',

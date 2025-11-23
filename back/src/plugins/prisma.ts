@@ -1,7 +1,7 @@
+import { PrismaClient } from '@/generated/prisma/index';
 import fastifyPrisma from '@joggr/fastify-prisma';
 import type { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
-import { PrismaClient } from '../generated/prisma/index';
 
 // Extiende el tipo de FastifyInstance para incluir prisma (REQUERIDO para tipos)
 declare module 'fastify' {

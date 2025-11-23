@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { AuthenticatedUser, JwtPayload } from '../models/auth';
+import type { AuthenticatedUser, JwtPayload } from '@/models/auth';
 // Importar extensiones de tipos de Fastify
-import '../models/fastify';
+import '@/models/fastify';
 
 /**
  *? Verificar si un token está revocado
