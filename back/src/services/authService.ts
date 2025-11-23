@@ -49,8 +49,8 @@ export class AuthService {
   loginUser(email: string) {
     return this.prisma.usuario.findUnique({
       where: {
-        correo: email.toLowerCase().trim(),
-        eliminadoEn: null, // Solo usuarios activos
+        correo: email,
+        eliminadoEn: null,
       },
       include: {
         cargo: {

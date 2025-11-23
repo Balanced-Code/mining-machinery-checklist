@@ -5,4 +5,5 @@ export {
   getUsuariosSchema,
   resetPasswordSchema,
   updateUsuarioSchema,
+  getCargosSchema,
 } from './schemas';

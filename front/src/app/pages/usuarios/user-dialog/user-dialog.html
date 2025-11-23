@@ -59,6 +59,7 @@
           required
           email
           [class.error]="correoInput.invalid && correoInput.touched"
+          [disabled]="mode() === 'edit'"
           #correoInput="ngModel"
         />
       </div>

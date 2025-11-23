@@ -50,11 +50,13 @@ export const putUsuariosRoutes: FastifyPluginAsync = async (
         return reply.send({
           success: true,
           message: 'Usuario actualizado correctamente',
-          data: {
+          user: {
             id: updatedUsuario.id,
             nombre: updatedUsuario.nombre,
             correo: updatedUsuario.correo,
-            cargo: updatedUsuario.cargo.nombre,
+            cargo: {
+              nombre: updatedUsuario.cargo.nombre,
+            },
           },
         });
       } catch (error) {

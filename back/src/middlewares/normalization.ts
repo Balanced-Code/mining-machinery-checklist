@@ -13,7 +13,7 @@ export const setupNormalizationHooks = (fastify: FastifyInstance) => {
     const params = request.params as Record<string, unknown> | undefined;
 
     // Campos que necesitan normalización
-    const fieldsToNormalize = ['nombre', 'correo'];
+    const fieldsToNormalize = ['correo'];
 
     // Normalizar body
     if (body && typeof body === 'object') {

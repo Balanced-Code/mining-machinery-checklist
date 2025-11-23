@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -8,7 +8,10 @@ import {
   User,
   UserDialogMode,
 } from '@core/models/user.model';
+import { AuthService } from '@core/services/auth.service';
+import { UsuariosService } from '@core/services/usuarios.service';
 import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
+import { ToastService } from '@shared/services/toast.service';
 import { getCargoColors } from '@shared/utils/cargo-colors.util';
 import { UserDialog } from './user-dialog/user-dialog';
 
@@ -29,9 +32,12 @@ interface Ordenamiento {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Usuarios {
-  // Signals para estado
-  protected users = signal<User[]>([]);
-  protected loading = signal(false);
+  // Servicios inyectados
+  private readonly usuariosService = inject(UsuariosService);
+  private readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
+
+  // Signals para estado local (filtros y UI)
   protected searchQuery = signal('');
   protected selectedCargoId = signal<number | null>(null);
   protected ordenamiento = signal<Ordenamiento>({
@@ -50,14 +56,51 @@ export class Usuarios {
   protected userToReset = signal<User | undefined>(undefined);
   protected userToDelete = signal<User | undefined>(undefined);
 
-  // Cargos disponibles para el select
-  protected cargos = signal<Cargo[]>([
-    { id: 1, nombre: 'Operador', nivel: 1 },
-    { id: 2, nombre: 'Técnico Mecánico', nivel: 2 },
-    { id: 3, nombre: 'Supervisor', nivel: 2 },
-    { id: 4, nombre: 'Inspector', nivel: 3 },
-    { id: 5, nombre: 'Administrador', nivel: 4 },
-  ]);
+  // Computed: usuarios del servicio (reactivo)
+  protected users = this.usuariosService.usuarios;
+  protected loading = this.usuariosService.loading;
+
+  // Computed: cargos desde AuthService
+  // Signal para cargos cargados desde backend
+  protected cargosSignal = signal<Cargo[]>([]);
+
+  // Computed: cargos (ahora simplemente devuelve el valor del signal)
+  protected cargos = computed(() => this.cargosSignal());
+
+  // Computed: Nivel del usuario actual
+  protected currentUserLevel = computed(() => {
+    return this.authService.user()?.cargo.nivel;
+  });
+
+  // Computed: ID del usuario actual
+  protected currentUserId = computed(() => {
+    return this.authService.user()?.id;
+  });
+
+  /**
+   * Verifica si el usuario actual puede editar/eliminar a otro usuario
+   * No puede editar:
+   * - A sí mismo
+   * - A usuarios con su mismo nivel o superior (mayor jerarquía)
+   */
+  protected canEditUser(user: User): boolean {
+    const currentLevel = this.currentUserLevel();
+    const currentId = this.currentUserId();
+
+    // Si es el mismo usuario, no puede editarlo
+    if (user.id === currentId) {
+      return false;
+    }
+
+    // Si no hay nivel actual, denegar por seguridad
+    if (currentLevel === undefined) {
+      return false;
+    }
+
+    // No puede editar usuarios con nivel >= al suyo
+    // (Recordar: nivel mayor = más jerarquía)
+    return user.cargo.nivel < currentLevel;
+  }
 
   // Computed: usuarios filtrados por búsqueda, rol y ordenamiento
   protected filteredUsers = computed(() => {
@@ -123,6 +166,7 @@ export class Usuarios {
   });
 
   constructor() {
+    // Cargar usuarios al inicializar el componente
     this.loadUsers();
   }
 
@@ -133,47 +177,19 @@ export class Usuarios {
 
   /**
    * Cargar usuarios desde el backend
-   * TODO: Implementar llamada HTTP real
    */
-  protected loadUsers(): void {
-    this.loading.set(true);
-
-    // Mock data - remover cuando tengas el endpoint
-    setTimeout(() => {
-      this.users.set([
-        {
-          id: 1,
-          nombre: 'Juan Pérez',
-          correo: 'juan.perez@normet.com',
-          cargo: { id: 4, nombre: 'Inspector', nivel: 3 },
-        },
-        {
-          id: 2,
-          nombre: 'María García',
-          correo: 'maria.garcia@normet.com',
-          cargo: { id: 3, nombre: 'Supervisor', nivel: 2 },
-        },
-        {
-          id: 3,
-          nombre: 'Carlos López',
-          correo: 'carlos.lopez@normet.com',
-          cargo: { id: 2, nombre: 'Técnico Mecánico', nivel: 2 },
-        },
-        {
-          id: 4,
-          nombre: 'Ana Martínez',
-          correo: 'ana.martinez@normet.com',
-          cargo: { id: 2, nombre: 'Técnico Mecánico', nivel: 2 },
-        },
-        {
-          id: 5,
-          nombre: 'Roberto Silva',
-          correo: 'roberto.silva@normet.com',
-          cargo: { id: 1, nombre: 'Operador', nivel: 1 },
-        },
+  protected async loadUsers(): Promise<void> {
+    try {
+      const [_, cargos] = await Promise.all([
+        this.usuariosService.getAll(),
+        this.usuariosService.getCargos(),
       ]);
-      this.loading.set(false);
-    }, 500);
+
+      this.cargosSignal.set(cargos);
+    } catch (error) {
+      this.toastService.error('Error al cargar los datos');
+      console.error('Error al cargar datos:', error);
+    }
   }
 
   /**
@@ -277,28 +293,40 @@ export class Usuarios {
 
   /**
    * Crear nuevo usuario
-   * TODO: Implementar llamada HTTP real
    */
-  private createUser(data: CreateUsuarioRequest): void {
-    console.log('Crear usuario:', data);
-    // Aquí iría la llamada HTTP
-    // this.http.post('/users', data).subscribe(...)
+  private async createUser(data: CreateUsuarioRequest): Promise<void> {
+    try {
+      const result = await this.usuariosService.create(data);
 
-    this.closeDialog();
-    this.loadUsers();
+      if (result) {
+        this.toastService.success(`Usuario creado exitosamente. Contraseña: ${result.password}`);
+        this.closeDialog();
+      } else {
+        this.toastService.error('Error al crear el usuario');
+      }
+    } catch (error) {
+      console.error('Error al crear usuario:', error);
+      // El error ya fue manejado por el servicio y mostrado en toast
+    }
   }
 
   /**
    * Actualizar usuario existente
-   * TODO: Implementar llamada HTTP real
    */
-  private updateUser(id: number, data: UpdateUsuarioRequest): void {
-    console.log('Actualizar usuario:', id, data);
-    // Aquí iría la llamada HTTP
-    // this.http.put(`/users/${id}`, data).subscribe(...)
+  private async updateUser(id: number, data: UpdateUsuarioRequest): Promise<void> {
+    try {
+      const success = await this.usuariosService.update(id, data);
 
-    this.closeDialog();
-    this.loadUsers();
+      if (success) {
+        this.toastService.success('Usuario actualizado exitosamente');
+        this.closeDialog();
+      } else {
+        this.toastService.error('Error al actualizar el usuario');
+      }
+    } catch (error) {
+      console.error('Error al actualizar usuario:', error);
+      // El error ya fue manejado por el servicio
+    }
   }
 
   /**
@@ -313,19 +341,25 @@ export class Usuarios {
   /**
    * Confirmar restablecimiento de contraseña
    */
-  protected confirmResetPassword(): void {
+  protected async confirmResetPassword(): Promise<void> {
     const user = this.userToReset();
     if (!user) return;
 
-    console.log('Restablecer contraseña:', user.id);
-    // Aquí iría la llamada HTTP
-    // this.http.post(`/users/${user.id}/reset-password`).subscribe(...)
+    try {
+      const newPassword = await this.usuariosService.resetPassword(user.id);
 
-    this.showResetConfirm.set(false);
-    this.userToReset.set(undefined);
-
-    // TODO: Mostrar toast de éxito en lugar de alert
-    alert(`La contraseña de ${user.nombre} ha sido restablecida a: Password123?`);
+      if (newPassword) {
+        this.toastService.success(`Contraseña de ${user.nombre} restablecida a: ${newPassword}`);
+      } else {
+        this.toastService.error('Error al restablecer la contraseña');
+      }
+    } catch (error) {
+      console.error('Error al restablecer contraseña:', error);
+      // El error ya fue manejado por el servicio
+    } finally {
+      this.showResetConfirm.set(false);
+      this.userToReset.set(undefined);
+    }
   }
 
   /**
@@ -334,6 +368,26 @@ export class Usuarios {
   protected cancelResetPassword(): void {
     this.showResetConfirm.set(false);
     this.userToReset.set(undefined);
+  }
+
+  /**
+   * Handler para reset password desde el diálogo
+   */
+  protected async handleDialogResetPassword(): Promise<void> {
+    const user = this.selectedUser();
+    if (!user) return;
+
+    try {
+      const newPassword = await this.usuariosService.resetPassword(user.id);
+
+      if (newPassword) {
+        this.toastService.success(`Contraseña restablecida a: ${newPassword}`);
+      } else {
+        this.toastService.error('Error al restablecer la contraseña');
+      }
+    } catch (error) {
+      console.error('Error al restablecer contraseña:', error);
+    }
   }
 
   /**
@@ -348,17 +402,25 @@ export class Usuarios {
   /**
    * Confirmar eliminación de usuario
    */
-  protected confirmDeleteUser(): void {
+  protected async confirmDeleteUser(): Promise<void> {
     const user = this.userToDelete();
     if (!user) return;
 
-    console.log('Eliminar usuario:', user.id);
-    // Aquí iría la llamada HTTP
-    // this.http.delete(`/users/${user.id}`).subscribe(...)
+    try {
+      const success = await this.usuariosService.delete(user.id);
 
-    this.showDeleteConfirm.set(false);
-    this.userToDelete.set(undefined);
-    this.loadUsers();
+      if (success) {
+        this.toastService.success(`Usuario ${user.nombre} eliminado exitosamente`);
+      } else {
+        this.toastService.error('Error al eliminar el usuario');
+      }
+    } catch (error) {
+      console.error('Error al eliminar usuario:', error);
+      // El error ya fue manejado por el servicio
+    } finally {
+      this.showDeleteConfirm.set(false);
+      this.userToDelete.set(undefined);
+    }
   }
 
   /**

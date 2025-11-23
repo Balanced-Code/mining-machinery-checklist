@@ -36,6 +36,7 @@ export class UserDialog implements OnInit {
   // Outputs
   @Output() onClose = new EventEmitter<void>();
   @Output() onSave = new EventEmitter<CreateUsuarioRequest | UpdateUsuarioRequest>();
+  @Output() onResetPassword = new EventEmitter<void>();
 
   // State
   protected saving = signal(false);
@@ -77,11 +78,23 @@ export class UserDialog implements OnInit {
 
     this.saving.set(true);
 
-    const data: CreateUsuarioRequest | UpdateUsuarioRequest = {
-      nombre: this.formData.nombre,
-      correo: this.formData.correo,
-      cargoId: this.formData.cargoId!,
-    };
+    let data: CreateUsuarioRequest | UpdateUsuarioRequest;
+
+    if (this.mode() === 'create') {
+      data = {
+        nombre: this.formData.nombre,
+        correo: this.formData.correo,
+        cargoId: this.formData.cargoId!,
+      };
+    } else {
+      // En modo edición, enviamos nombre y cargoId siempre.
+      // El backend se encarga de verificar si hubo cambios reales.
+      // No enviamos correo porque no es editable.
+      data = {
+        nombre: this.formData.nombre,
+        cargoId: Number(this.formData.cargoId!),
+      };
+    }
 
     this.onSave.emit(data);
     this.saving.set(false);
@@ -99,10 +112,7 @@ export class UserDialog implements OnInit {
    */
   protected confirmResetPassword(): void {
     this.showResetConfirm.set(false);
-    console.log('Restablecer contraseña desde diálogo');
-    // Aquí se llamaría al servicio para restablecer contraseña
-    // TODO: Mostrar toast de éxito en lugar de alert
-    alert('La contraseña ha sido restablecida a: Password123?');
+    this.onResetPassword.emit();
   }
 
   /**

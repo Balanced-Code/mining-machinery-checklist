@@ -338,6 +338,12 @@
   color: red;
 }
 
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Footer de tabla */
 .table-footer {
   padding: 13px 24px;

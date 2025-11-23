@@ -3,7 +3,7 @@
  */
 export const usuarioVistaSchema = {
   type: 'object',
-  required: ['id', 'nombre', 'correo', 'cargo', 'creadoEn'],
+  required: ['id', 'nombre', 'correo', 'cargo', 'eliminadoEn'],
   properties: {
     id: { type: 'number' },
     nombre: { type: 'string' },
@@ -108,5 +108,22 @@ export const resetPasswordResponseSchema = {
     success: { type: 'boolean' },
     message: { type: 'string' },
     temporaryPassword: { type: 'string' },
+  },
+} as const;
+
+/**
+ * Schema de lista de cargos
+ */
+export const cargosListResponseSchema = {
+  description: 'Lista de cargos disponibles',
+  type: 'array',
+  items: {
+    type: 'object',
+    required: ['id', 'nombre', 'nivel'],
+    properties: {
+      id: { type: 'number' },
+      nombre: { type: 'string' },
+      nivel: { type: 'number' },
+    },
   },
 } as const;

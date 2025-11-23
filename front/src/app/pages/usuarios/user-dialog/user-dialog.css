@@ -178,6 +178,12 @@
   background: rgb(255 0 0 / 5%);
 }
 
+.form-input:disabled {
+  background: rgb(0 0 0 / 3%);
+  color: rgb(0 0 0 / 50%);
+  cursor: not-allowed;
+}
+
 .form-hint {
   margin: 0;
   font-family: Inter, sans-serif;

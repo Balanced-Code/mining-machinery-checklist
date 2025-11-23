@@ -1,6 +1,10 @@
 import { requireCargoLevel } from '@/middlewares/auth';
-import type { UsersDetails } from '@/models/user';
-import { getUsuarioByIdSchema, getUsuariosSchema } from '@/schemas/usuarios';
+import type { CargosDetails, UsersDetails } from '@/models/user';
+import {
+  getCargosSchema,
+  getUsuarioByIdSchema,
+  getUsuariosSchema,
+} from '@/schemas/usuarios';
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
 
 export const getUsuariosRoutes: FastifyPluginAsync = async (
@@ -24,6 +28,27 @@ export const getUsuariosRoutes: FastifyPluginAsync = async (
       } catch (error) {
         fastify.log.error({ error }, 'Error al obtener usuarios');
         return reply.internalServerError('Error al obtener usuarios');
+      }
+    }
+  );
+
+  /**
+   * GET /usuarios/cargos - Obtener listado de cargos
+   * Solo administradores pueden acceder a esta ruta
+   * @returns Lista de cargos
+   */
+  fastify.get<{ Reply: CargosDetails[] }>(
+    '/cargos',
+    {
+      schema: getCargosSchema,
+    },
+    async (request, reply) => {
+      try {
+        const result = await fastify.services.usuarios.getAllCargos();
+        return reply.send(result);
+      } catch (error) {
+        fastify.log.error({ error }, 'Error al obtener cargos');
+        return reply.internalServerError('Error al obtener cargos');
       }
     }
   );

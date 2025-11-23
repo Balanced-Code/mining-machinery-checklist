@@ -41,6 +41,17 @@ export class UsuariosService {
   }
 
   /**
+   * Obtener todos los cargos disponibles
+   */
+  async getAllCargos(): Promise<CargosDetails[]> {
+    return this.prisma.cargo.findMany({
+      orderBy: {
+        nivel: 'asc',
+      },
+    });
+  }
+
+  /**
    * Obtener un usuario por ID
    * @param id ID del usuario
    * @returns Usuario encontrado
@@ -114,12 +125,38 @@ export class UsuariosService {
     return this.prisma.usuario.update({
       where: { id },
       data: userData,
+      select: {
+        id: true,
+        nombre: true,
+        correo: true,
+        cargo: {
+          select: {
+            id: true,
+            nombre: true,
+            nivel: true,
+          },
+        },
+        eliminadoEn: true,
+      },
     });
   }
 
-  getDeleteUsuario(id: number): Promise<UsersDetails> {
-    return this.prisma.usuario.delete({
+  getDeleteUsuario(id: number): Promise<UsersDetails | null> {
+    return this.prisma.usuario.findFirst({
       where: { id, eliminadoEn: null },
+      select: {
+        id: true,
+        nombre: true,
+        correo: true,
+        cargo: {
+          select: {
+            id: true,
+            nombre: true,
+            nivel: true,
+          },
+        },
+        eliminadoEn: true,
+      },
     });
   }
 

@@ -8,9 +8,10 @@
 export const CORREO_EMPRESA_PATTERN = '^[a-zA-Z0-9._%+-]+@normet\\.com$';
 
 /**
- * Patrón para validar nombres (solo letras)
+ * Patrón para validar nombres (letras, espacios, acentos, ñ)
+ * Permite nombres completos como "Juan Pérez" o "María José García"
  */
-export const NOMBRE_PATTERN = '^[A-Za-z]+$';
+export const NOMBRE_PATTERN = '^[A-Za-zÀ-ÿ\\u00f1\\u00d1\\s]+$';
 
 /**
  * Patrón para contraseñas seguras

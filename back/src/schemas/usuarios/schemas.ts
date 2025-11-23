@@ -9,6 +9,7 @@ import {
   updateUsuarioOperationResponseSchema,
   usuariosListaResponseSchema,
   usuarioVistaSchema,
+  cargosListResponseSchema,
 } from './response';
 
 /**
@@ -130,6 +131,25 @@ export const resetPasswordSchema = {
     200: resetPasswordResponseSchema,
     404: {
       description: 'Usuario no encontrado',
+      type: 'object',
+      properties: {
+        error: { type: 'string' },
+        message: { type: 'string' },
+      },
+    },
+  },
+} as const;
+
+/**
+ * Schema para GET /usuarios/cargos - Lista de Cargos
+ */
+export const getCargosSchema = {
+  description: 'Obtener lista de cargos disponibles',
+  tags: ['Usuarios'],
+  response: {
+    200: cargosListResponseSchema,
+    401: {
+      description: 'No autorizado',
       type: 'object',
       properties: {
         error: { type: 'string' },
