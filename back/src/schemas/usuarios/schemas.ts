@@ -1,12 +1,12 @@
 import {
   createUsuarioBodySchema,
-  updateUsusarioBodySchema,
+  updateUsuarioBodySchema,
   usuarioIdParamSchema,
 } from './request';
 import {
   deleteUsuarioResponseSchema,
   resetPasswordResponseSchema,
-  usuarioOperationResponseSchema,
+  updateUsuarioOperationResponseSchema,
   usuariosListaResponseSchema,
   usuarioVistaSchema,
 } from './response';
@@ -58,7 +58,7 @@ export const createUsuarioSchema = {
   tags: ['Usuarios'],
   body: createUsuarioBodySchema,
   response: {
-    201: usuarioOperationResponseSchema,
+    201: updateUsuarioOperationResponseSchema,
     400: {
       description: 'Datos inválidos',
       type: 'object',
@@ -85,9 +85,9 @@ export const updateUsuarioSchema = {
   description: 'Actualizar un usuario existente',
   tags: ['Usuarios'],
   params: usuarioIdParamSchema,
-  body: updateUsusarioBodySchema,
+  body: updateUsuarioBodySchema,
   response: {
-    200: usuarioOperationResponseSchema,
+    200: updateUsuarioOperationResponseSchema,
     404: {
       description: 'Usuario no encontrado',
       type: 'object',

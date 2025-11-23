@@ -7,7 +7,7 @@ export const getUsuariosRoutes: FastifyPluginAsync = async (
   fastify: FastifyInstance
 ) => {
   /**
-   * GET /users/ - Obtener listado de usuarios
+   * GET /usuarios - Obtener listado de usuarios
    * Solo administradores pueden acceder a esta ruta
    * @returns Lista de usuarios con información de cargo
    */
@@ -29,7 +29,7 @@ export const getUsuariosRoutes: FastifyPluginAsync = async (
   );
 
   /**
-   * GET /users/:id - Obtener usuario por ID
+   * GET /usuarios/:id - Obtener usuario por ID
    * Solo administradores pueden acceder a esta ruta
    * @param id ID del usuario
    * @returns Usuario encontrado

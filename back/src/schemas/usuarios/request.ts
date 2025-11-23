@@ -32,9 +32,9 @@ export const createUsuarioBodySchema = {
 /**
  * Schemas para actualizar usuarios
  */
-export const updateUsusarioBodySchema = {
+export const updateUsuarioBodySchema = {
   type: 'object',
-  required: ['nombre', 'correo', 'contrasena', 'cargoId'],
+  required: ['nombre', 'cargoId'],
   properties: {
     nombre: {
       type: 'string',
@@ -42,11 +42,13 @@ export const updateUsusarioBodySchema = {
       maxLength: 80,
       pattern: NOMBRE_PATTERN,
     },
-    correo: {},
+    correo: {
+      type: 'string',
+      format: 'email',
+      pattern: CORREO_EMPRESA_PATTERN,
+    },
     contrasena: {
       type: 'string',
-      format: 'password',
-      minLength: 8,
       pattern: PASSWORD_SEGURO_PATTERN,
     },
     cargoId: {

@@ -24,6 +24,27 @@ export const usuarioVistaSchema = {
   },
 } as const;
 
+export const usuarioUpdateSchema = {
+  type: 'object',
+  required: ['id', 'nombre', 'cargo'],
+  properties: {
+    id: { type: 'number' },
+    nombre: { type: 'string' },
+    correo: {
+      type: 'string',
+      format: 'email',
+    },
+    contrasena: { type: 'string' },
+    cargo: {
+      type: 'object',
+      required: ['nombre'],
+      properties: {
+        nombre: { type: 'string' },
+      },
+    },
+  },
+} as const;
+
 /**
  *  Schema de lista de usuarios
  */
@@ -53,6 +74,17 @@ export const usuarioOperationResponseSchema = {
   },
 } as const;
 
+export const updateUsuarioOperationResponseSchema = {
+  description: 'Usuario actualizado',
+  type: 'object',
+  required: ['success', 'message', 'user'],
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+    user: usuarioUpdateSchema,
+  },
+} as const;
+
 /**
  * Schema de respuesta de eliminación
  */
@@ -71,6 +103,7 @@ export const deleteUsuarioResponseSchema = {
 export const resetPasswordResponseSchema = {
   description: 'Contraseña restablecida',
   type: 'object',
+  required: ['success', 'message', 'temporaryPassword'],
   properties: {
     success: { type: 'boolean' },
     message: { type: 'string' },

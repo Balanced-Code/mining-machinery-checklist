@@ -25,14 +25,21 @@ export interface CreateUserData {
   cargoId: number;
 }
 
+export interface UpdateUserData {
+  nombre?: string;
+  cargoId?: number;
+}
+
 /**
  * Datos para actualizar un usuario
  */
-export interface UpdateUserData {
-  nombre?: string;
-  correo?: string;
-  contrasena?: string;
-  cargoId?: number;
+export interface UpdatePassUserData {
+  id: number;
+  nombre: string;
+  correo: string;
+  cargo: {
+    nombre: string;
+  };
 }
 
 export interface UserAuth {
@@ -45,6 +52,12 @@ export interface UserAuth {
     nombre: string;
     nivel: number;
   };
+}
+
+export interface CargosDetails {
+  id: number;
+  nombre: string;
+  nivel: number;
 }
 
 /**
