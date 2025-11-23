@@ -15,6 +15,17 @@ export interface UsersDetails {
   eliminadoEn: Date | null;
 }
 
+export interface NewUserDetails {
+  id: number;
+  nombre: string;
+  correo: string;
+  cargo: {
+    id: number;
+    nombre: string;
+    nivel: number;
+  };
+}
+
 /**
  * Datos para crear un usuario
  */

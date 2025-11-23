@@ -6,6 +6,7 @@ export interface User {
   nombre: string;
   correo: string;
   cargo: Cargo;
+  eliminadoEn: string | null;
 }
 
 /**

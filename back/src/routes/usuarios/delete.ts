@@ -20,8 +20,8 @@ export const deleteUsersRoutes: FastifyPluginAsync = async (
       try {
         const { id } = request.params;
 
-        // Verificar que el usuario existe y no está eliminado
-        const usuario = await fastify.services.usuarios.getDeleteUsuario(id);
+        // Verificar que el usuario existe y no este eliminado
+        const usuario = await fastify.services.usuarios.getActiveUsuario(id);
 
         if (!usuario) {
           return reply.notFound('Usuario no encontrado o eliminado');

@@ -3,6 +3,7 @@ export {
   deleteUsuarioSchema,
   getUsuarioByIdSchema,
   getUsuariosSchema,
+  reactiveUsuarioSchema,
   resetPasswordSchema,
   updateUsuarioSchema,
   getCargosSchema,

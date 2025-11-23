@@ -10,6 +10,7 @@ import {
   usuariosListaResponseSchema,
   usuarioVistaSchema,
   cargosListResponseSchema,
+  reactiveUsuarioResponseSchema,
 } from './response';
 
 /**
@@ -150,6 +151,23 @@ export const getCargosSchema = {
     200: cargosListResponseSchema,
     401: {
       description: 'No autorizado',
+      type: 'object',
+      properties: {
+        error: { type: 'string' },
+        message: { type: 'string' },
+      },
+    },
+  },
+} as const;
+
+export const reactiveUsuarioSchema = {
+  description: 'Usuario reactivado',
+  tags: ['Usuarios'],
+  params: usuarioIdParamSchema,
+  response: {
+    200: reactiveUsuarioResponseSchema,
+    404: {
+      description: 'Usuario no encontrado',
       type: 'object',
       properties: {
         error: { type: 'string' },

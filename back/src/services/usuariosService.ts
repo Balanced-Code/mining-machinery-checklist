@@ -1,6 +1,7 @@
 import type {
   CargosDetails,
   CreateUserData,
+  NewUserDetails,
   UpdatePassUserData,
   UpdateUserData,
   UsersDetails,
@@ -98,9 +99,21 @@ export class UsuariosService {
     }) as Promise<CargosDetails | null>;
   }
 
-  createUsuario(userData: CreateUserData): Promise<UsersDetails> {
+  createUsuario(userData: CreateUserData): Promise<NewUserDetails> {
     return this.prisma.usuario.create({
-      data: userData,
+      data: { ...userData, creadoEn: new Date() },
+      select: {
+        id: true,
+        nombre: true,
+        correo: true,
+        cargo: {
+          select: {
+            id: true,
+            nombre: true,
+            nivel: true,
+          },
+        },
+      },
     });
   }
 
@@ -141,7 +154,12 @@ export class UsuariosService {
     });
   }
 
-  getDeleteUsuario(id: number): Promise<UsersDetails | null> {
+  /**
+   * Obtener un usuario activo
+   * @param id ID del usuario
+   * @returns Usuario activo
+   */
+  getActiveUsuario(id: number): Promise<UsersDetails | null> {
     return this.prisma.usuario.findFirst({
       where: { id, eliminadoEn: null },
       select: {
@@ -166,6 +184,34 @@ export class UsuariosService {
         where: { id },
         data: { eliminadoEn: new Date() },
         select: { id: true },
+      })
+      .then(() => undefined);
+  }
+
+  getDeleteUsuario(id: number): Promise<UsersDetails | null> {
+    return this.prisma.usuario.findFirst({
+      where: { id, eliminadoEn: { not: null } },
+      select: {
+        id: true,
+        nombre: true,
+        correo: true,
+        cargo: {
+          select: {
+            id: true,
+            nombre: true,
+            nivel: true,
+          },
+        },
+        eliminadoEn: true,
+      },
+    });
+  }
+
+  reactiveUsuario(id: number): Promise<void> {
+    return this.prisma.usuario
+      .update({
+        where: { id },
+        data: { eliminadoEn: null, actualizadoEn: new Date() },
       })
       .then(() => undefined);
   }

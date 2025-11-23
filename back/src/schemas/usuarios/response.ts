@@ -103,11 +103,11 @@ export const deleteUsuarioResponseSchema = {
 export const resetPasswordResponseSchema = {
   description: 'Contraseña restablecida',
   type: 'object',
-  required: ['success', 'message', 'temporaryPassword'],
+  required: ['success', 'message', 'user'],
   properties: {
     success: { type: 'boolean' },
     message: { type: 'string' },
-    temporaryPassword: { type: 'string' },
+    user: usuarioUpdateSchema,
   },
 } as const;
 
@@ -125,5 +125,15 @@ export const cargosListResponseSchema = {
       nombre: { type: 'string' },
       nivel: { type: 'number' },
     },
+  },
+} as const;
+
+export const reactiveUsuarioResponseSchema = {
+  description: 'Usuario reactivado',
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+    user: usuarioUpdateSchema,
   },
 } as const;

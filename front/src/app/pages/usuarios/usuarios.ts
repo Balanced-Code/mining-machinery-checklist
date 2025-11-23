@@ -53,8 +53,10 @@ export class Usuarios {
   // Confirm dialogs
   protected showResetConfirm = signal(false);
   protected showDeleteConfirm = signal(false);
+  protected showReactivateConfirm = signal(false);
   protected userToReset = signal<User | undefined>(undefined);
   protected userToDelete = signal<User | undefined>(undefined);
+  protected userToReactivate = signal<User | undefined>(undefined);
 
   // Computed: usuarios del servicio (reactivo)
   protected users = this.usuariosService.usuarios;
@@ -391,6 +393,42 @@ export class Usuarios {
   }
 
   /**
+   * Handler para cambiar estado desde el diálogo
+   */
+  protected async handleDialogToggleStatus(): Promise<void> {
+    const user = this.selectedUser();
+    if (!user) return;
+
+    const isActive = user.eliminadoEn === null;
+
+    try {
+      let success: boolean;
+
+      if (isActive) {
+        // Desactivar usuario
+        success = await this.usuariosService.delete(user.id);
+        if (success) {
+          this.toastService.success(`Usuario ${user.nombre} desactivado exitosamente`);
+          this.closeDialog();
+        } else {
+          this.toastService.error('Error al desactivar el usuario');
+        }
+      } else {
+        // Activar usuario
+        success = await this.usuariosService.reactivate(user.id);
+        if (success) {
+          this.toastService.success(`Usuario ${user.nombre} activado exitosamente`);
+          this.closeDialog();
+        } else {
+          this.toastService.error('Error al activar el usuario');
+        }
+      }
+    } catch (error) {
+      console.error('Error al cambiar estado del usuario:', error);
+    }
+  }
+
+  /**
    * Eliminar usuario
    * TODO: Implementar llamada HTTP real
    */
@@ -429,5 +467,44 @@ export class Usuarios {
   protected cancelDeleteUser(): void {
     this.showDeleteConfirm.set(false);
     this.userToDelete.set(undefined);
+  }
+
+  /**
+   * Reactivar usuario
+   */
+  protected reactivateUser(user: User): void {
+    this.userToReactivate.set(user);
+    this.showReactivateConfirm.set(true);
+  }
+
+  /**
+   * Confirmar reactivación de usuario
+   */
+  protected async confirmReactivateUser(): Promise<void> {
+    const user = this.userToReactivate();
+    if (!user) return;
+
+    try {
+      const success = await this.usuariosService.reactivate(user.id);
+
+      if (success) {
+        this.toastService.success(`Usuario ${user.nombre} reactivado exitosamente`);
+      } else {
+        this.toastService.error('Error al reactivar el usuario');
+      }
+    } catch (error) {
+      console.error('Error al reactivar usuario:', error);
+    } finally {
+      this.showReactivateConfirm.set(false);
+      this.userToReactivate.set(undefined);
+    }
+  }
+
+  /**
+   * Cancelar reactivación de usuario
+   */
+  protected cancelReactivateUser(): void {
+    this.showReactivateConfirm.set(false);
+    this.userToReactivate.set(undefined);
   }
 }

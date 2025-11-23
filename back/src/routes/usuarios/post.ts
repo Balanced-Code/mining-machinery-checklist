@@ -1,6 +1,10 @@
 import { requireCargoLevel } from '@/middlewares/auth';
 import type { CreateUserData } from '@/models/user';
-import { createUsuarioSchema, resetPasswordSchema } from '@/schemas/usuarios';
+import {
+  createUsuarioSchema,
+  reactiveUsuarioSchema,
+  resetPasswordSchema,
+} from '@/schemas/usuarios';
 import bcrypt from 'bcrypt';
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
 
@@ -46,7 +50,9 @@ export const postUsuariosRoutes: FastifyPluginAsync = async (
             nombre: nuevoUsuario.nombre,
             correo: nuevoUsuario.correo,
             contrasena: 'Password123!',
-            cargo: nuevoUsuario.cargo.nombre.toLowerCase().trim(),
+            cargo: {
+              nombre: nuevoUsuario.cargo.nombre,
+            },
           },
         });
       } catch (error) {
@@ -88,12 +94,53 @@ export const postUsuariosRoutes: FastifyPluginAsync = async (
             nombre: updatedUsuario.nombre,
             correo: updatedUsuario.correo,
             contrasena: 'Password123!',
-            cargo: updatedUsuario.cargo.nombre.toLowerCase().trim(),
+            cargo: {
+              nombre: updatedUsuario.cargo.nombre,
+            },
           },
         });
       } catch (error) {
         fastify.log.error({ error }, 'Error al restablecer la contraseña:');
         return reply.internalServerError('Error al restablecer la contraseña');
+      }
+    }
+  );
+
+  /**
+   * POST /usuarios/:id/reactive - Reactivar una cuenta de usuario
+   * Solo administradores pueden acceder a esta ruta
+   * @returns El usuario con la cuenta reactivada
+   */
+  fastify.post<{ Params: { id: number } }>(
+    '/:id/reactive',
+    { preHandler: requireCargoLevel(4), schema: reactiveUsuarioSchema },
+    async (request, reply) => {
+      try {
+        const { id } = request.params;
+
+        const usuario = await fastify.services.usuarios.getDeleteUsuario(id);
+
+        if (!usuario) {
+          return reply.notFound('El usuario no existe o no esta eliminado');
+        }
+
+        await fastify.services.usuarios.reactiveUsuario(id);
+
+        return reply.send({
+          success: true,
+          message: 'Cuenta reactivada exitosamente',
+          user: {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            correo: usuario.correo,
+            cargo: {
+              nombre: usuario.cargo.nombre,
+            },
+          },
+        });
+      } catch (error) {
+        fastify.log.error({ error }, 'Error al reactivar la cuenta:');
+        return reply.internalServerError('Error al reactivar la cuenta');
       }
     }
   );

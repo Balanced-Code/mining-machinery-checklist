@@ -235,6 +235,38 @@ export class UsuariosService {
   }
 
   /**
+   * Reactiva un usuario (soft delete inverso)
+   * @param id ID del usuario a reactivar
+   * @returns true si se reactivó correctamente, false en caso contrario
+   */
+  async reactivate(id: number): Promise<boolean> {
+    this.loadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    try {
+      const response = await firstValueFrom(
+        this.http.post<{ success: boolean; message: string }>(
+          `${this.baseUrl}/usuarios/${id}/reactive`,
+          {}
+        )
+      );
+
+      if (response?.success) {
+        // Recargar la lista después de reactivar
+        await this.getAll();
+        return true;
+      }
+
+      return false;
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al reactivar el usuario');
+      throw err;
+    } finally {
+      this.loadingSignal.set(false);
+    }
+  }
+
+  /**
    * Maneja errores HTTP y actualiza el signal de error
    * @param err Error capturado
    * @param defaultMessage Mensaje por defecto si no hay mensaje específico

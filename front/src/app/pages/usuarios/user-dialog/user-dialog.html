@@ -38,9 +38,15 @@
           [(ngModel)]="formData.nombre"
           name="nombre"
           required
+          minlength="3"
+          maxlength="80"
+          pattern="^[A-Za-zÀ-ÿ\u00f1\u00d1\s]+$"
           [class.error]="nombreInput.invalid && nombreInput.touched"
           #nombreInput="ngModel"
         />
+        @if (nombreInput.invalid && nombreInput.touched) {
+        <p class="error-message">{{ getNombreError() }}</p>
+        }
       </div>
 
       <!-- Correo Electrónico Corporativo -->
@@ -58,10 +64,14 @@
           name="correo"
           required
           email
+          pattern="^[a-zA-Z0-9._%+-]+@normet\.com$"
           [class.error]="correoInput.invalid && correoInput.touched"
           [disabled]="mode() === 'edit'"
           #correoInput="ngModel"
         />
+        @if (correoInput.invalid && correoInput.touched && mode() === 'create') {
+        <p class="error-message">{{ getCorreoError() }}</p>
+        }
       </div>
 
       <!-- Rol del Usuario -->
@@ -88,8 +98,32 @@
         </div>
       </div>
 
-      <!-- Sección de Contraseña (solo en edición) -->
       @if (mode() === 'edit') {
+      <!-- Sección de Estado del Usuario (solo en edición) -->
+      <div class="status-section">
+        <div class="status-header">
+          <span class="material-icons">{{ isUserActive() ? 'check_circle' : 'cancel' }}</span>
+          <label>Estado de la Cuenta</label>
+        </div>
+        <div class="status-display" [class.active]="isUserActive()">
+          <span class="status-indicator"></span>
+          <span class="status-text">{{
+            isUserActive() ? 'Usuario Activo' : 'Usuario Desactivado'
+          }}</span>
+        </div>
+        <button
+          class="toggle-status-btn"
+          [class.deactivate]="isUserActive()"
+          [class.activate]="!isUserActive()"
+          (click)="toggleStatusClick()"
+          type="button"
+        >
+          <span class="material-icons">{{ isUserActive() ? 'block' : 'check_circle' }}</span>
+          {{ isUserActive() ? 'Desactivar Usuario' : 'Activar Usuario' }}
+        </button>
+      </div>
+
+      <!-- Sección de Contraseña (solo en edición) -->
       <div class="password-section">
         <div class="password-header">
           <span class="material-icons">lock</span>
@@ -146,5 +180,22 @@
   [type]="'warning'"
   (onConfirm)="confirmResetPassword()"
   (onCancel)="cancelResetPassword()"
+/>
+}
+
+<!-- Diálogo de confirmación para cambiar estado -->
+@if (showStatusConfirm()) {
+<app-confirm-dialog
+  [title]="isUserActive() ? 'Desactivar usuario' : 'Activar usuario'"
+  [message]="
+    isUserActive()
+      ? '¿Estás seguro de desactivar este usuario?\n\nEl usuario no podrá acceder al sistema hasta que sea reactivado.'
+      : '¿Estás seguro de activar este usuario?\n\nEl usuario podrá acceder al sistema nuevamente.'
+  "
+  [confirmText]="isUserActive() ? 'Desactivar' : 'Activar'"
+  [cancelText]="'Cancelar'"
+  [type]="isUserActive() ? 'danger' : 'info'"
+  (onConfirm)="confirmToggleStatus()"
+  (onCancel)="cancelToggleStatus()"
 />
 }
