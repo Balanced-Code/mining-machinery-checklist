@@ -26,4 +26,61 @@ export class AuthService {
       },
     }) as Promise<UserAuth | null>;
   }
+
+  /**
+   * Obtiene la lista de cargos activos para configuración
+   * @returns Lista de cargos con nombre y nivel
+   */
+  getCargosHierarchy() {
+    return this.prisma.cargo.findMany({
+      where: {
+        eliminadoEn: null, // Solo cargos activos
+      },
+      select: {
+        nombre: true,
+        nivel: true,
+      },
+      orderBy: {
+        nivel: 'asc', // Ordenar por nivel ascendente
+      },
+    });
+  }
+
+  loginUser(email: string) {
+    return this.prisma.usuario.findUnique({
+      where: {
+        correo: email.toLowerCase().trim(),
+        eliminadoEn: null, // Solo usuarios activos
+      },
+      include: {
+        cargo: {
+          select: {
+            id: true,
+            nombre: true,
+            nivel: true,
+          },
+        },
+      },
+    });
+  }
+
+  changePassword(userId: number) {
+    return this.prisma.usuario.findUnique({
+      where: {
+        id: userId,
+        eliminadoEn: null,
+      },
+      select: {
+        id: true,
+        contrasena: true,
+      },
+    });
+  }
+
+  updatePassword(userId: number, newPassword: string) {
+    return this.prisma.usuario.update({
+      where: { id: userId },
+      data: { contrasena: newPassword },
+    });
+  }
 }

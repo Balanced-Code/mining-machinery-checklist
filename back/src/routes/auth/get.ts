@@ -22,19 +22,8 @@ export const getAuthRoutes: FastifyPluginAsync = async (
     },
     async (request, reply) => {
       try {
-        // 1. Obtener todos los cargos activos de la base de datos
-        const cargos = await fastify.prisma.cargo.findMany({
-          where: {
-            eliminadoEn: null, // Solo cargos activos
-          },
-          select: {
-            nombre: true,
-            nivel: true,
-          },
-          orderBy: {
-            nivel: 'asc', // Ordenar por nivel ascendente
-          },
-        });
+        // 1. Obtener todos los cargos activos usando el servicio
+        const cargos = await fastify.services.auth.getCargosHierarchy();
 
         // 2. Transformar a formato de jerarquía: { "operador": 1, "supervisor": 2, ... }
         const hierarchy = cargos.reduce<Record<string, number>>(
@@ -87,18 +76,7 @@ export const getAuthRoutes: FastifyPluginAsync = async (
         }
 
         // 2. Retornar perfil del usuario
-        return reply.send({
-          user: {
-            id: usuario.id,
-            nombre: usuario.nombre,
-            correo: usuario.correo,
-            cargo: {
-              id: usuario.cargo.id,
-              nombre: usuario.cargo.nombre,
-              nivel: usuario.cargo.nivel,
-            },
-          },
-        });
+        return reply.send(usuario);
       } catch (error) {
         fastify.log.error({ error }, 'Error al obtener perfil de usuario');
         return reply.internalServerError(

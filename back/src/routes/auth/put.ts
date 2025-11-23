@@ -48,16 +48,9 @@ export const putAuthRoute: FastifyPluginAsync = async (
         }
 
         // 5. Obtener usuario de la BD con contraseña hasheada
-        const usuario = await fastify.prisma.usuario.findUnique({
-          where: {
-            id: request.currentUser.id,
-            eliminadoEn: null,
-          },
-          select: {
-            id: true,
-            contrasena: true,
-          },
-        });
+        const usuario = await fastify.services.auth.changePassword(
+          request.currentUser.id
+        );
 
         if (!usuario) {
           return reply.notFound('Usuario no encontrado');
@@ -77,14 +70,10 @@ export const putAuthRoute: FastifyPluginAsync = async (
         const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
         // 8. Actualizar contraseña en la BD
-        await fastify.prisma.usuario.update({
-          where: {
-            id: usuario.id,
-          },
-          data: {
-            contrasena: hashedNewPassword,
-          },
-        });
+        await fastify.services.auth.updatePassword(
+          usuario.id,
+          hashedNewPassword
+        );
 
         // 9. Revocar todos los tokens existentes (forzar re-login)
         // Esto es una buena práctica de seguridad
