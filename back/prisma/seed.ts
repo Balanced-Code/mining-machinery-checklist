@@ -171,43 +171,201 @@ async function main() {
     }),
   ]);
 
-  // Crear un template de ejemplo
-  console.log('ando template de inspección...');
-  await prisma.template.create({
-    data: {
-      nombre: 'REVISIÓN PUESTA EN MARCHA, REGULACIONES Y MOVIMIENTOS',
-      creadoPor: adminUser.id,
-      secciones: {
-        create: [
-          {
-            nombre: 'Puesta en marcha (primer arranque)',
-            orden: 1,
-            creadoPor: adminUser.id,
-          },
-          {
-            nombre: 'Verificación de niveles de fluidos',
-            orden: 2,
-            creadoPor: adminUser.id,
-          },
-          {
-            nombre: 'Revisión de sistema hidráulico',
-            orden: 3,
-            creadoPor: adminUser.id,
-          },
-          {
-            nombre: 'Prueba de movimientos básicos',
-            orden: 4,
-            creadoPor: adminUser.id,
-          },
-          {
-            nombre: 'Verificación de sistema eléctrico',
-            orden: 5,
-            creadoPor: adminUser.id,
-          },
-        ],
+  // Crear templates de ejemplo basados en los mocks del frontend
+  console.log('Creando templates de checklist...');
+  await Promise.all([
+    // Checklist 1
+    prisma.template.create({
+      data: {
+        nombre: 'Checklist 1',
+        creadoPor: adminUser.id,
+        secciones: {
+          create: [
+            {
+              nombre:
+                'Niveles de fluidos (aceite, motor, refrigerante, hidráulico) son correctos.',
+              orden: 1,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Presión de neumáticos correcta.',
+              orden: 2,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Estado de luces y señalización.',
+              orden: 3,
+              creadoPor: adminUser.id,
+            },
+          ],
+        },
       },
-    },
-  });
+    }),
+
+    // Checklist 2
+    prisma.template.create({
+      data: {
+        nombre: 'Checklist 2',
+        creadoPor: adminUser.id,
+        secciones: {
+          create: [
+            {
+              nombre:
+                'Niveles de fluidos (aceite, motor, refrigerante, hidráulico) son correctos.',
+              orden: 1,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Sistema de frenos operativo.',
+              orden: 2,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Cinturones de seguridad en buen estado.',
+              orden: 3,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Espejos retrovisores ajustados.',
+              orden: 4,
+              creadoPor: adminUser.id,
+            },
+          ],
+        },
+      },
+    }),
+
+    // Checklist 3
+    prisma.template.create({
+      data: {
+        nombre: 'Checklist 3',
+        creadoPor: adminUser.id,
+        secciones: {
+          create: [
+            {
+              nombre: 'Inspección visual del motor.',
+              orden: 1,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Verificación de sistema eléctrico.',
+              orden: 2,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Estado de mangueras y conexiones.',
+              orden: 3,
+              creadoPor: adminUser.id,
+            },
+          ],
+        },
+      },
+    }),
+
+    // Checklist 4
+    prisma.template.create({
+      data: {
+        nombre: 'Checklist 4',
+        creadoPor: adminUser.id,
+        secciones: {
+          create: [
+            {
+              nombre:
+                'Niveles de fluidos (aceite, motor, refrigerante, hidráulico) son correctos.',
+              orden: 1,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Revisión de batería y conexiones.',
+              orden: 2,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Estado de correas y tensores.',
+              orden: 3,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Funcionamiento de sistema de refrigeración.',
+              orden: 4,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Verificación de filtros de aire y combustible.',
+              orden: 5,
+              creadoPor: adminUser.id,
+            },
+          ],
+        },
+      },
+    }),
+
+    // Checklist 5
+    prisma.template.create({
+      data: {
+        nombre: 'Checklist 5',
+        creadoPor: adminUser.id,
+        secciones: {
+          create: [
+            {
+              nombre: 'Inspección de estructura y chasis.',
+              orden: 1,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Estado de suspensión y amortiguadores.',
+              orden: 2,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Verificación de sistema de escape.',
+              orden: 3,
+              creadoPor: adminUser.id,
+            },
+          ],
+        },
+      },
+    }),
+
+    // Checklist 6
+    prisma.template.create({
+      data: {
+        nombre: 'Checklist 6',
+        creadoPor: adminUser.id,
+        secciones: {
+          create: [
+            {
+              nombre: 'Revisión de documentación del vehículo.',
+              orden: 1,
+              creadoPor: adminUser.id,
+            },
+            {
+              nombre: 'Kit de emergencia completo.',
+              orden: 2,
+              creadoPor: adminUser.id,
+            },
+          ],
+        },
+      },
+    }),
+
+    // Checklist 7
+    prisma.template.create({
+      data: {
+        nombre: 'Checklist 7',
+        creadoPor: adminUser.id,
+        secciones: {
+          create: [
+            {
+              nombre: 'Verificación de sistema hidráulico.',
+              orden: 1,
+              creadoPor: adminUser.id,
+            },
+          ],
+        },
+      },
+    }),
+  ]);
 
   console.log('ed completado exitosamente!');
   console.log('\nos creados:');
@@ -229,7 +387,7 @@ async function main() {
   console.log(`     • Invitado (Nivel 1): ${invitadoUser.correo}`);
   console.log(`   - ${maquinas.length} Máquinas`);
   console.log(`   - 3 Roles de asignación`);
-  console.log(`   - 1 Template con 5 secciones`);
+  console.log(`   - 7 Templates de checklist con sus secciones`);
   console.log('\ndenciales de acceso (todos tienen la misma contraseña):');
   console.log('   Password: admin123');
 }

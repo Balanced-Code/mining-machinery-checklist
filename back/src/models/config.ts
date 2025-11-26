@@ -12,8 +12,8 @@ export interface EnvConfig {
 }
 
 /**
- * Schema de validación para variables de entorno
- * Usado por fastify-env o similar
+ * !Schema de validación para variables de entorno
+ * !Usado por fastify-env o similar
  */
 export const envSchema = {
   type: 'object',
