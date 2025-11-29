@@ -42,3 +42,117 @@ export const templatesListaResponseSchema = {
     total: { type: 'number' },
   },
 } as const;
+
+/**
+ * Schema de respuesta para crear template
+ */
+export const createTemplateResponseSchema = {
+  description: 'Template creado exitosamente',
+  type: 'object',
+  required: ['success', 'message', 'template'],
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+    template: {
+      type: 'object',
+      required: ['id', 'nombre'],
+      properties: {
+        id: { type: 'number' },
+        nombre: { type: 'string' },
+      },
+    },
+  },
+} as const;
+
+/**
+ * Schema de respuesta para crear sección
+ */
+export const createSeccionResponseSchema = {
+  description: 'Sección creada exitosamente',
+  type: 'object',
+  required: ['success', 'message', 'seccion'],
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+    seccion: {
+      type: 'object',
+      required: ['id', 'nombre', 'templateId', 'orden'],
+      properties: {
+        id: { type: 'number' },
+        nombre: { type: 'string' },
+        templateId: { type: 'number' },
+        orden: { type: 'number' },
+      },
+    },
+  },
+} as const;
+
+/**
+ * Schema de respuesta para actualizar template
+ */
+export const updateTemplateResponseSchema = {
+  description: 'Template actualizado exitosamente',
+  type: 'object',
+  required: ['success', 'message', 'template'],
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+    template: {
+      type: 'object',
+      required: ['id', 'nombre'],
+      properties: {
+        id: { type: 'number' },
+        nombre: { type: 'string' },
+      },
+    },
+  },
+} as const;
+
+/**
+ * Schema de respuesta para actualizar sección
+ */
+export const updateSeccionResponseSchema = {
+  description: 'Sección actualizada exitosamente',
+  type: 'object',
+  required: ['success', 'message', 'seccion'],
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+    seccion: {
+      type: 'object',
+      required: ['id', 'nombre', 'templateId', 'orden'],
+      properties: {
+        id: { type: 'number' },
+        nombre: { type: 'string' },
+        templateId: { type: 'number' },
+        orden: { type: 'number' },
+      },
+    },
+  },
+} as const;
+
+/**
+ * Schema de respuesta para eliminar template
+ */
+export const deleteTemplateResponseSchema = {
+  description: 'Template eliminado exitosamente',
+  type: 'object',
+  required: ['success', 'message'],
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+  },
+} as const;
+
+/**
+ * Schema de respuesta para eliminar sección
+ */
+export const deleteSeccionResponseSchema = {
+  description: 'Sección eliminada exitosamente',
+  type: 'object',
+  required: ['success', 'message'],
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+  },
+} as const;

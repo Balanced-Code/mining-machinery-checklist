@@ -10,7 +10,7 @@ import { randomUUID } from 'node:crypto';
  * Rutas POST de autenticación
  */
 
-export const postAuthRoute: FastifyPluginAsync = async (
+export const postAuthRoutes: FastifyPluginAsync = async (
   fastify: FastifyInstance
 ) => {
   /**

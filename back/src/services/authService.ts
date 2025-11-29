@@ -46,6 +46,10 @@ export class AuthService {
     });
   }
 
+  /**
+   * Obtiene un usuario por correo
+   * @returns El usuario encontrado o null si no se encuentra
+   */
   loginUser(email: string) {
     return this.prisma.usuario.findUnique({
       where: {
@@ -64,6 +68,10 @@ export class AuthService {
     });
   }
 
+  /**
+   * Obtiene un usuario por ID para cambiar contraseña
+   * @returns El usuario encontrado o null si no se encuentra
+   */
   changePassword(userId: number) {
     return this.prisma.usuario.findUnique({
       where: {
@@ -77,10 +85,14 @@ export class AuthService {
     });
   }
 
+  /**
+   * Actualiza la contraseña de un usuario
+   * @returns El usuario actualizado
+   */
   updatePassword(userId: number, newPassword: string) {
     return this.prisma.usuario.update({
       where: { id: userId },
-      data: { contrasena: newPassword },
+      data: { contrasena: newPassword, actualizadoEn: new Date() },
     });
   }
 }

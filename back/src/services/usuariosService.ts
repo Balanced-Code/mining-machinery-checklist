@@ -91,6 +91,11 @@ export class UsuariosService {
     });
   }
 
+  /**
+   * Verificar si un cargo existe
+   * @param cargoId ID del cargo
+   * @returns Cargo encontrado
+   */
   checkRole(cargoId: number): Promise<CargosDetails | null> {
     return this.prisma.cargo.findUnique({
       where: {
@@ -99,6 +104,11 @@ export class UsuariosService {
     }) as Promise<CargosDetails | null>;
   }
 
+  /**
+   * Crear un nuevo usuario
+   * @param userData Datos del usuario a crear
+   * @returns Usuario creado
+   */
   createUsuario(userData: CreateUserData): Promise<NewUserDetails> {
     return this.prisma.usuario.create({
       data: { ...userData, creadoEn: new Date() },
@@ -117,6 +127,12 @@ export class UsuariosService {
     });
   }
 
+  /**
+   * Resetear la contraseña de un usuario
+   * @param id ID del usuario
+   * @param contrasena Nueva contraseña
+   * @returns Usuario actualizado
+   */
   resetUsuario(id: number, contrasena: string): Promise<UpdatePassUserData> {
     return this.prisma.usuario.update({
       where: { id },
@@ -134,10 +150,16 @@ export class UsuariosService {
     });
   }
 
+  /**
+   * Actualizar un usuario
+   * @param id ID del usuario
+   * @param userData Datos del usuario a actualizar
+   * @returns Usuario actualizado
+   */
   updateUsuario(id: number, userData: UpdateUserData): Promise<UsersDetails> {
     return this.prisma.usuario.update({
       where: { id },
-      data: userData,
+      data: { ...userData, actualizadoEn: new Date() },
       select: {
         id: true,
         nombre: true,
@@ -178,6 +200,11 @@ export class UsuariosService {
     });
   }
 
+  /**
+   * Eliminar un usuario
+   * @param id ID del usuario
+   * @returns void
+   */
   deleteUsuario(id: number): Promise<void> {
     return this.prisma.usuario
       .update({
@@ -188,6 +215,11 @@ export class UsuariosService {
       .then(() => undefined);
   }
 
+  /**
+   * Obtener un usuario eliminado
+   * @param id ID del usuario
+   * @returns Usuario eliminado
+   */
   getDeleteUsuario(id: number): Promise<UsersDetails | null> {
     return this.prisma.usuario.findFirst({
       where: { id, eliminadoEn: { not: null } },
@@ -207,6 +239,11 @@ export class UsuariosService {
     });
   }
 
+  /**
+   * Reactivar un usuario
+   * @param id ID del usuario
+   * @returns void
+   */
   reactiveUsuario(id: number): Promise<void> {
     return this.prisma.usuario
       .update({
