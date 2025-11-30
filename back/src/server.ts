@@ -14,6 +14,9 @@ import servicesPlugin from './plugins/services';
 import swaggerPlugin from './plugins/swagger';
 import authRoutes from './routes/auth/index';
 import usuariosRoutes from './routes/usuarios';
+import templateRoutes from './routes/checklists_template';
+import inspeccionesRoutes from './routes/inspecciones';
+import maquinasRoutes from './routes/maquinas';
 
 const app = Fastify({
   logger: {
@@ -62,7 +65,9 @@ async function start() {
     // 12. Rutas con prefijos
     await app.register(authRoutes, { prefix: '/auth' }); // Gestión de Autenticación/Perfil
     await app.register(usuariosRoutes, { prefix: '/usuarios' }); // Gestión de Usuarios
-    // await app.register(templateRoutes, { prefix: '/templates' }); // Gestion de Templates de Checklist
+    await app.register(templateRoutes, { prefix: '/templates' }); // Gestion de Templates de Checklist
+    await app.register(inspeccionesRoutes, { prefix: '/inspecciones' }); // Gestión de Inspecciones
+    await app.register(maquinasRoutes, { prefix: '/maquinas' }); // Gestión de Máquinas
 
     // Iniciar servidor
     await app.listen({

@@ -11,6 +11,30 @@ import {
   ResumenInspeccion,
   UsuarioInspeccion,
 } from '@core/models/inspeccion.model';
+import { firstValueFrom } from 'rxjs';
+import { BackendInspeccion } from './inspecciones.service';
+
+interface BackendTemplateSeccion {
+  id: number;
+  nombre: string;
+  orden: number;
+}
+
+interface BackendTemplate {
+  id: number;
+  nombre: string;
+  secciones: BackendTemplateSeccion[];
+}
+
+interface TemplatesResponse {
+  temps: BackendTemplate[];
+  total: number;
+}
+
+interface UsuariosResponse {
+  users: UsuarioInspeccion[];
+  total: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -80,27 +104,64 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Cuando el backend esté listo, usar el endpoint real
-      // const response = await firstValueFrom(
-      //   this.http.post<Inspeccion>(`${this.baseUrl}/inspecciones`, data)
-      // );
-
-      // Mock: Simular creación
-      const mockInspeccion: Inspeccion = {
-        id: Date.now(),
-        fechaInicio: new Date().toISOString(),
-        fechaFinalizacion: null,
+      // Mapear al formato del backend
+      const payload = {
+        fechaInicio: data.fechaInicio,
         maquinaId: data.maquinaId,
         numSerie: data.numSerie,
-        nSerieMotor: data.nSerieMotor || null,
-        cabinado: data.cabinado || null,
-        horometro: data.horometro || null,
-        creadoPor: 1, // Mock: ID del usuario actual
-        creadoEn: new Date(),
+        nSerieMotor: data.nSerieMotor,
+        cabinado: data.cabinado,
+        horometro: data.horometro,
+        templateIds: data.templateIds,
+        // Nota: supervisorId y tecnicoIds se ignoran por ahora ya que el backend no los soporta en creación
       };
 
-      this.currentInspeccionSignal.set(mockInspeccion);
-      return mockInspeccion;
+      const response = await firstValueFrom(
+        this.http.post<{
+          success: boolean;
+          inspeccion: {
+            id: string;
+            fechaInicio: string;
+            fechaFinalizacion: string | null;
+            maquinaId: number;
+            numSerie: string;
+            nSerieMotor: string | null;
+            cabinado: boolean | null;
+            horometro: number | null;
+            creadoPor: number;
+            creadoEn: string;
+            maquina?: { id: number; nombre: string };
+          };
+        }>(`${this.baseUrl}/inspecciones`, payload)
+      );
+
+      if (response.success && response.inspeccion) {
+        // Mapear la respuesta del backend al modelo del frontend
+        const nuevaInspeccion: Inspeccion = {
+          id: parseInt(response.inspeccion.id, 10),
+          fechaInicio: response.inspeccion.fechaInicio,
+          fechaFinalizacion: response.inspeccion.fechaFinalizacion,
+          maquinaId: response.inspeccion.maquinaId,
+          numSerie: response.inspeccion.numSerie,
+          nSerieMotor: response.inspeccion.nSerieMotor,
+          cabinado: response.inspeccion.cabinado,
+          horometro: response.inspeccion.horometro,
+          creadoPor: response.inspeccion.creadoPor,
+          creadoEn: response.inspeccion.creadoEn
+            ? new Date(response.inspeccion.creadoEn)
+            : undefined,
+          maquina: response.inspeccion.maquina
+            ? {
+                id: response.inspeccion.maquina.id,
+                nombre: response.inspeccion.maquina.nombre,
+              }
+            : undefined,
+        };
+
+        this.currentInspeccionSignal.set(nuevaInspeccion);
+        return nuevaInspeccion;
+      }
+      return null;
     } catch (err: unknown) {
       this.handleError(err, 'Error al crear la inspección');
       return null;
@@ -117,28 +178,33 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Cuando el backend esté listo
-      // const response = await firstValueFrom(
-      //   this.http.get<Inspeccion>(`${this.baseUrl}/inspecciones/${id}`)
-      // );
+      const response = await firstValueFrom(
+        this.http.get<BackendInspeccion>(`${this.baseUrl}/inspecciones/${id}`)
+      );
 
-      // Mock: Simular obtención
-      const mockInspeccion: Inspeccion = {
-        id: id,
-        fechaInicio: '2025-01-19T08:00:00',
-        fechaFinalizacion: null,
-        maquinaId: 1,
-        numSerie: 'EQA-0332',
-        nSerieMotor: 'MOT-123',
-        cabinado: true,
-        horometro: 1200.5,
-        creadoPor: 1,
-        creadoEn: new Date('2025-01-19T08:00:00'),
-        maquina: { id: 1, nombre: 'VOLVO L90H' },
+      // Mapear respuesta
+      // Nota: Ajustar según la respuesta real del backend
+      const inspeccion: Inspeccion = {
+        id: parseInt(response.id, 10),
+        fechaInicio: response.fechaInicio,
+        fechaFinalizacion: response.fechaFinalizacion,
+        maquinaId: response.maquinaId,
+        numSerie: response.numSerie,
+        nSerieMotor: response.nSerieMotor,
+        cabinado: response.cabinado,
+        horometro: response.horometro,
+        creadoPor: response.creadoPor,
+        creadoEn: response.creadoEn ? new Date(response.creadoEn) : undefined,
+        maquina: response.maquina
+          ? {
+              id: response.maquina.id,
+              nombre: response.maquina.nombre,
+            }
+          : undefined,
       };
 
-      this.currentInspeccionSignal.set(mockInspeccion);
-      return mockInspeccion;
+      this.currentInspeccionSignal.set(inspeccion);
+      return inspeccion;
     } catch (err: unknown) {
       this.handleError(err, 'Error al obtener la inspección');
       return null;
@@ -155,21 +221,14 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Cuando el backend esté listo
-      // await firstValueFrom(
-      //   this.http.patch<Inspeccion>(`${this.baseUrl}/inspecciones/${id}`, data)
-      // );
+      await firstValueFrom(this.http.put(`${this.baseUrl}/inspecciones/${id}`, data));
 
-      // Mock: Simular actualización
+      // Actualizar estado local
       const current = this.currentInspeccionSignal();
       if (current && current.id === id) {
         this.currentInspeccionSignal.set({
           ...current,
-          numSerie: data.numSerie ?? current.numSerie,
-          maquinaId: data.maquinaId ?? current.maquinaId,
-          nSerieMotor: data.nSerieMotor ?? current.nSerieMotor,
-          cabinado: data.cabinado ?? current.cabinado,
-          horometro: data.horometro ?? current.horometro,
+          ...data,
           actualizadoEn: new Date(),
         });
       }
@@ -198,12 +257,8 @@ export class InspeccionService {
         return false;
       }
 
-      // TODO: Cuando el backend esté listo
-      // await firstValueFrom(
-      //   this.http.post(`${this.baseUrl}/inspecciones/${id}/terminar`, {})
-      // );
+      await firstValueFrom(this.http.post(`${this.baseUrl}/inspecciones/${id}/terminar`, {}));
 
-      // Mock: Simular finalización
       const current = this.currentInspeccionSignal();
       if (current && current.id === id) {
         this.currentInspeccionSignal.set({
@@ -230,12 +285,8 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Cuando el backend esté listo
-      // await firstValueFrom(
-      //   this.http.delete(`${this.baseUrl}/inspecciones/${id}`)
-      // );
+      await firstValueFrom(this.http.delete(`${this.baseUrl}/inspecciones/${id}`));
 
-      // Mock: Limpiar estado
       if (this.currentInspeccionSignal()?.id === id) {
         this.currentInspeccionSignal.set(null);
         this.checklistsSignal.set([]);
@@ -334,18 +385,14 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Cuando el backend esté listo
-      // await firstValueFrom(
-      //   this.http.post(
-      //     `${this.baseUrl}/inspecciones/respuestas`,
-      //     {
-      //       templateId,
-      //       ...respuesta
-      //     }
-      //   )
-      // );
+      await firstValueFrom(
+        this.http.post(`${this.baseUrl}/inspecciones/respuestas`, {
+          templateId,
+          ...respuesta,
+        })
+      );
 
-      // Mock: Actualizar localmente
+      // Actualizar localmente
       this.checklistsSignal.update((checklists) =>
         checklists.map((checklist) => {
           if (checklist.templateId === templateId) {
@@ -406,17 +453,13 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Cuando el backend esté listo
-      // const checklists = await firstValueFrom(
-      //   this.http.get<InspeccionChecklistDTO[]>(
-      //     `${this.baseUrl}/inspecciones/${_inspeccionId}/checklists`
-      //   )
-      // );
+      const checklists = await firstValueFrom(
+        this.http.get<InspeccionChecklistDTO[]>(
+          `${this.baseUrl}/inspecciones/${_inspeccionId}/checklists`
+        )
+      );
 
-      // Mock: Datos de ejemplo
-      const mockChecklists: InspeccionChecklistDTO[] = [];
-
-      this.checklistsSignal.set(mockChecklists);
+      this.checklistsSignal.set(checklists);
     } catch (err: unknown) {
       this.handleError(err, 'Error al cargar los checklists');
     } finally {
@@ -438,20 +481,9 @@ export class InspeccionService {
    */
   async obtenerMaquinas(): Promise<Maquina[]> {
     try {
-      // TODO: Cuando el backend esté listo
-      // const maquinas = await firstValueFrom(
-      //   this.http.get<Maquina[]>(`${this.baseUrl}/maquinas`)
-      // );
+      const maquinas = await firstValueFrom(this.http.get<Maquina[]>(`${this.baseUrl}/maquinas`));
 
-      // Mock: Datos de ejemplo
-      const mockMaquinas: Maquina[] = [
-        { id: 1, nombre: 'VOLVO L90H' },
-        { id: 2, nombre: 'CAT 320D' },
-        { id: 3, nombre: 'KOMATSU PC200' },
-        { id: 4, nombre: 'HITACHI ZX350' },
-      ];
-
-      return mockMaquinas;
+      return maquinas;
     } catch (err: unknown) {
       this.handleError(err, 'Error al obtener las máquinas');
       return [];
@@ -463,22 +495,42 @@ export class InspeccionService {
    */
   async obtenerUsuarios(): Promise<UsuarioInspeccion[]> {
     try {
-      // TODO: Cuando el backend esté listo
-      // const usuarios = await firstValueFrom(
-      //   this.http.get<UsuarioInspeccion[]>(`${this.baseUrl}/usuarios`)
-      // );
+      const response = await firstValueFrom(
+        this.http.get<UsuariosResponse>(`${this.baseUrl}/usuarios`)
+      );
 
-      // Mock: Datos de ejemplo
-      const mockUsuarios: UsuarioInspeccion[] = [
-        { id: 1, nombre: 'Juan Pérez', correo: 'juan.perez@normet.com' },
-        { id: 2, nombre: 'María García', correo: 'maria.garcia@normet.com' },
-        { id: 3, nombre: 'Carlos López', correo: 'carlos.lopez@normet.com' },
-        { id: 4, nombre: 'Ana Martínez', correo: 'ana.martinez@normet.com' },
-      ];
-
-      return mockUsuarios;
+      return response.users;
     } catch (err: unknown) {
       this.handleError(err, 'Error al obtener los usuarios');
+      return [];
+    }
+  }
+
+  /**
+   * Obtiene la lista de templates de checklist disponibles
+   */
+  async obtenerTemplates(): Promise<ChecklistTemplate[]> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<TemplatesResponse>(`${this.baseUrl}/templates`)
+      );
+
+      if (response && response.temps) {
+        return response.temps.map((t) => ({
+          id: t.id,
+          titulo: t.nombre,
+          items: t.secciones.map((s) => ({
+            id: s.id,
+            orden: s.orden,
+            descripcion: s.nombre,
+            checklistTemplateId: t.id,
+          })),
+        }));
+      }
+
+      return [];
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al obtener los templates');
       return [];
     }
   }

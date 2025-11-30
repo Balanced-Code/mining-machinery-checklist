@@ -18,7 +18,7 @@ export const getUsuariosRoutes: FastifyPluginAsync = async (
   fastify.get<{ Reply: { users: UsersDetails[]; total: number } }>(
     '/',
     {
-      preHandler: requireCargoLevel(4),
+      preHandler: requireCargoLevel(3),
       schema: getUsuariosSchema,
     },
     async (request, reply) => {

@@ -1,3 +1,19 @@
+<!-- Loading overlay -->
+@if (inspeccionesService.loading()) {
+<div class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <p>Cargando...</p>
+</div>
+}
+
+<!-- Error banner -->
+@if (inspeccionesService.errorMessage()) {
+<div class="error-banner">
+  <mat-icon>error_outline</mat-icon>
+  <span>{{ inspeccionesService.errorMessage() }}</span>
+</div>
+}
+
 <div class="historial-container">
   <!-- Barra de acciones superior -->
   <div class="actions-bar">

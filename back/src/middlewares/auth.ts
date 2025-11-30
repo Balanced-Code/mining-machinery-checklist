@@ -181,8 +181,8 @@ export function requireCargo(...allowedCargoNames: string[]) {
 
 /**
  * Middleware para verificar nivel mínimo de cargo
- * @param minLevel - Nivel mínimo requerido (1 = Admin, 2 = Supervisor, etc.)
- * Niveles menores = mayor jerarquía
+ * @param minLevel - Nivel mínimo requerido (4 = Admin, 3 = Inspector, etc.)
+ * Niveles mayores = mayor jerarquía
  */
 export function requireCargoLevel(minLevel: number) {
   return async (
@@ -195,7 +195,7 @@ export function requireCargoLevel(minLevel: number) {
     }
 
     // Verificar que tenga el nivel de jerarquía requerido o superior
-    if (request.currentUser.cargoNivel > minLevel) {
+    if (request.currentUser.cargoNivel < minLevel) {
       return reply.forbidden(
         `Acceso denegado. Se requiere nivel de cargo ${minLevel} o superior. Nivel actual: ${request.currentUser.cargoNivel}`
       );

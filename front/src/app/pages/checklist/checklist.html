@@ -1,4 +1,23 @@
 <div class="checklist-container">
+  <!-- Loading overlay -->
+  @if (templateService.loading()) {
+  <div class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <span>Cargando...</span>
+  </div>
+  }
+
+  <!-- Error banner -->
+  @if (templateService.errorMessage()) {
+  <div class="error-banner">
+    <mat-icon>error</mat-icon>
+    <span>{{ templateService.errorMessage() }}</span>
+    <button class="btn-close-error" (click)="templateService['errorSignal'].set(null)">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  }
+
   <!-- Barra de acciones superior -->
   <div class="actions-bar">
     <!-- Buscador -->

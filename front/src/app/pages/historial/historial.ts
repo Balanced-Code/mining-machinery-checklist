@@ -10,6 +10,7 @@ import {
   Inspeccion,
 } from '@core/models/inspeccion.model';
 import { AuthService } from '@core/services/auth.service';
+import { InspeccionesService } from '@core/services/inspecciones.service';
 import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
 
 @Component({
@@ -22,6 +23,7 @@ import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog'
 export class Historial {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  protected readonly inspeccionesService = inject(InspeccionesService);
 
   // ============================================================================
   // ESTADO
@@ -191,7 +193,7 @@ export class Historial {
   // ============================================================================
 
   constructor() {
-    this.loadMockData();
+    this.loadInspecciones();
   }
 
   // ============================================================================
@@ -234,17 +236,27 @@ export class Historial {
   /**
    * Confirmar eliminación
    */
-  protected confirmDelete(): void {
+  protected async confirmDelete(): Promise<void> {
     const inspeccion = this.inspeccionToDelete();
     if (!inspeccion) return;
 
-    // TODO: Llamar al servicio para eliminar
-    console.log('Eliminando inspección:', inspeccion);
+    try {
+      const deleted = await this.inspeccionesService.delete(inspeccion.id);
 
-    // Por ahora solo removemos del estado local
-    this.inspecciones.update((inspecciones) => inspecciones.filter((i) => i.id !== inspeccion.id));
-
-    this.cancelDelete();
+      if (deleted) {
+        // Actualizar estado local
+        this.inspecciones.update((inspecciones) =>
+          inspecciones.filter((i) => i.id !== inspeccion.id)
+        );
+      } else {
+        alert('Error al eliminar la inspección');
+      }
+    } catch (error) {
+      console.error('Error al eliminar inspección:', error);
+      alert('Error al eliminar la inspección');
+    } finally {
+      this.cancelDelete();
+    }
   }
 
   /**
@@ -413,181 +425,16 @@ export class Historial {
   protected getEstado(inspeccion: Inspeccion): string {
     return inspeccion.fechaFinalizacion ? 'Completada' : 'En progreso';
   }
-
-  // ============================================================================
-  // MOCK DATA (temporal hasta que backend esté listo)
-  // ============================================================================
-
-  private loadMockData(): void {
-    const mockInspecciones: Inspeccion[] = [
-      {
-        id: 1,
-        numSerie: 'EQA-2232',
-        maquinaId: 1,
-        maquina: { id: 1, nombre: 'CAT 320D' },
-        fechaInicio: '2025-01-14T08:30:00',
-        fechaFinalizacion: '2025-01-14T16:45:00',
-        inspector: { id: 1, nombre: 'Juan Pérez', correo: 'juan@example.com' },
-        creadoPor: 1,
-        creadoEn: new Date('2025-01-14T08:30:00'),
-      },
-      {
-        id: 2,
-        numSerie: 'EQA-0332',
-        maquinaId: 2,
-        maquina: { id: 2, nombre: 'VOLVO L90H' },
-        fechaInicio: '2025-01-19T09:00:00',
-        fechaFinalizacion: '2025-01-26T17:30:00',
-        inspector: { id: 2, nombre: 'María González', correo: 'maria@example.com' },
-        creadoPor: 2,
-        creadoEn: new Date('2025-01-19T09:00:00'),
-      },
-      {
-        id: 3,
-        numSerie: 'EQA-0242',
-        maquinaId: 3,
-        maquina: { id: 3, nombre: 'GROVE RT530E' },
-        fechaInicio: '2025-01-21T07:15:00',
-        fechaFinalizacion: null, // En progreso - para probar edición
-        inspector: { id: 3, nombre: 'Carlos Ramírez', correo: 'carlos@example.com' },
-        creadoPor: 3,
-        creadoEn: new Date('2025-01-21T07:15:00'),
-      },
-      {
-        id: 4,
-        numSerie: 'EQA-3231',
-        maquinaId: 4,
-        maquina: { id: 4, nombre: 'SCANIA R450' },
-        fechaInicio: '2025-01-09T10:00:00',
-        fechaFinalizacion: '2025-01-19T18:00:00',
-        inspector: { id: 4, nombre: 'Ana Torres', correo: 'ana@example.com' },
-        creadoPor: 4,
-        creadoEn: new Date('2025-01-09T10:00:00'),
-      },
-      {
-        id: 5,
-        numSerie: 'EQA-1252',
-        maquinaId: 5,
-        maquina: { id: 5, nombre: 'FURUKAWA F70' },
-        fechaInicio: '2025-01-17T08:45:00',
-        fechaFinalizacion: '2025-01-24T16:15:00',
-        inspector: { id: 5, nombre: 'Luis Morales', correo: 'luis@example.com' },
-        creadoPor: 5,
-        creadoEn: new Date('2025-01-17T08:45:00'),
-      },
-      {
-        id: 6,
-        numSerie: 'EQA-0342',
-        maquinaId: 6,
-        maquina: { id: 6, nombre: 'ATLAS COPCO ROC L8' },
-        fechaInicio: '2025-01-11T11:30:00',
-        fechaFinalizacion: '2025-01-18T14:45:00',
-        inspector: { id: 6, nombre: 'Patricia Vega', correo: 'patricia@example.com' },
-        creadoPor: 6,
-        creadoEn: new Date('2025-01-11T11:30:00'),
-      },
-      {
-        id: 7,
-        numSerie: 'EQA-6732',
-        maquinaId: 7,
-        maquina: { id: 7, nombre: 'KOMATSU D65EX' },
-        fechaInicio: '2025-01-24T09:30:00',
-        fechaFinalizacion: '2025-01-31T17:00:00',
-        inspector: { id: 7, nombre: 'Roberto Silva', correo: 'roberto@example.com' },
-        creadoPor: 7,
-        creadoEn: new Date('2025-01-24T09:30:00'),
-      },
-      {
-        id: 8,
-        numSerie: 'EQA-2369',
-        maquinaId: 8,
-        maquina: { id: 8, nombre: 'BOBCAT S650' },
-        fechaInicio: '2025-01-15T08:00:00',
-        fechaFinalizacion: '2025-01-22T16:30:00',
-        inspector: { id: 8, nombre: 'Elena Campos', correo: 'elena@example.com' },
-        creadoPor: 8,
-        creadoEn: new Date('2025-01-15T08:00:00'),
-      },
-      {
-        id: 9,
-        numSerie: 'EQA-2232',
-        maquinaId: 9,
-        maquina: { id: 9, nombre: 'JCB 4CX' },
-        fechaInicio: '2025-01-23T10:15:00',
-        fechaFinalizacion: '2025-02-17T15:45:00',
-        inspector: { id: 1, nombre: 'Juan Pérez', correo: 'juan@example.com' },
-        creadoPor: 1,
-        creadoEn: new Date('2025-01-23T10:15:00'),
-      },
-      {
-        id: 10,
-        numSerie: 'EQA-0333',
-        maquinaId: 10,
-        maquina: { id: 10, nombre: 'BOMAG BW213' },
-        fechaInicio: '2025-01-11T07:45:00',
-        fechaFinalizacion: '2025-02-07T18:30:00',
-        inspector: { id: 2, nombre: 'María González', correo: 'maria@example.com' },
-        creadoPor: 2,
-        creadoEn: new Date('2025-01-11T07:45:00'),
-      },
-      {
-        id: 11,
-        numSerie: 'EQA-9876',
-        maquinaId: 11,
-        maquina: { id: 11, nombre: 'HITACHI ZX350' },
-        fechaInicio: '2025-02-01T09:00:00',
-        fechaFinalizacion: null, // En progreso
-        inspector: { id: 3, nombre: 'Carlos Ramírez', correo: 'carlos@example.com' },
-        creadoPor: 3,
-        creadoEn: new Date('2025-02-01T09:00:00'),
-      },
-      {
-        id: 12,
-        numSerie: 'EQA-5432',
-        maquinaId: 12,
-        maquina: { id: 12, nombre: 'LIEBHERR R956' },
-        fechaInicio: '2025-02-05T08:30:00',
-        fechaFinalizacion: null, // En progreso
-        inspector: { id: 4, nombre: 'Ana Torres', correo: 'ana@example.com' },
-        creadoPor: 4,
-        creadoEn: new Date('2025-02-05T08:30:00'),
-      },
-      // Registros con el mismo día pero diferentes horas para probar ordenamiento
-      {
-        id: 13,
-        numSerie: 'EQA-1111',
-        maquinaId: 13,
-        maquina: { id: 13, nombre: 'CAT 336F' },
-        fechaInicio: '2025-01-15T14:30:00',
-        fechaFinalizacion: '2025-01-15T18:45:00',
-        inspector: { id: 5, nombre: 'Luis Morales', correo: 'luis@example.com' },
-        creadoPor: 5,
-        creadoEn: new Date('2025-01-15T14:30:00'),
-      },
-      {
-        id: 14,
-        numSerie: 'EQA-2222',
-        maquinaId: 14,
-        maquina: { id: 14, nombre: 'KOMATSU PC210' },
-        fechaInicio: '2025-01-15T09:15:00',
-        fechaFinalizacion: '2025-01-15T12:30:00',
-        inspector: { id: 6, nombre: 'Patricia Vega', correo: 'patricia@example.com' },
-        creadoPor: 6,
-        creadoEn: new Date('2025-01-15T09:15:00'),
-      },
-      {
-        id: 15,
-        numSerie: 'EQA-3333',
-        maquinaId: 15,
-        maquina: { id: 15, nombre: 'VOLVO EC380' },
-        fechaInicio: '2025-01-15T16:00:00',
-        fechaFinalizacion: '2025-01-15T19:20:00',
-        inspector: { id: 7, nombre: 'Roberto Silva', correo: 'roberto@example.com' },
-        creadoPor: 7,
-        creadoEn: new Date('2025-01-15T16:00:00'),
-      },
-    ];
-
-    this.inspecciones.set(mockInspecciones);
+  /**
+   * Cargar inspecciones desde el backend
+   */
+  private async loadInspecciones(): Promise<void> {
+    try {
+      await this.inspeccionesService.getAll();
+      // Sincronizar con el signal del servicio
+      this.inspecciones.set(this.inspeccionesService.inspecciones());
+    } catch (error) {
+      console.error('Error al cargar inspecciones:', error);
+    }
   }
 }

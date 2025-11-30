@@ -1,9 +1,11 @@
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ChecklistItem, ChecklistTemplate } from '@core/models/checklist.model';
 import { AuthService } from '@core/services/auth.service';
+import { TemplateService } from '@core/services/template.service';
 import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
 
 @Component({
@@ -15,6 +17,7 @@ import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog'
 })
 export class Checklist {
   private readonly authService = inject(AuthService);
+  protected readonly templateService = inject(TemplateService);
 
   // Estado
   protected readonly templates = signal<ChecklistTemplate[]>([]);
@@ -85,14 +88,26 @@ export class Checklist {
   });
 
   constructor() {
-    // Cargar datos mock (luego se reemplazará con llamadas al backend)
-    this.loadMockData();
+    // Cargar templates del backend
+    this.loadTemplates();
   }
 
   /**
-   * Carga datos de ejemplo (mock)
+   * Carga templates desde el backend
    */
-  private loadMockData(): void {
+  private async loadTemplates(): Promise<void> {
+    try {
+      await this.templateService.getAll();
+      this.templates.set(this.templateService.templates());
+    } catch (error) {
+      console.error('Error al cargar templates:', error);
+    }
+  }
+
+  /**
+   * Carga datos de ejemplo (mock) - DEPRECATED
+   */
+  private loadMockData_DEPRECATED(): void {
     const mockTemplates: ChecklistTemplate[] = [
       {
         id: 1,
@@ -299,17 +314,22 @@ export class Checklist {
   protected async createTemplate(): Promise<void> {
     if (!this.canEdit()) return;
 
-    const newTemplate: ChecklistTemplate = {
-      id: Date.now(), // Mock ID
-      titulo: `Checklist ${this.templates().length + 1}`,
-      items: [],
-    };
+    try {
+      const newTemplate = await this.templateService.create(
+        `Checklist ${this.templates().length + 1}`
+      );
 
-    this.templates.update((templates) => [...templates, newTemplate]);
-    this.expandedTemplates.update((expanded) => new Set([...expanded, newTemplate.id]));
+      if (newTemplate) {
+        this.templates.update((templates) => [...templates, newTemplate]);
+        this.expandedTemplates.update((expanded) => new Set([...expanded, newTemplate.id]));
 
-    // Auto-editar el título
-    this.startEditingTitle(newTemplate.id, newTemplate.titulo);
+        // Auto-editar el título
+        this.startEditingTitle(newTemplate.id, newTemplate.titulo);
+      }
+    } catch (error) {
+      console.error('Error al crear template:', error);
+      alert('Error al crear el checklist');
+    }
   }
 
   /**
@@ -325,7 +345,7 @@ export class Checklist {
   /**
    * Guarda el título editado
    */
-  protected saveTitle(templateId: number): void {
+  protected async saveTitle(templateId: number): Promise<void> {
     const newTitle = this.editingTitleValue().trim();
 
     if (!newTitle) {
@@ -333,11 +353,37 @@ export class Checklist {
       return;
     }
 
-    this.templates.update((templates) =>
-      templates.map((t) => (t.id === templateId ? { ...t, titulo: newTitle } : t))
-    );
+    try {
+      const updated = await this.templateService.update(templateId, newTitle);
 
-    this.cancelEditingTitle();
+      if (updated) {
+        this.templates.update((templates) =>
+          templates.map((t) => (t.id === templateId ? { ...t, titulo: newTitle } : t))
+        );
+      }
+    } catch (error) {
+      if (error instanceof HttpErrorResponse) {
+        if (error.status === 409) {
+          alert(
+            error.error?.message ||
+              'No se puede modificar un template que está siendo usado en inspecciones'
+          );
+        } else if (error.status === 400) {
+          // Error de validación del schema
+          alert(
+            error.error?.message ||
+              'Error de validación. El nombre debe tener al menos 3 caracteres.'
+          );
+        } else {
+          alert(error.error?.message || 'Error al actualizar el template');
+        }
+      } else {
+        console.error('Error al actualizar template:', error);
+        alert('Error al actualizar el template');
+      }
+    } finally {
+      this.cancelEditingTitle();
+    }
   }
 
   /**
@@ -361,19 +407,28 @@ export class Checklist {
   /**
    * Confirmar eliminación de template
    */
-  protected confirmDeleteTemplate(): void {
+  protected async confirmDeleteTemplate(): Promise<void> {
     const template = this.templateToDelete();
     if (!template) return;
 
-    this.templates.update((templates) => templates.filter((t) => t.id !== template.id));
-    this.expandedTemplates.update((expanded) => {
-      const newExpanded = new Set(expanded);
-      newExpanded.delete(template.id);
-      return newExpanded;
-    });
+    try {
+      const deleted = await this.templateService.delete(template.id);
 
-    this.showDeleteTemplateConfirm.set(false);
-    this.templateToDelete.set(undefined);
+      if (deleted) {
+        this.templates.update((templates) => templates.filter((t) => t.id !== template.id));
+        this.expandedTemplates.update((expanded) => {
+          const newExpanded = new Set(expanded);
+          newExpanded.delete(template.id);
+          return newExpanded;
+        });
+      }
+    } catch (error) {
+      console.error('Error al eliminar template:', error);
+      alert('Error al eliminar el template');
+    } finally {
+      this.showDeleteTemplateConfirm.set(false);
+      this.templateToDelete.set(undefined);
+    }
   }
 
   /**
@@ -387,25 +442,29 @@ export class Checklist {
   /**
    * Agrega un nuevo ítem a un template
    */
-  protected addItem(templateId: number): void {
+  protected async addItem(templateId: number): Promise<void> {
     if (!this.canEdit()) return;
 
     const template = this.templates().find((t) => t.id === templateId);
     if (!template) return;
 
-    const newItem: ChecklistItem = {
-      id: Date.now(), // Mock ID
-      orden: template.items.length + 1,
-      descripcion: '',
-      checklistTemplateId: templateId,
-    };
+    const orden = template.items.length + 1;
 
-    this.templates.update((templates) =>
-      templates.map((t) => (t.id === templateId ? { ...t, items: [...t.items, newItem] } : t))
-    );
+    try {
+      const newItem = await this.templateService.createSeccion(templateId, 'Item', orden);
 
-    // Auto-editar el ítem
-    this.startEditingItem(newItem.id, '');
+      if (newItem) {
+        this.templates.update((templates) =>
+          templates.map((t) => (t.id === templateId ? { ...t, items: [...t.items, newItem] } : t))
+        );
+
+        // Auto-editar el ítem
+        this.startEditingItem(newItem.id, 'Item');
+      }
+    } catch (error) {
+      console.error('Error al crear sección:', error);
+      alert('Error al crear la sección');
+    }
   }
 
   /**
@@ -421,7 +480,7 @@ export class Checklist {
   /**
    * Guarda el ítem editado
    */
-  protected saveItem(templateId: number, itemId: number): void {
+  protected async saveItem(templateId: number, itemId: number): Promise<void> {
     const newDescription = this.editingItemValue().trim();
 
     if (!newDescription) {
@@ -430,31 +489,62 @@ export class Checklist {
       const item = template?.items.find((i) => i.id === itemId);
 
       if (item && !item.descripcion) {
-        this.templates.update((templates) =>
-          templates.map((t) =>
-            t.id === templateId ? { ...t, items: t.items.filter((i) => i.id !== itemId) } : t
-          )
-        );
+        try {
+          await this.templateService.deleteSeccion(itemId, templateId);
+        } catch (error) {
+          console.error('Error al eliminar sección vacía:', error);
+        }
       }
 
       this.cancelEditingItem();
       return;
     }
 
-    this.templates.update((templates) =>
-      templates.map((t) =>
-        t.id === templateId
-          ? {
-              ...t,
-              items: t.items.map((i) =>
-                i.id === itemId ? { ...i, descripcion: newDescription } : i
-              ),
-            }
-          : t
-      )
-    );
+    try {
+      const updated = await this.templateService.updateSeccion(itemId, templateId, {
+        descripcion: newDescription,
+      });
 
-    this.cancelEditingItem();
+      if (updated) {
+        // Actualizar el estado local inmediatamente
+        this.templates.update((templates) =>
+          templates.map((t) =>
+            t.id === templateId
+              ? {
+                  ...t,
+                  items: t.items.map((item) =>
+                    item.id === itemId ? { ...item, descripcion: newDescription } : item
+                  ),
+                }
+              : t
+          )
+        );
+      } else {
+        alert('Error al actualizar la sección');
+      }
+    } catch (error) {
+      if (error instanceof HttpErrorResponse) {
+        if (error.status === 409) {
+          alert(
+            error.error?.message ||
+              'No se puede modificar una sección que está siendo usada en inspecciones'
+          );
+        } else if (error.status === 400) {
+          // Error de validación del schema
+          alert(
+            error.error?.message ||
+              'Error de validación. El nombre debe tener al menos 3 caracteres.'
+          );
+        } else {
+          alert(error.error?.message || 'Error al actualizar la sección');
+        }
+      } else {
+        console.error('Error al actualizar sección:', error);
+        alert('Error al actualizar la sección');
+      }
+    } finally {
+      this.cancelEditingItem();
+    }
   }
 
   /**
@@ -478,26 +568,38 @@ export class Checklist {
   /**
    * Confirmar eliminación de ítem
    */
-  protected confirmDeleteItem(): void {
+  protected async confirmDeleteItem(): Promise<void> {
     const data = this.itemToDelete();
     if (!data) return;
 
     const { templateId, item } = data;
 
-    this.templates.update((templates) =>
-      templates.map((t) => {
-        if (t.id === templateId) {
-          const newItems = t.items
-            .filter((i) => i.id !== item.id)
-            .map((i, index) => ({ ...i, orden: index + 1 }));
-          return { ...t, items: newItems };
-        }
-        return t;
-      })
-    );
+    try {
+      const deleted = await this.templateService.deleteSeccion(item.id, templateId);
 
-    this.showDeleteItemConfirm.set(false);
-    this.itemToDelete.set(undefined);
+      if (deleted) {
+        // Actualizar el estado local del componente inmediatamente
+        this.templates.update((templates) =>
+          templates.map((t) => {
+            if (t.id === templateId) {
+              const newItems = t.items
+                .filter((i) => i.id !== item.id)
+                .map((i, index) => ({ ...i, orden: index + 1 }));
+              return { ...t, items: newItems };
+            }
+            return t;
+          })
+        );
+      } else {
+        alert('Error al eliminar la sección');
+      }
+    } catch (error) {
+      console.error('Error al eliminar sección:', error);
+      alert('Error al eliminar la sección');
+    } finally {
+      this.showDeleteItemConfirm.set(false);
+      this.itemToDelete.set(undefined);
+    }
   }
 
   /**
@@ -511,26 +613,49 @@ export class Checklist {
   /**
    * Maneja el drop de drag & drop para reordenar ítems
    */
-  protected onItemDrop(event: CdkDragDrop<ChecklistItem[]>, templateId: number): void {
+  protected async onItemDrop(
+    event: CdkDragDrop<ChecklistItem[]>,
+    templateId: number
+  ): Promise<void> {
     if (!this.canEdit()) return;
 
+    const template = this.templates().find((t) => t.id === templateId);
+    if (!template) return;
+
+    // Crear copia local para reordenar
+    const items = [...template.items];
+    moveItemInArray(items, event.previousIndex, event.currentIndex);
+
+    // Actualizar orden localmente primero (optimistic update)
+    const reorderedItems = items.map((item, index) => ({
+      ...item,
+      orden: index + 1,
+    }));
+
     this.templates.update((templates) =>
-      templates.map((t) => {
-        if (t.id === templateId) {
-          const items = [...t.items];
-          moveItemInArray(items, event.previousIndex, event.currentIndex);
-
-          // Actualizar orden
-          const reorderedItems = items.map((item, index) => ({
-            ...item,
-            orden: index + 1,
-          }));
-
-          return { ...t, items: reorderedItems };
-        }
-        return t;
-      })
+      templates.map((t) => (t.id === templateId ? { ...t, items: reorderedItems } : t))
     );
+
+    // Enviar todas las secciones con su nuevo orden al backend
+    const seccionesReordenadas = reorderedItems.map((item) => ({
+      id: item.id,
+      orden: item.orden,
+    }));
+
+    try {
+      await this.templateService.reorderSecciones(templateId, seccionesReordenadas);
+    } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 409) {
+        alert(error.error?.message || 'Conflicto al reordenar. Las secciones pueden estar en uso.');
+        // Recargar templates para obtener el estado correcto
+        await this.loadTemplates();
+      } else {
+        console.error('Error al reordenar:', error);
+        alert('Error al guardar el nuevo orden');
+        // Recargar templates para revertir cambios
+        await this.loadTemplates();
+      }
+    }
   }
 
   /**

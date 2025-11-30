@@ -269,6 +269,16 @@ export class TemplatesService {
    * @param userId ID del usuario que elimina (para audit trail)
    */
   async deleteSeccion(id: number, userId: number): Promise<void> {
+    // Obtener información de la sección antes de eliminar
+    const seccion = await this.prisma.templateSeccion.findUnique({
+      where: { id },
+      select: { templateId: true, orden: true },
+    });
+
+    if (!seccion) {
+      throw new Error('Sección no encontrada');
+    }
+
     // Verificar si la sección está siendo usada en inspecciones
     const inUse = await this.prisma.eleccionRespuesta.findFirst({
       where: { templateSeccionId: id },
@@ -285,9 +295,75 @@ export class TemplatesService {
       });
     } else {
       // Hard delete - Sección no usada
-      await this.prisma.templateSeccion.delete({
-        where: { id },
+      await this.prisma.$transaction(async prisma => {
+        // 1. Eliminar la sección
+        await prisma.templateSeccion.delete({
+          where: { id },
+        });
+
+        // 2. Reordenar las secciones restantes del mismo template
+        const seccionesRestantes = await prisma.templateSeccion.findMany({
+          where: {
+            templateId: seccion.templateId,
+            eliminadoEn: null,
+          },
+          orderBy: { orden: 'asc' },
+        });
+
+        // 3. Actualizar el orden de cada sección para que sea secuencial (1, 2, 3...)
+        for (let i = 0; i < seccionesRestantes.length; i++) {
+          await prisma.templateSeccion.update({
+            where: { id: seccionesRestantes[i]!.id },
+            data: { orden: i + 1 },
+          });
+        }
       });
     }
+  }
+
+  /**
+   * Reordena múltiples secciones de un template de forma atómica
+   * @param templateId ID del template
+   * @param secciones Array con {id, orden} de cada sección
+   */
+  async reorderSecciones(
+    templateId: number,
+    secciones: Array<{ id: number; orden: number }>
+  ): Promise<void> {
+    // Verificar que ninguna sección esté en uso
+    for (const seccion of secciones) {
+      const inUse = await this.prisma.eleccionRespuesta.findFirst({
+        where: { templateSeccionId: seccion.id },
+      });
+
+      if (inUse) {
+        throw new Error(
+          'No se puede reordenar secciones que están siendo usadas en inspecciones'
+        );
+      }
+    }
+
+    // Estrategia para evitar conflictos de constraint único:
+    // 1. Asignar orden temporal (9999 + index) a todas las secciones
+    // 2. Actualizar con los órdenes finales
+    const TEMP_ORDER_BASE = 9999;
+
+    await this.prisma.$transaction(async prisma => {
+      // Paso 1: Asignar órdenes temporales
+      for (let i = 0; i < secciones.length; i++) {
+        await prisma.templateSeccion.update({
+          where: { id: secciones[i]!.id },
+          data: { orden: TEMP_ORDER_BASE + i },
+        });
+      }
+
+      // Paso 2: Asignar órdenes finales
+      for (const seccion of secciones) {
+        await prisma.templateSeccion.update({
+          where: { id: seccion.id },
+          data: { orden: seccion.orden },
+        });
+      }
+    });
   }
 }

@@ -169,26 +169,7 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   }
 
   private async obtenerTemplates(): Promise<ChecklistTemplate[]> {
-    // TODO: Obtener del backend
-    return [
-      {
-        id: 1,
-        titulo: 'Revisión de cabina y controles',
-        items: [
-          { id: 1, orden: 1, descripcion: 'Limpieza y orden de la cabina.' },
-          { id: 2, orden: 2, descripcion: 'Estado de espejos y cámaras.' },
-          { id: 3, orden: 3, descripcion: 'Funcionamiento de luces y alarmas.' },
-        ],
-      },
-      {
-        id: 2,
-        titulo: 'Sistema hidráulico',
-        items: [
-          { id: 4, orden: 1, descripcion: 'Nivel de aceite hidráulico.' },
-          { id: 5, orden: 2, descripcion: 'Inspección de mangueras y conexiones.' },
-        ],
-      },
-    ];
+    return this.inspeccionService.obtenerTemplates();
   }
 
   protected agregarChecklist(): void {
@@ -297,17 +278,23 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   protected async confirmarTerminar(): Promise<void> {
     this.showConfirmTerminar.set(false);
 
-    // TODO: Guardar en backend
-    console.log('Guardando inspección...', {
+    const data = {
       fechaInicio: this.fechaHoraInicio().toISOString(),
       numSerie: this.numSerie(),
-      maquinaId: this.maquinaId(),
-      supervisorId: this.supervisorId(),
+      maquinaId: this.maquinaId()!,
+      supervisorId: this.supervisorId() || undefined,
       tecnicoIds: this.tecnicoIds(),
-      checklists: this.checklists(),
-    });
+      templateIds: this.selectedTemplateIds(),
+      nSerieMotor: undefined,
+      cabinado: undefined,
+      horometro: undefined,
+    };
 
-    this.router.navigate(['/historial']);
+    const nuevaInspeccion = await this.inspeccionService.crear(data);
+
+    if (nuevaInspeccion) {
+      this.router.navigate(['/historial']);
+    }
   }
 
   protected cancelarTerminar(): void {
