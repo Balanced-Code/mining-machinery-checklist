@@ -1,6 +1,7 @@
 import {
   getInspeccionesSchema,
   getInspeccionByIdSchema,
+  getChecklistsSchema,
 } from '@/schemas/inspecciones';
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
 
@@ -67,6 +68,32 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
       } catch (error) {
         fastify.log.error({ error }, 'Error al obtener inspección:');
         return reply.internalServerError('Error al obtener la inspección');
+      }
+    }
+  );
+
+  /**
+   * GET /inspecciones/:id/checklists
+   * Obtener los checklists de una inspección con sus respuestas
+   * Acceso: Automático (cualquier usuario autenticado)
+   */
+  fastify.get<{ Params: { id: string } }>(
+    '/:id/checklists',
+    { schema: getChecklistsSchema },
+    async (request, reply) => {
+      try {
+        const { id } = request.params;
+        const inspeccionId = BigInt(id);
+
+        const checklists =
+          await fastify.services.inspecciones.getChecklists(inspeccionId);
+
+        return reply.send({
+          checklists,
+        });
+      } catch (error) {
+        fastify.log.error({ error }, 'Error al obtener checklists:');
+        return reply.internalServerError('Error al obtener los checklists');
       }
     }
   );

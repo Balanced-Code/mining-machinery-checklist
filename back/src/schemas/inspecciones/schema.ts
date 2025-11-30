@@ -5,11 +5,15 @@ import {
   deleteInspeccionResponseSchema,
   createInspeccionResponseSchema,
   updateInspeccionResponseSchema,
+  guardarRespuestaResponseSchema,
+  checklistsResponseSchema,
+  terminarInspeccionResponseSchema,
 } from './response';
 import {
   inspeccionIdParamSchema,
   createInspeccionBodySchema,
   updateInspeccionBodySchema,
+  guardarRespuestaBodySchema,
 } from './request';
 
 /**
@@ -84,6 +88,55 @@ export const deleteInspeccionSchema = {
   params: inspeccionIdParamSchema,
   response: {
     200: deleteInspeccionResponseSchema,
+    401: errorsResponseSchema,
+    403: errorsResponseSchema,
+    404: errorsResponseSchema,
+    500: errorsResponseSchema,
+  },
+} as const;
+
+/**
+ * Schema completo para POST /inspecciones/respuestas
+ */
+export const guardarRespuestaSchema = {
+  description: 'Guardar respuesta a un ítem del checklist',
+  tags: ['inspecciones'],
+  body: guardarRespuestaBodySchema,
+  response: {
+    200: guardarRespuestaResponseSchema,
+    201: guardarRespuestaResponseSchema,
+    400: errorsResponseSchema,
+    401: errorsResponseSchema,
+    404: errorsResponseSchema,
+    500: errorsResponseSchema,
+  },
+} as const;
+
+/**
+ * Schema completo para GET /inspecciones/:id/checklists
+ */
+export const getChecklistsSchema = {
+  description: 'Obtener los checklists de una inspección con sus respuestas',
+  tags: ['inspecciones'],
+  params: inspeccionIdParamSchema,
+  response: {
+    200: checklistsResponseSchema,
+    401: errorsResponseSchema,
+    404: errorsResponseSchema,
+    500: errorsResponseSchema,
+  },
+} as const;
+
+/**
+ * Schema completo para POST /inspecciones/:id/terminar
+ */
+export const terminarInspeccionSchema = {
+  description: 'Finalizar una inspección (establece fecha de finalización)',
+  tags: ['inspecciones'],
+  params: inspeccionIdParamSchema,
+  response: {
+    200: terminarInspeccionResponseSchema,
+    400: errorsResponseSchema,
     401: errorsResponseSchema,
     403: errorsResponseSchema,
     404: errorsResponseSchema,

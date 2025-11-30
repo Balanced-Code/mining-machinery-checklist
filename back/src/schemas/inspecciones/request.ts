@@ -21,7 +21,7 @@ export const inspeccionIdParamSchema = {
  */
 export const createInspeccionBodySchema = {
   type: 'object',
-  required: ['fechaInicio', 'maquinaId', 'numSerie', 'templateIds'],
+  required: ['fechaInicio', 'maquinaId'],
   properties: {
     fechaInicio: {
       type: 'string',
@@ -36,7 +36,7 @@ export const createInspeccionBodySchema = {
       minimum: 1,
     },
     numSerie: {
-      type: 'string',
+      type: ['string', 'null'],
       minLength: 1,
       maxLength: 50,
     },
@@ -51,14 +51,25 @@ export const createInspeccionBodySchema = {
       type: ['number', 'null'],
       minimum: 0,
     },
+    supervisorId: {
+      type: ['number', 'null'],
+      minimum: 1,
+    },
+    tecnicoIds: {
+      type: 'array',
+      items: {
+        type: 'number',
+        minimum: 1,
+      },
+      default: [],
+    },
     templateIds: {
       type: 'array',
       items: {
         type: 'number',
         minimum: 1,
       },
-      minItems: 1,
-      uniqueItems: true,
+      default: [],
     },
   },
 } as const;
@@ -95,5 +106,50 @@ export const updateInspeccionBodySchema = {
     },
     // No permitimos cambiar maquinaId
     // No permitimos cambiar templateIds (solo agregar/eliminar en endpoints específicos)
+  },
+} as const;
+
+/**
+ * Schema para guardar una respuesta a un ítem del checklist
+ */
+export const guardarRespuestaBodySchema = {
+  type: 'object',
+  required: ['inspeccionId', 'templateId', 'templateSeccionId', 'cumple'],
+  properties: {
+    inspeccionId: {
+      type: 'string', // BigInt como string
+      pattern: '^[0-9]+$',
+    },
+    templateId: {
+      type: 'number',
+      minimum: 1,
+    },
+    templateSeccionId: {
+      type: 'number',
+      minimum: 1,
+    },
+    cumple: {
+      type: ['boolean', 'null'], // true=Sí, false=No, null=N/A
+    },
+    observacion: {
+      type: ['object', 'null'],
+      properties: {
+        id: {
+          type: 'number', // Si existe, se actualiza la observación
+        },
+        descripcion: {
+          type: 'string',
+          minLength: 1,
+        },
+        // archivosExistentes se manejan por separado en un endpoint de archivos
+        archivosExistentes: {
+          type: 'array',
+          items: {
+            type: 'number', // IDs de archivos existentes a mantener
+          },
+        },
+      },
+      required: ['descripcion'],
+    },
   },
 } as const;

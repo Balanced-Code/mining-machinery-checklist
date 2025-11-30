@@ -90,6 +90,10 @@ export class InspeccionesService {
     data: CreateInspeccionCompleteData,
     userId: number
   ): Promise<InspeccionData> {
+    if (!data.maquinaId) {
+      throw new Error('El ID de la máquina es obligatorio');
+    }
+
     // Validar que la máquina existe
     const maquina = await this.prisma.maquina.findUnique({
       where: { id: data.maquinaId },
@@ -205,5 +209,291 @@ export class InspeccionesService {
         eliminadoPor: userId,
       },
     });
+  }
+
+  /**
+   * Guardar o actualizar respuesta a un ítem del checklist
+   */
+  async guardarRespuesta(data: {
+    inspeccionId: bigint;
+    templateId: number;
+    templateSeccionId: number;
+    cumple: boolean | null;
+    observacion?:
+      | {
+          id?: number;
+          descripcion: string;
+        }
+      | undefined;
+    userId: number;
+  }) {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // 1. Verificar que la inspección existe
+      const inspeccion = await tx.inspeccion.findUnique({
+        where: { id: data.inspeccionId, eliminadoEn: null },
+      });
+
+      if (!inspeccion) {
+        throw new Error('Inspección no encontrada');
+      }
+
+      // 2. Obtener o crear EleccionTemplate
+      let eleccionTemplate = await tx.eleccionTemplate.findFirst({
+        where: {
+          inspeccionId: data.inspeccionId,
+          templateId: data.templateId,
+          eliminadoEn: null,
+        },
+      });
+
+      if (!eleccionTemplate) {
+        // Crear elección de template si no existe
+        eleccionTemplate = await tx.eleccionTemplate.create({
+          data: {
+            inspeccionId: data.inspeccionId,
+            templateId: data.templateId,
+            creadoPor: data.userId,
+          },
+        });
+      }
+
+      // 3. Verificar que la sección del template existe
+      const templateSeccion = await tx.templateSeccion.findUnique({
+        where: { id: data.templateSeccionId, eliminadoEn: null },
+      });
+
+      if (!templateSeccion) {
+        throw new Error('Sección de template no encontrada');
+      }
+
+      // 4. Crear o actualizar observación si se proporciona
+      let observacionId: bigint | null = null;
+      if (data.observacion) {
+        if (data.observacion.id) {
+          // Actualizar observación existente
+          const observacionActualizada = await tx.observacion.update({
+            where: { id: BigInt(data.observacion.id) },
+            data: {
+              descripcion: data.observacion.descripcion,
+              actualizadoPor: data.userId,
+              actualizadoEn: new Date(),
+            },
+          });
+          observacionId = observacionActualizada.id;
+        } else {
+          // Crear nueva observación
+          const nuevaObservacion = await tx.observacion.create({
+            data: {
+              descripcion: data.observacion.descripcion,
+              creadoPor: data.userId,
+            },
+          });
+          observacionId = nuevaObservacion.id;
+        }
+      }
+
+      // 5. Buscar si ya existe una respuesta para este templateSeccionId y eleccionTemplateId
+      const eleccionRespuestaExistente = await tx.eleccionRespuesta.findFirst({
+        where: {
+          eleccionTemplateId: eleccionTemplate.id,
+          templateSeccionId: data.templateSeccionId,
+          eliminadoEn: null,
+        },
+        include: {
+          resultadoAtributo: true,
+        },
+      });
+
+      if (eleccionRespuestaExistente) {
+        // Actualizar respuesta existente
+        const resultadoActualizado = await tx.resultadoAtributoChecklist.update(
+          {
+            where: {
+              id: eleccionRespuestaExistente.resultadoAtributoChecklistId,
+            },
+            data: {
+              cumple: data.cumple,
+              observacionId,
+              actualizadoPor: data.userId,
+              actualizadoEn: new Date(),
+            },
+          }
+        );
+
+        const eleccionRespuestaActualizada = await tx.eleccionRespuesta.update({
+          where: { id: eleccionRespuestaExistente.id },
+          data: {
+            actualizadoPor: data.userId,
+            actualizadoEn: new Date(),
+          },
+        });
+
+        return {
+          eleccionRespuesta: eleccionRespuestaActualizada,
+          resultado: resultadoActualizado,
+        };
+      } else {
+        // Crear nueva respuesta
+        const nuevoResultado = await tx.resultadoAtributoChecklist.create({
+          data: {
+            cumple: data.cumple,
+            observacionId,
+            creadoPor: data.userId,
+          },
+        });
+
+        const nuevaEleccionRespuesta = await tx.eleccionRespuesta.create({
+          data: {
+            eleccionTemplateId: eleccionTemplate.id,
+            templateSeccionId: data.templateSeccionId,
+            resultadoAtributoChecklistId: nuevoResultado.id,
+            creadoPor: data.userId,
+          },
+        });
+
+        return {
+          eleccionRespuesta: nuevaEleccionRespuesta,
+          resultado: nuevoResultado,
+        };
+      }
+    });
+  }
+
+  /**
+   * Obtener checklists de una inspección con sus respuestas
+   */
+  async getChecklists(inspeccionId: bigint) {
+    const eleccionesTemplate = await this.prisma.eleccionTemplate.findMany({
+      where: {
+        inspeccionId,
+        eliminadoEn: null,
+      },
+      include: {
+        template: {
+          include: {
+            secciones: {
+              where: { eliminadoEn: null },
+              orderBy: { orden: 'asc' },
+            },
+          },
+        },
+        eleccionRespuestas: {
+          where: { eliminadoEn: null },
+          include: {
+            templateSeccion: true,
+            resultadoAtributo: {
+              include: {
+                observacion: {
+                  include: {
+                    archivos: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return eleccionesTemplate.map(
+      (eleccion: (typeof eleccionesTemplate)[0]) => {
+        const items = eleccion.template.secciones.map(
+          (seccion: (typeof eleccion.template.secciones)[0]) => {
+            const respuesta = eleccion.eleccionRespuestas.find(
+              (r: (typeof eleccion.eleccionRespuestas)[0]) =>
+                r.templateSeccionId === seccion.id
+            );
+
+            return {
+              templateSeccionId: seccion.id,
+              orden: seccion.orden,
+              descripcion: seccion.nombre,
+              cumple: respuesta?.resultadoAtributo.cumple ?? null,
+              observacion: respuesta?.resultadoAtributo.observacion
+                ? {
+                    id: respuesta.resultadoAtributo.observacion.id.toString(),
+                    descripcion:
+                      respuesta.resultadoAtributo.observacion.descripcion,
+                    archivos: respuesta.resultadoAtributo.observacion.archivos,
+                  }
+                : null,
+              eleccionRespuestaId: respuesta?.id ?? null,
+              resultadoId:
+                respuesta?.resultadoAtributoChecklistId.toString() ?? null,
+            };
+          }
+        );
+
+        const progresoSI = items.filter(
+          (i: (typeof items)[0]) => i.cumple === true
+        ).length;
+        const progresoNO = items.filter(
+          (i: (typeof items)[0]) => i.cumple === false
+        ).length;
+        const progresoNA = items.filter(
+          (i: (typeof items)[0]) =>
+            i.cumple === null && i.eleccionRespuestaId !== null
+        ).length;
+        const completado =
+          progresoSI + progresoNO + progresoNA === items.length;
+
+        return {
+          eleccionTemplateId: eleccion.id,
+          templateId: eleccion.templateId,
+          nombreTemplate: eleccion.template.nombre,
+          items,
+          completado,
+          progresoSI,
+          progresoNO,
+          progresoNA,
+          progresoTotal: items.length,
+        };
+      }
+    );
+  }
+
+  /**
+   * Terminar una inspección (establecer fecha de finalización)
+   */
+  async terminarInspeccion(id: bigint, userId: number) {
+    // Verificar que la inspección existe y no está finalizada
+    const inspeccion = await this.prisma.inspeccion.findUnique({
+      where: { id, eliminadoEn: null },
+    });
+
+    if (!inspeccion) {
+      throw new Error('Inspección no encontrada');
+    }
+
+    if (inspeccion.fechaFinalizacion) {
+      throw new Error('La inspección ya está finalizada');
+    }
+
+    // Actualizar fecha de finalización
+    const inspeccionActualizada = await this.prisma.inspeccion.update({
+      where: { id },
+      data: {
+        fechaFinalizacion: new Date(),
+        actualizadoPor: userId,
+        actualizadoEn: new Date(),
+      },
+      include: {
+        maquina: {
+          select: {
+            id: true,
+            nombre: true,
+          },
+        },
+        creador: {
+          select: {
+            id: true,
+            nombre: true,
+            correo: true,
+          },
+        },
+      },
+    });
+
+    return inspeccionActualizada as unknown as InspeccionData;
   }
 }

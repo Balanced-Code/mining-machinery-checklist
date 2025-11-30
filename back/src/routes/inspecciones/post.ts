@@ -1,5 +1,9 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { createInspeccionSchema } from '@/schemas/inspecciones';
+import {
+  createInspeccionSchema,
+  guardarRespuestaSchema,
+  terminarInspeccionSchema,
+} from '@/schemas/inspecciones';
 import { requireCargoLevel } from '@/middlewares/auth';
 import type {
   CreateInspeccionCompleteData,
@@ -99,6 +103,150 @@ export const inspeccionesPostRoutes: FastifyPluginAsync = async fastify => {
           statusCode: 500,
           error: 'Internal Server Error',
           message: 'Error al crear la inspección',
+        });
+      }
+    }
+  );
+};
+
+/**
+ * Interfaces para guardar respuesta
+ */
+interface GuardarRespuestaBody {
+  inspeccionId: string; // BigInt como string
+  templateId: number;
+  templateSeccionId: number;
+  cumple: boolean | null;
+  observacion?: {
+    id?: number;
+    descripcion: string;
+    archivosExistentes?: number[];
+  };
+}
+
+/**
+ * POST /inspecciones/respuestas - Guardar respuesta a un ítem del checklist
+ * Requiere autenticación
+ */
+export const guardarRespuestaRoute: FastifyPluginAsync = async fastify => {
+  fastify.post<{ Body: GuardarRespuestaBody }>(
+    '/respuestas',
+    {
+      schema: guardarRespuestaSchema,
+    },
+    async (request, reply) => {
+      try {
+        const userId = request.currentUser!.id;
+        const body = request.body;
+
+        const resultado = await fastify.services.inspecciones.guardarRespuesta({
+          inspeccionId: BigInt(body.inspeccionId),
+          templateId: body.templateId,
+          templateSeccionId: body.templateSeccionId,
+          cumple: body.cumple,
+          observacion: body.observacion
+            ? {
+                ...(body.observacion.id !== undefined && {
+                  id: body.observacion.id,
+                }),
+                descripcion: body.observacion.descripcion,
+              }
+            : undefined,
+          userId,
+        });
+
+        const statusCode =
+          resultado.eleccionRespuesta.creadoEn.getTime() ===
+          resultado.eleccionRespuesta.actualizadoEn?.getTime()
+            ? 201
+            : 200;
+
+        return reply.code(statusCode).send({
+          success: true,
+          message:
+            statusCode === 201
+              ? 'Respuesta guardada exitosamente'
+              : 'Respuesta actualizada exitosamente',
+          eleccionRespuesta: {
+            id: resultado.eleccionRespuesta.id,
+            eleccionTemplateId: resultado.eleccionRespuesta.eleccionTemplateId,
+            templateSeccionId: resultado.eleccionRespuesta.templateSeccionId,
+            resultadoAtributoChecklistId: resultado.resultado.id.toString(),
+          },
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          if (
+            error.message.includes('no encontrada') ||
+            error.message.includes('no encontrado')
+          ) {
+            request.log.warn(
+              `Error de validación al guardar respuesta: ${error.message}`
+            );
+            return reply.code(404).send({
+              statusCode: 404,
+              error: 'Not Found',
+              message: error.message,
+            });
+          }
+        }
+
+        fastify.log.error({ error }, 'Error al guardar respuesta');
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Error al guardar la respuesta',
+        });
+      }
+    }
+  );
+};
+
+/**
+ * POST /inspecciones/:id/terminar - Finalizar una inspección
+ * Requiere autenticación
+ */
+export const terminarInspeccionRoute: FastifyPluginAsync = async fastify => {
+  fastify.post<{ Params: { id: string } }>(
+    '/:id/terminar',
+    {
+      schema: terminarInspeccionSchema,
+    },
+    async (request, reply) => {
+      try {
+        const userId = request.currentUser!.id;
+        const { id } = request.params;
+        const inspeccionId = BigInt(id);
+
+        await fastify.services.inspecciones.terminarInspeccion(
+          inspeccionId,
+          userId
+        );
+
+        return reply.send({
+          success: true,
+          message: 'Inspección finalizada exitosamente',
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          if (
+            error.message.includes('no encontrada') ||
+            error.message.includes('ya está finalizada')
+          ) {
+            request.log.warn(`Error al finalizar inspección: ${error.message}`);
+            return reply.code(404).send({
+              statusCode: 404,
+              error: 'Not Found',
+              message: error.message,
+            });
+          }
+        }
+
+        fastify.log.error({ error }, 'Error al finalizar inspección');
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Error al finalizar la inspección',
         });
       }
     }

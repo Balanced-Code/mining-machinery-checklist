@@ -385,14 +385,21 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      await firstValueFrom(
-        this.http.post(`${this.baseUrl}/inspecciones/respuestas`, {
-          templateId,
-          ...respuesta,
-        })
-      );
+      const currentInspeccion = this.currentInspeccionSignal();
 
-      // Actualizar localmente
+      // Solo enviar al backend si la inspección ya fue creada
+      // En modo "crear", las respuestas se guardan solo localmente hasta que se cree la inspección
+      if (currentInspeccion) {
+        await firstValueFrom(
+          this.http.post(`${this.baseUrl}/inspecciones/respuestas`, {
+            inspeccionId: currentInspeccion.id.toString(),
+            templateId,
+            ...respuesta,
+          })
+        );
+      }
+
+      // Siempre actualizar localmente (para modo crear Y editar)
       this.checklistsSignal.update((checklists) =>
         checklists.map((checklist) => {
           if (checklist.templateId === templateId) {

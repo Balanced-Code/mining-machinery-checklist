@@ -15,6 +15,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { ChecklistTemplate } from '@core/models/checklist.model';
 import {
+  Inspeccion,
   InspeccionItemDTO,
   Maquina,
   Observacion,
@@ -180,8 +181,10 @@ export class CrearInspeccion implements OnInit, OnDestroy {
     this.inspeccionService.agregarChecklistPlaceholder();
 
     // Liberar después de 300ms
-    setTimeout(() => {
+    setTimeout(async () => {
       this.agregandoChecklist = false;
+      // Intentar crear inspección si se agregó un checklist
+      await this.intentarCrearInspeccion();
     }, 300);
   }
 
@@ -191,6 +194,22 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   ): Promise<void> {
     if (this.isChecklistSelected(template.id)) return;
     await this.inspeccionService.reemplazarChecklist(checklistIndex, template);
+
+    // Crear inspección en el backend si aún no existe y si tenemos los datos mínimos
+    await this.crearInspeccionSiEsNecesario();
+  }
+
+  /**
+   * Crea la inspección en el backend si aún no existe y si se cumplen las condiciones mínimas
+   */
+  private async crearInspeccionSiEsNecesario(): Promise<void> {
+    // Solo crear si no existe una inspección activa
+    if (this.inspeccionService.currentInspeccion()) return;
+
+    // Verificar que tengamos los datos mínimos necesarios
+    if (!this.datosMinimosParaCrear()) return;
+
+    await this.crearInspeccionInicial();
   }
 
   protected isChecklistSelected(templateId: number): boolean {
@@ -199,6 +218,114 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
   protected async eliminarChecklist(index: number): Promise<void> {
     await this.inspeccionService.eliminarChecklist(index);
+
+    // Auto-guardar si ya existe inspección
+    await this.autoGuardarSiExiste();
+  }
+
+  /**
+   * Se llama cuando el usuario sale del campo Número de Serie
+   */
+  protected async onNumSerieBlur(): Promise<void> {
+    await this.intentarCrearInspeccion();
+  }
+
+  /**
+   * Se llama cuando el usuario selecciona una máquina
+   */
+  protected async onMaquinaChange(): Promise<void> {
+    await this.intentarCrearInspeccion();
+  }
+
+  /**
+   * Auto-guarda los cambios si ya existe una inspección creada
+   */
+  private async autoGuardarSiExiste(): Promise<void> {
+    const inspeccion = this.inspeccionService.currentInspeccion();
+    if (inspeccion) {
+      await this.inspeccionService.actualizar(inspeccion.id, {
+        fechaInicio: this.fechaHoraInicio().toISOString(),
+        numSerie: this.numSerie(),
+      });
+    }
+  }
+
+  /**
+   * Intenta crear la inspección si aún no existe y hay datos mínimos
+   * Se llama desde eventos específicos: blur de numSerie, selección de máquina, agregar checklist
+   */
+  private async intentarCrearInspeccion(): Promise<void> {
+    // Si ya existe inspección, no hacer nada
+    if (this.inspeccionService.currentInspeccion()) return;
+
+    // Verificar que tengamos datos mínimos para crear
+    if (!this.datosMinimosParaCrear()) {
+      return;
+    }
+
+    await this.crearInspeccionInicial();
+  }
+
+  /**
+   * Verifica si tenemos los datos mínimos necesarios para crear la inspección
+   * Requiere al menos UNA acción significativa: numSerie o checklist
+   */
+  private datosMinimosParaCrear(): boolean {
+    // Verificar que haya fecha y hora (campos con valores por defecto)
+    if (!this.fechaInicio() || !this.horaInicio()) {
+      return false;
+    }
+
+    // La máquina es obligatoria para crear la inspección
+    if (!this.maquinaId()) {
+      return false;
+    }
+
+    // Verificar que haya AL MENOS UNA acción significativa
+    const tieneNumSerie = this.numSerie().trim().length > 0;
+    const tieneChecklist = this.checklists().length > 0;
+
+    return tieneNumSerie || tieneChecklist;
+  }
+
+  /**
+   * Crea la inspección inicial en el backend
+   */
+  private async crearInspeccionInicial(): Promise<void> {
+    // Evitar creación si ya existe
+    if (this.inspeccionService.currentInspeccion()) {
+      return;
+    }
+
+    const data = {
+      fechaInicio: this.fechaHoraInicio().toISOString(),
+      numSerie: this.numSerie() || undefined,
+      maquinaId: this.maquinaId() || undefined,
+      supervisorId: this.supervisorId() || undefined,
+      tecnicoIds: this.tecnicoIds(),
+      templateIds: this.selectedTemplateIds(),
+      nSerieMotor: undefined,
+      cabinado: undefined,
+      horometro: undefined,
+    };
+
+    await this.inspeccionService.crear(data);
+  }
+
+  /**
+   * Auto-guarda cambios en la información general
+   */
+  private autoGuardarCambios(inspeccion: Inspeccion): void {
+    const fechaHora = this.fechaHoraInicio();
+    const numSerie = this.numSerie();
+
+    // Auto-guardar con debounce
+    setTimeout(() => {
+      this.inspeccionService.actualizar(inspeccion.id, {
+        fechaInicio: fechaHora.toISOString(),
+        numSerie: numSerie,
+      });
+    }, 500);
   }
 
   protected async onRespuestaChange(
@@ -278,23 +405,26 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   protected async confirmarTerminar(): Promise<void> {
     this.showConfirmTerminar.set(false);
 
-    const data = {
-      fechaInicio: this.fechaHoraInicio().toISOString(),
-      numSerie: this.numSerie(),
-      maquinaId: this.maquinaId()!,
-      supervisorId: this.supervisorId() || undefined,
-      tecnicoIds: this.tecnicoIds(),
-      templateIds: this.selectedTemplateIds(),
-      nSerieMotor: undefined,
-      cabinado: undefined,
-      horometro: undefined,
-    };
+    const inspeccion = this.inspeccionService.currentInspeccion();
 
-    const nuevaInspeccion = await this.inspeccionService.crear(data);
+    if (!inspeccion) {
+      // Si por alguna razón no hay inspección creada, crearla primero
+      await this.crearInspeccionSiEsNecesario();
+      const nuevaInspeccion = this.inspeccionService.currentInspeccion();
 
-    if (nuevaInspeccion) {
-      this.router.navigate(['/historial']);
+      if (!nuevaInspeccion) {
+        // Si aún no se pudo crear, mostrar error
+        return;
+      }
+
+      // Terminar la inspección recién creada
+      await this.inspeccionService.terminar(nuevaInspeccion.id);
+    } else {
+      // Terminar la inspección existente
+      await this.inspeccionService.terminar(inspeccion.id);
     }
+
+    this.router.navigate(['/historial']);
   }
 
   protected cancelarTerminar(): void {

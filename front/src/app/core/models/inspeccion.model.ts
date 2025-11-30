@@ -218,8 +218,8 @@ export interface InspeccionChecklistDTO {
 export interface InspeccionFormDTO {
   // Datos básicos
   fechaInicio: string;
-  numSerie: string;
-  maquinaId: number;
+  numSerie?: string;
+  maquinaId?: number;
   nSerieMotor?: string;
   cabinado?: boolean;
   horometro?: number;
