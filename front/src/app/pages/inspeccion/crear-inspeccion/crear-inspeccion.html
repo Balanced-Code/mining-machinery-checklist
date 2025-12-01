@@ -51,21 +51,35 @@
       </div>
       <div class="form-field">
         <label class="field-label"> Máquina <span class="required">*</span> </label>
-        <input
-          type="text"
-          class="field-input"
-          [class.field-input-error]="errorMaquina()"
-          placeholder="Seleccione o ingrese nueva máquina"
-          [value]="maquinaNombre()"
-          (input)="onMaquinaInput($any($event.target).value)"
-          (blur)="onMaquinaBlur()"
-          list="maquinas-list"
-        />
-        <datalist id="maquinas-list">
-          @for (maquina of maquinas(); track maquina.id) {
-          <option [value]="maquina.nombre">{{ maquina.nombre }}</option>
-          }
-        </datalist>
+        <mat-form-field class="field-select" [class.field-select-error]="errorMaquina()">
+          <mat-select
+            placeholder="Seleccione o cree una máquina"
+            [value]="maquinaSeleccionada()"
+            (selectionChange)="onMaquinaSelectionChange($event.value)"
+            (openedChange)="$event ? null : searchMaquina.set('')"
+          >
+            <mat-option>
+              <ngx-mat-select-search
+                [(ngModel)]="searchMaquina"
+                placeholderLabel="Buscar o crear..."
+                noEntriesFoundLabel="No se encontraron máquinas"
+              ></ngx-mat-select-search>
+            </mat-option>
+            <!-- Opción para crear nueva máquina si hay búsqueda y no coincide -->
+            @if (searchMaquina() && !maquinaExacta() && searchMaquina().trim()) {
+            <mat-option [value]="'__NUEVA__:' + searchMaquina()">
+              <mat-icon class="option-icon-add">add_circle</mat-icon>
+              <span class="option-create">Crear nueva: "{{ searchMaquina() }}"</span>
+            </mat-option>
+            }
+            <!-- Lista de máquinas existentes -->
+            @for (maquina of maquinasFiltradas(); track maquina.id) {
+            <mat-option [value]="maquina.id">
+              {{ maquina.nombre }}
+            </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
         @if (errorMaquina()) {
         <span class="field-error">{{ errorMaquina() }}</span>
         }

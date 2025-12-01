@@ -447,6 +447,19 @@
   box-shadow: 0 0 0 3px rgb(237 27 46 / 10%);
 }
 
+/* Estilos para opción de crear nueva máquina */
+.option-icon-add {
+  color: #ed1b2e;
+  font-size: 18px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.option-create {
+  color: #ed1b2e;
+  font-weight: 500;
+}
+
 /* Estilos para el panel desplegable (dropdown) */
 ::ng-deep .mat-mdc-select-panel {
   background: white;

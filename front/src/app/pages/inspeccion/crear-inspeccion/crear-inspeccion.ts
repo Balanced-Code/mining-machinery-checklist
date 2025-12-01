@@ -1,4 +1,4 @@
-import {
+﻿import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -63,6 +63,30 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   protected readonly maquinas = signal<Maquina[]>([]);
   protected readonly usuarios = signal<UsuarioInspeccion[]>([]);
   protected readonly templatesDisponibles = signal<ChecklistTemplate[]>([]);
+
+  // Filtros de búsqueda
+  protected readonly searchMaquina = signal('');
+
+  // Listas filtradas
+  protected readonly maquinasFiltradas = computed(() => {
+    const search = this.searchMaquina().toLowerCase().trim();
+    if (!search) return this.maquinas();
+
+    return this.maquinas().filter((maquina) => maquina.nombre.toLowerCase().includes(search));
+  });
+
+  // Verifica si hay una máquina que coincida exactamente con la búsqueda
+  protected readonly maquinaExacta = computed(() => {
+    const search = this.searchMaquina().toLowerCase().trim();
+    if (!search) return null;
+
+    return this.maquinas().find((m) => m.nombre.toLowerCase() === search);
+  });
+
+  // Valor seleccionado en el mat-select (puede ser ID o null)
+  protected readonly maquinaSeleccionada = computed(() => {
+    return this.maquinaId();
+  });
 
   // Estados de UI
   protected readonly showConfirmSalir = signal(false);
@@ -217,65 +241,46 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   }
 
   /**
-   * Se llama cuando el usuario selecciona una máquina
+   * Se llama cuando el usuario selecciona una opción en el mat-select de máquina
    */
-  protected async onMaquinaChange(): Promise<void> {
-    await this.intentarCrearInspeccion();
-  }
-
-  /**
-   * Se llama cuando el usuario escribe en el campo de m\u00e1quina
-   */
-  protected onMaquinaInput(valor: string): void {
-    this.maquinaNombre.set(valor);
-
-    // Buscar si la m\u00e1quina existe en la lista
-    const maquinaExistente = this.maquinas().find(
-      (m) => m.nombre.toLowerCase() === valor.toLowerCase().trim()
-    );
-
-    if (maquinaExistente) {
-      this.maquinaId.set(maquinaExistente.id);
-    } else {
-      // Si no existe, el ID ser\u00e1 null (se crear\u00e1 al hacer blur)
-      this.maquinaId.set(null);
-    }
-
-    // Auto-guardar si ya existe inspecci\u00f3n
-    this.autoGuardarSiExiste();
-  }
-
-  /**
-   * Se llama cuando el usuario sale del campo de m\u00e1quina
-   */
-  protected async onMaquinaBlur(): Promise<void> {
-    const nombreMaquina = this.maquinaNombre().trim();
-
-    if (!nombreMaquina) {
+  protected async onMaquinaSelectionChange(valor: number | string): Promise<void> {
+    // Si es un número, es una máquina existente
+    if (typeof valor === 'number') {
+      const maquina = this.maquinas().find((m) => m.id === valor);
+      if (maquina) {
+        this.maquinaId.set(maquina.id);
+        this.maquinaNombre.set(maquina.nombre);
+      }
+      await this.intentarCrearInspeccion();
       return;
     }
 
-    // Verificar si la m\u00e1quina ya existe
-    const maquinaExistente = this.maquinas().find(
-      (m) => m.nombre.toLowerCase() === nombreMaquina.toLowerCase()
-    );
-
-    if (maquinaExistente) {
-      // Si existe, asegurar que tenemos el ID correcto
-      this.maquinaId.set(maquinaExistente.id);
-    } else {
-      // Si no existe, crearla
-      const nuevaMaquina = await this.inspeccionService.crearMaquina(nombreMaquina);
-
-      if (nuevaMaquina) {
-        // Agregar a la lista local
-        this.maquinas.update((maquinas) => [...maquinas, nuevaMaquina]);
-        this.maquinaId.set(nuevaMaquina.id);
-      }
+    // Si es string y comienza con '__NUEVA__:', crear nueva máquina
+    if (typeof valor === 'string' && valor.startsWith('__NUEVA__:')) {
+      const nombreNuevo = valor.replace('__NUEVA__:', '').trim();
+      await this.crearNuevaMaquina(nombreNuevo);
     }
+  }
 
-    // Intentar crear la inspecci\u00f3n si se completaron los campos obligatorios
-    await this.intentarCrearInspeccion();
+  /**
+   * Crea una nueva máquina y la selecciona
+   */
+  private async crearNuevaMaquina(nombre: string): Promise<void> {
+    if (!nombre) return;
+
+    const nuevaMaquina = await this.inspeccionService.crearMaquina(nombre);
+
+    if (nuevaMaquina) {
+      // Agregar a la lista local
+      this.maquinas.update((maquinas) => [...maquinas, nuevaMaquina]);
+      // Seleccionar la nueva máquina
+      this.maquinaId.set(nuevaMaquina.id);
+      this.maquinaNombre.set(nuevaMaquina.nombre);
+      // Limpiar búsqueda
+      this.searchMaquina.set('');
+      // Intentar crear la inspección
+      await this.intentarCrearInspeccion();
+    }
   }
 
   /**

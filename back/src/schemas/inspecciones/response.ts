@@ -21,7 +21,7 @@ export const inspeccionVistaSchema = {
       type: 'object',
       properties: {
         id: { type: 'number' },
-        modelo: { type: 'string' },
+        nombre: { type: 'string' },
       },
     },
     creador: {

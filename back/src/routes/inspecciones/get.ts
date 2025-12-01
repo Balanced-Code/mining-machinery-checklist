@@ -21,10 +21,32 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
         const inspecciones =
           await fastify.services.inspecciones.getAllInspecciones();
 
-        // Serializar BigInt a string para JSON
+        // Serializar manualmente para preservar todas las propiedades
         const inspeccionesSerializadas = inspecciones.map(insp => ({
-          ...insp,
           id: insp.id.toString(),
+          fechaInicio: insp.fechaInicio,
+          fechaFinalizacion: insp.fechaFinalizacion,
+          maquinaId: insp.maquinaId,
+          numSerie: insp.numSerie,
+          nSerieMotor: insp.nSerieMotor,
+          cabinado: insp.cabinado,
+          horometro: insp.horometro,
+          creadoPor: insp.creadoPor,
+          creadoEn: insp.creadoEn,
+          // Incluir relaciones explícitamente
+          maquina: insp.maquina
+            ? {
+                id: insp.maquina.id,
+                nombre: insp.maquina.nombre,
+              }
+            : null,
+          creador: insp.creador
+            ? {
+                id: insp.creador.id,
+                nombre: insp.creador.nombre,
+                correo: insp.creador.correo,
+              }
+            : null,
         }));
 
         return reply.send({

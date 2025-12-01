@@ -20,6 +20,16 @@ export interface InspeccionData {
   actualizadoEn: Date | null;
   eliminadoPor: number | null;
   eliminadoEn: Date | null;
+  // Relaciones opcionales (cuando se usa include)
+  maquina?: {
+    id: number;
+    nombre: string;
+  };
+  creador?: {
+    id: number;
+    nombre: string;
+    correo: string;
+  };
 }
 
 /**
