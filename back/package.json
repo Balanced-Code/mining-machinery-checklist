@@ -20,6 +20,9 @@
     "db:push": "prisma db push",
     "db:reset": "prisma migrate reset --force"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
