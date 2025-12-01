@@ -17,4 +17,33 @@ export class MaquinasService {
       },
     });
   }
+
+  async getMaquinaByNombre(nombre: string) {
+    return this.prisma.maquina.findFirst({
+      where: {
+        nombre: {
+          equals: nombre,
+          mode: 'insensitive', // Búsqueda case-insensitive
+        },
+        eliminadoEn: null,
+      },
+      select: {
+        id: true,
+        nombre: true,
+      },
+    });
+  }
+
+  async createMaquina(nombre: string, userId: number) {
+    return this.prisma.maquina.create({
+      data: {
+        nombre: nombre.trim(),
+        creadoPor: userId,
+      },
+      select: {
+        id: true,
+        nombre: true,
+      },
+    });
+  }
 }

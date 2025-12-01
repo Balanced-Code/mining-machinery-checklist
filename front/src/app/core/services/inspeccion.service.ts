@@ -498,6 +498,32 @@ export class InspeccionService {
   }
 
   /**
+   * Crea una nueva máquina
+   */
+  async crearMaquina(nombre: string): Promise<Maquina | null> {
+    this.isLoadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    try {
+      const response = await firstValueFrom(
+        this.http.post<{ success: boolean; maquina: Maquina }>(`${this.baseUrl}/maquinas`, {
+          nombre,
+        })
+      );
+
+      if (response.success && response.maquina) {
+        return response.maquina;
+      }
+      return null;
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al crear la máquina');
+      return null;
+    } finally {
+      this.isLoadingSignal.set(false);
+    }
+  }
+
+  /**
    * Obtiene la lista de usuarios disponibles para asignar roles
    */
   async obtenerUsuarios(): Promise<UsuarioInspeccion[]> {

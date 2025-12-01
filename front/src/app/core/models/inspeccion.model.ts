@@ -224,10 +224,6 @@ export interface InspeccionFormDTO {
   cabinado?: boolean;
   horometro?: number;
 
-  // Roles (Inspector es automático = usuario actual)
-  supervisorId?: number;
-  tecnicoIds?: number[]; // Puede haber múltiples técnicos
-
   // Checklists seleccionados
   templateIds: number[];
 }

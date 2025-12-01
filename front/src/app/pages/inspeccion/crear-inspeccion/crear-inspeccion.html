@@ -12,6 +12,7 @@
         <label class="field-label"> Fecha de Inicio <span class="required">*</span> </label>
         <p-datepicker
           [(ngModel)]="fechaInicio"
+          (ngModelChange)="onFechaHoraChange()"
           dateFormat="dd/mm/yy"
           placeholder="Seleccione fecha"
           [showIcon]="true"
@@ -24,6 +25,7 @@
         <label class="field-label"> Hora de Inicio <span class="required">*</span> </label>
         <p-datepicker
           [(ngModel)]="horaInicio"
+          (ngModelChange)="onFechaHoraChange()"
           [timeOnly]="true"
           hourFormat="24"
           placeholder="Seleccione hora"
@@ -37,79 +39,38 @@
         <input
           type="text"
           class="field-input"
+          [class.field-input-error]="errorNumSerie()"
           placeholder="Ej: EQA-0332"
           [value]="numSerie()"
-          (input)="numSerie.set($any($event.target).value)"
+          (input)="numSerie.set($any($event.target).value); onNumSerieChange()"
           (blur)="onNumSerieBlur()"
         />
+        @if (errorNumSerie()) {
+        <span class="field-error">{{ errorNumSerie() }}</span>
+        }
       </div>
       <div class="form-field">
         <label class="field-label"> Máquina <span class="required">*</span> </label>
-        <mat-form-field class="field-select">
-          <mat-select
-            placeholder="Seleccione una máquina"
-            [value]="maquinaId()"
-            (selectionChange)="maquinaId.set($event.value)"
-            (openedChange)="$event ? null : searchMaquina.set('')"
-          >
-            <mat-option>
-              <ngx-mat-select-search
-                [(ngModel)]="searchMaquina"
-                placeholderLabel="Buscar..."
-                noEntriesFoundLabel="No se encontraron máquinas"
-              ></ngx-mat-select-search>
-            </mat-option>
-            @for (maquina of maquinasFiltradas(); track maquina.id) {
-            <mat-option [value]="maquina.id"> {{ maquina.nombre }} </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        <input
+          type="text"
+          class="field-input"
+          [class.field-input-error]="errorMaquina()"
+          placeholder="Seleccione o ingrese nueva máquina"
+          [value]="maquinaNombre()"
+          (input)="onMaquinaInput($any($event.target).value)"
+          (blur)="onMaquinaBlur()"
+          list="maquinas-list"
+        />
+        <datalist id="maquinas-list">
+          @for (maquina of maquinas(); track maquina.id) {
+          <option [value]="maquina.nombre">{{ maquina.nombre }}</option>
+          }
+        </datalist>
+        @if (errorMaquina()) {
+        <span class="field-error">{{ errorMaquina() }}</span>
+        }
       </div>
-      <div class="form-field">
-        <label class="field-label">Supervisor</label>
-        <mat-form-field class="field-select">
-          <mat-select
-            placeholder="Seleccione un supervisor"
-            [value]="supervisorId()"
-            (selectionChange)="supervisorId.set($event.value)"
-            (openedChange)="$event ? null : searchSupervisor.set('')"
-          >
-            <mat-option>
-              <ngx-mat-select-search
-                [(ngModel)]="searchSupervisor"
-                placeholderLabel="Buscar..."
-                noEntriesFoundLabel="No se encontraron usuarios"
-              ></ngx-mat-select-search>
-            </mat-option>
-            <mat-option [value]="null">Ninguno</mat-option>
-            @for (usuario of usuariosFiltradosSupervisor(); track usuario.id) {
-            <mat-option [value]="usuario.id"> {{ formatUsuario(usuario) }} </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
-      <div class="form-field">
-        <label class="field-label">Técnicos</label>
-        <mat-form-field class="field-select">
-          <mat-select
-            placeholder="Seleccione técnicos"
-            multiple
-            [(ngModel)]="tecnicoIds"
-            (openedChange)="$event ? null : searchTecnicos.set('')"
-          >
-            <mat-option>
-              <ngx-mat-select-search
-                [(ngModel)]="searchTecnicos"
-                placeholderLabel="Buscar..."
-                noEntriesFoundLabel="No se encontraron usuarios"
-              ></ngx-mat-select-search>
-            </mat-option>
-            @for (usuario of usuariosFiltradosTecnicos(); track usuario.id) {
-            <mat-option [value]="usuario.id"> {{ formatUsuario(usuario) }} </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
+      <div class="form-field"></div>
       <div class="form-field">
         <label class="field-label">Inspector</label>
         <input
@@ -118,6 +79,45 @@
           [value]="inspectorNombre"
           readonly
           tabindex="-1"
+        />
+      </div>
+      <div class="form-field">
+        <label class="field-label">Número de Serie Motor</label>
+        <input
+          type="text"
+          class="field-input"
+          placeholder="Ej: MTR-12345"
+          [value]="nSerieMotor()"
+          (input)="nSerieMotor.set($any($event.target).value); onNSerieMotorChange()"
+        />
+      </div>
+      <div class="form-field">
+        <label class="field-label">Cabinado</label>
+        <mat-form-field class="field-select">
+          <mat-select
+            placeholder="Sin especificar"
+            [(ngModel)]="cabinado"
+            (ngModelChange)="onCabinadoChange()"
+          >
+            <mat-option [value]="null">Sin especificar</mat-option>
+            <mat-option [value]="true">Sí</mat-option>
+            <mat-option [value]="false">No</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Horómetro (horas)</label>
+        <input
+          type="number"
+          class="field-input"
+          placeholder="Ej: 1250.50"
+          step="0.01"
+          min="0"
+          [value]="horometro()"
+          (input)="
+            horometro.set($any($event.target).value ? parseFloat($any($event.target).value) : null);
+            onHorometroChange()
+          "
         />
       </div>
     </div>
@@ -130,7 +130,16 @@
         <mat-icon>checklist</mat-icon>
         <h2 class="section-title">Checklists de la Inspección</h2>
       </div>
-      <button class="btn-primary" (click)="agregarChecklist()">
+      <button
+        class="btn-primary"
+        (click)="agregarChecklist()"
+        [disabled]="!puedeAgregarChecklist()"
+        [title]="
+          puedeAgregarChecklist()
+            ? 'Agregar nuevo checklist'
+            : 'Complete los campos obligatorios para habilitar esta opción'
+        "
+      >
         <mat-icon>add</mat-icon>
         Agregar Checklist
       </button>

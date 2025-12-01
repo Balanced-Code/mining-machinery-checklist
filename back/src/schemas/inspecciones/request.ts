@@ -21,7 +21,7 @@ export const inspeccionIdParamSchema = {
  */
 export const createInspeccionBodySchema = {
   type: 'object',
-  required: ['fechaInicio', 'maquinaId'],
+  required: ['fechaInicio', 'maquinaId', 'numSerie'],
   properties: {
     fechaInicio: {
       type: 'string',
@@ -36,7 +36,7 @@ export const createInspeccionBodySchema = {
       minimum: 1,
     },
     numSerie: {
-      type: ['string', 'null'],
+      type: 'string',
       minLength: 1,
       maxLength: 50,
     },

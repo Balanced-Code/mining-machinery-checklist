@@ -139,6 +139,29 @@ export const guardarRespuestaRoute: FastifyPluginAsync = async fastify => {
         const userId = request.currentUser!.id;
         const body = request.body;
 
+        // Verificar que la inspección existe y no está finalizada
+        const inspeccion =
+          await fastify.services.inspecciones.getInspeccionById(
+            BigInt(body.inspeccionId)
+          );
+
+        if (!inspeccion) {
+          return reply.code(404).send({
+            statusCode: 404,
+            error: 'Not Found',
+            message: 'Inspección no encontrada',
+          });
+        }
+
+        if (inspeccion.fechaFinalizacion) {
+          return reply.code(403).send({
+            statusCode: 403,
+            error: 'Forbidden',
+            message:
+              'No se pueden guardar respuestas en una inspección finalizada',
+          });
+        }
+
         const resultado = await fastify.services.inspecciones.guardarRespuesta({
           inspeccionId: BigInt(body.inspeccionId),
           templateId: body.templateId,

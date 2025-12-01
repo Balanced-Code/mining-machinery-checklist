@@ -8,7 +8,9 @@ export const deleteInspeccionesRoutes: FastifyPluginAsync = async (
   /**
    * DELETE /inspecciones/:id
    * Eliminar una inspección (soft delete)
-   * Acceso: Solo nivel 3+ (inspectores y admin)
+   * Acceso:
+   * - Nivel 3 (inspectores): Solo inspecciones NO finalizadas
+   * - Nivel 4 (administradores): Todas las inspecciones
    */
   fastify.delete<{ Params: { id: string } }>(
     '/:id',
@@ -17,6 +19,7 @@ export const deleteInspeccionesRoutes: FastifyPluginAsync = async (
       try {
         const { id } = request.params;
         const inspeccionId = BigInt(id);
+        const currentUser = request.currentUser!;
 
         // Verificar que la inspección existe
         const inspeccion =
@@ -26,10 +29,26 @@ export const deleteInspeccionesRoutes: FastifyPluginAsync = async (
           return reply.notFound('Inspección no encontrada');
         }
 
+        // Verificar permisos según el nivel del usuario
+        const userCargo = await fastify.prisma.cargo.findUnique({
+          where: { id: currentUser.cargoId },
+        });
+
+        if (!userCargo) {
+          return reply.forbidden('No se pudo verificar el nivel de permisos');
+        }
+
+        // Si la inspección está finalizada y el usuario NO es nivel 4 (admin)
+        if (inspeccion.fechaFinalizacion && userCargo.nivel < 4) {
+          return reply.forbidden(
+            'Solo los administradores pueden eliminar inspecciones finalizadas'
+          );
+        }
+
         // Soft delete
         await fastify.services.inspecciones.deleteInspeccion(
           inspeccionId,
-          request.currentUser!.id
+          currentUser.id
         );
 
         return reply.send({

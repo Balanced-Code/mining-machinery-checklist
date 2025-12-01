@@ -36,6 +36,26 @@ export const inspeccionesPatchRoutes: FastifyPluginAsync = async fastify => {
         const id = BigInt(request.params.id);
         const body = request.body;
 
+        // Verificar que la inspección existe y no está finalizada
+        const inspeccionExistente =
+          await fastify.services.inspecciones.getInspeccionById(id);
+
+        if (!inspeccionExistente) {
+          return reply.code(404).send({
+            statusCode: 404,
+            error: 'Not Found',
+            message: 'Inspección no encontrada',
+          });
+        }
+
+        if (inspeccionExistente.fechaFinalizacion) {
+          return reply.code(403).send({
+            statusCode: 403,
+            error: 'Forbidden',
+            message: 'No se puede modificar una inspección finalizada',
+          });
+        }
+
         // Construir datos de actualización condicionalmente
         const data: UpdateInspeccionData = {};
 
