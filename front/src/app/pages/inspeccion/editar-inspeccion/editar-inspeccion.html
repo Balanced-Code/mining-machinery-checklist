@@ -12,6 +12,7 @@
         <label class="field-label"> Fecha de Inicio <span class="required">*</span> </label>
         <p-datepicker
           [(ngModel)]="fechaInicio"
+          (ngModelChange)="onFechaHoraChange()"
           dateFormat="dd/mm/yy"
           placeholder="Seleccione fecha"
           [showIcon]="true"
@@ -24,6 +25,7 @@
         <label class="field-label"> Hora de Inicio <span class="required">*</span> </label>
         <p-datepicker
           [(ngModel)]="horaInicio"
+          (ngModelChange)="onFechaHoraChange()"
           [timeOnly]="true"
           hourFormat="24"
           placeholder="Seleccione hora"
@@ -49,7 +51,7 @@
           class="field-input"
           placeholder="Ej: EQA-0332"
           [value]="numSerie()"
-          (input)="numSerie.set($any($event.target).value)"
+          (input)="numSerie.set($any($event.target).value); onNumSerieChange()"
         />
       </div>
       <div class="form-field">
@@ -58,7 +60,7 @@
           <mat-select
             placeholder="Seleccione una máquina"
             [value]="maquinaId()"
-            (selectionChange)="maquinaId.set($event.value)"
+            (selectionChange)="maquinaId.set($event.value); onMaquinaChange()"
             (openedChange)="$event ? null : searchMaquina.set('')"
           >
             <mat-option>
@@ -80,7 +82,7 @@
           <mat-select
             placeholder="Seleccione un supervisor"
             [value]="supervisorId()"
-            (selectionChange)="supervisorId.set($event.value)"
+            (selectionChange)="supervisorId.set($event.value); onSupervisorChange($event.value)"
             (openedChange)="$event ? null : searchSupervisor.set('')"
           >
             <mat-option>
@@ -104,6 +106,7 @@
             placeholder="Seleccione técnicos"
             multiple
             [(ngModel)]="tecnicoIds"
+            (ngModelChange)="onTecnicosChange($event)"
             (openedChange)="$event ? null : searchTecnicos.set('')"
           >
             <mat-option>

@@ -223,6 +223,125 @@ export const guardarRespuestaRoute: FastifyPluginAsync = async fastify => {
       }
     }
   );
+
+  /**
+   * POST /inspecciones/:id/templates - Agregar un template a una inspección
+   * Requiere nivel 3+ (Inspector o Administrador)
+   */
+  fastify.post<{
+    Params: { id: string };
+    Body: { templateId: number };
+  }>(
+    '/:id/templates',
+    {
+      preHandler: requireCargoLevel(3),
+    },
+    async (request, reply) => {
+      try {
+        const userId = request.currentUser!.id;
+        const { id } = request.params;
+        const { templateId } = request.body;
+        const inspeccionId = BigInt(id);
+
+        const eleccionTemplate =
+          await fastify.services.inspecciones.agregarTemplate(
+            inspeccionId,
+            templateId,
+            userId
+          );
+
+        return reply.code(201).send({
+          success: true,
+          message: 'Checklist agregado exitosamente',
+          eleccionTemplate: {
+            id: eleccionTemplate.id,
+            templateId: eleccionTemplate.templateId,
+            inspeccionId: eleccionTemplate.inspeccionId.toString(),
+          },
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          if (
+            error.message.includes('no encontrada') ||
+            error.message.includes('no encontrado') ||
+            error.message.includes('finalizada') ||
+            error.message.includes('ya está agregado')
+          ) {
+            request.log.warn(`Error al agregar template: ${error.message}`);
+            return reply.code(400).send({
+              statusCode: 400,
+              error: 'Bad Request',
+              message: error.message,
+            });
+          }
+        }
+
+        fastify.log.error({ error }, 'Error al agregar template');
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Error al agregar el checklist',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /inspecciones/:id/asignaciones - Asignar un usuario con rol a una inspección
+   * Requiere nivel 3+ (Inspector o Administrador)
+   */
+  fastify.post<{
+    Params: { id: string };
+    Body: { usuarioId: number; rolAsignacionId: number };
+  }>(
+    '/:id/asignaciones',
+    {
+      preHandler: requireCargoLevel(3),
+    },
+    async (request, reply) => {
+      try {
+        const userId = request.currentUser!.id;
+        const { id } = request.params;
+        const { usuarioId, rolAsignacionId } = request.body;
+        const inspeccionId = BigInt(id);
+
+        const asignacion = await fastify.services.inspecciones.asignarUsuario(
+          inspeccionId,
+          usuarioId,
+          rolAsignacionId,
+          userId
+        );
+
+        return reply.code(201).send({
+          success: true,
+          message: 'Usuario asignado exitosamente',
+          asignacion: {
+            id: asignacion.id,
+            usuarioId: asignacion.usuarioId,
+            rolAsignacionId: asignacion.rolAsignacionId,
+          },
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          if (error.message.includes('no encontrad')) {
+            request.log.warn(`Error al asignar usuario: ${error.message}`);
+            return reply.code(404).send({
+              statusCode: 404,
+              error: 'Not Found',
+              message: error.message,
+            });
+          }
+        }
+
+        fastify.log.error({ error }, 'Error al asignar usuario');
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: 'Error al asignar el usuario',
+        });
+      }
+    }
+  );
 };
 
 /**

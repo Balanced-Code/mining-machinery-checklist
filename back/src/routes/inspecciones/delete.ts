@@ -61,4 +61,92 @@ export const deleteInspeccionesRoutes: FastifyPluginAsync = async (
       }
     }
   );
+
+  /**
+   * DELETE /inspecciones/:id/templates/:templateId
+   * Eliminar un template de una inspección
+   * Requiere nivel 3+
+   */
+  fastify.delete<{ Params: { id: string; templateId: string } }>(
+    '/:id/templates/:templateId',
+    { preHandler: requireCargoLevel(3) },
+    async (request, reply) => {
+      try {
+        const { id, templateId } = request.params;
+        const inspeccionId = BigInt(id);
+        const currentUser = request.currentUser!;
+
+        await fastify.services.inspecciones.eliminarTemplate(
+          inspeccionId,
+          Number(templateId),
+          currentUser.id
+        );
+
+        return reply.send({
+          success: true,
+          message: 'Checklist eliminado exitosamente',
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          if (
+            error.message.includes('no encontrada') ||
+            error.message.includes('no encontrado') ||
+            error.message.includes('finalizada')
+          ) {
+            request.log.warn(`Error al eliminar template: ${error.message}`);
+            return reply.code(400).send({
+              statusCode: 400,
+              error: 'Bad Request',
+              message: error.message,
+            });
+          }
+        }
+
+        fastify.log.error({ error }, 'Error al eliminar template:');
+        return reply.internalServerError('Error al eliminar el checklist');
+      }
+    }
+  );
+
+  /**
+   * DELETE /inspecciones/:id/asignaciones/:usuarioId
+   * Eliminar una asignación de usuario de una inspección
+   * Requiere nivel 3+
+   */
+  fastify.delete<{ Params: { id: string; usuarioId: string } }>(
+    '/:id/asignaciones/:usuarioId',
+    { preHandler: requireCargoLevel(3) },
+    async (request, reply) => {
+      try {
+        const { id, usuarioId } = request.params;
+        const inspeccionId = BigInt(id);
+        const currentUser = request.currentUser!;
+
+        await fastify.services.inspecciones.eliminarAsignacion(
+          inspeccionId,
+          Number(usuarioId),
+          currentUser.id
+        );
+
+        return reply.send({
+          success: true,
+          message: 'Asignación eliminada exitosamente',
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          if (error.message.includes('no encontrad')) {
+            request.log.warn(`Error al eliminar asignación: ${error.message}`);
+            return reply.code(404).send({
+              statusCode: 404,
+              error: 'Not Found',
+              message: error.message,
+            });
+          }
+        }
+
+        fastify.log.error({ error }, 'Error al eliminar asignación:');
+        return reply.internalServerError('Error al eliminar la asignación');
+      }
+    }
+  );
 };

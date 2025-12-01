@@ -26,6 +26,21 @@ export interface BackendInspeccion {
     nombre: string;
     correo: string;
   };
+  asignaciones?: Array<{
+    id: string;
+    inspeccionId: string;
+    usuarioId: number;
+    rolAsignacionId: number;
+    usuario: {
+      id: number;
+      nombre: string;
+      correo: string;
+    };
+    rolAsignacion: {
+      id: number;
+      nombre: string;
+    };
+  }>;
 }
 
 /**

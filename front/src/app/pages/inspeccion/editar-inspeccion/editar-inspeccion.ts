@@ -15,6 +15,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChecklistTemplate } from '@core/models/checklist.model';
 import {
+  Inspeccion,
   InspeccionItemDTO,
   Maquina,
   Observacion,
@@ -107,6 +108,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
   protected readonly showConfirmSalir = signal(false);
   protected readonly showConfirmTerminar = signal(false);
   private agregandoChecklist = false;
+  private autoGuardadoTimeout: number | null = null;
 
   // Computed del servicio
   protected readonly checklists = this.inspeccionService.checklists;
@@ -197,6 +199,10 @@ export class EditarInspeccion implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Limpiar timeout de autoguardado si existe
+    if (this.autoGuardadoTimeout !== null) {
+      clearTimeout(this.autoGuardadoTimeout);
+    }
     this.inspeccionService.limpiarEstado();
   }
 
@@ -227,12 +233,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     this.poblarFormulario(inspeccion);
   }
 
-  private poblarFormulario(inspeccion: {
-    fechaInicio: string;
-    fechaFinalizacion: string | null;
-    numSerie: string;
-    maquinaId: number;
-  }): void {
+  private poblarFormulario(inspeccion: Inspeccion): void {
     // Fecha y hora de inicio
     const fechaInicio = new Date(inspeccion.fechaInicio);
     this.fechaInicio.set(fechaInicio);
@@ -249,9 +250,29 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     this.numSerie.set(inspeccion.numSerie);
     this.maquinaId.set(inspeccion.maquinaId);
 
-    // TODO: Cargar supervisor y técnicos cuando el modelo lo soporte
-    // this.supervisorId.set(inspeccion.supervisorId);
-    // this.tecnicoIds.set(inspeccion.tecnicoIds);
+    // Cargar supervisor y técnicos desde asignaciones
+    if (inspeccion.asignaciones && inspeccion.asignaciones.length > 0) {
+      console.log('📋 Cargando asignaciones:', inspeccion.asignaciones);
+
+      // Buscar supervisor (rol id 3 o nombre "Supervisor")
+      const supervisorAsignacion = inspeccion.asignaciones.find(
+        (a) => a.rolAsignacion?.id === 3 || a.rolAsignacion?.nombre === 'Supervisor'
+      );
+      if (supervisorAsignacion) {
+        console.log('👤 Supervisor encontrado:', supervisorAsignacion.usuarioId);
+        this.supervisorId.set(supervisorAsignacion.usuarioId);
+      }
+
+      // Buscar técnicos (rol ID 2 o nombre "Técnico")
+      const tecnicoAsignaciones = inspeccion.asignaciones.filter(
+        (a) => a.rolAsignacion?.id === 2 || a.rolAsignacion?.nombre === 'Técnico'
+      );
+      if (tecnicoAsignaciones.length > 0) {
+        const tecnicoIds = tecnicoAsignaciones.map((a) => a.usuarioId);
+        console.log('👥 Técnicos encontrados:', tecnicoIds);
+        this.tecnicoIds.set(tecnicoIds);
+      }
+    }
   }
 
   private async obtenerTemplates(): Promise<ChecklistTemplate[]> {
@@ -277,7 +298,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     ];
   }
 
-  protected agregarChecklist(): void {
+  protected async agregarChecklist(): Promise<void> {
     // Prevenir clics múltiples rápidos (debounce manual)
     if (this.agregandoChecklist) return;
 
@@ -295,7 +316,17 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     template: ChecklistTemplate
   ): Promise<void> {
     if (this.isChecklistSelected(template.id)) return;
-    await this.inspeccionService.reemplazarChecklist(checklistIndex, template);
+
+    const id = this.inspeccionId();
+    if (!id) return;
+
+    // Agregar el template al backend
+    const agregado = await this.inspeccionService.agregarTemplateAInspeccion(id, template.id);
+
+    if (agregado) {
+      // Actualizar localmente
+      await this.inspeccionService.reemplazarChecklist(checklistIndex, template);
+    }
   }
 
   protected isChecklistSelected(templateId: number): boolean {
@@ -303,7 +334,158 @@ export class EditarInspeccion implements OnInit, OnDestroy {
   }
 
   protected async eliminarChecklist(index: number): Promise<void> {
-    await this.inspeccionService.eliminarChecklist(index);
+    const id = this.inspeccionId();
+    const checklist = this.checklists()[index];
+
+    if (!id || !checklist) return;
+
+    // Si es un placeholder (templateId negativo), solo eliminar localmente
+    if (checklist.templateId < 0) {
+      await this.inspeccionService.eliminarChecklist(index);
+      return;
+    }
+
+    // Eliminar del backend
+    const eliminado = await this.inspeccionService.eliminarTemplateDeInspeccion(
+      id,
+      checklist.templateId
+    );
+
+    if (eliminado) {
+      // Eliminar localmente
+      await this.inspeccionService.eliminarChecklist(index);
+    }
+  }
+
+  /**
+   * Se llama cuando cambia el número de serie
+   */
+  protected async onNumSerieChange(): Promise<void> {
+    await this.autoGuardar();
+  }
+
+  /**
+   * Se llama cuando cambia la fecha o hora de inicio
+   */
+  protected async onFechaHoraChange(): Promise<void> {
+    await this.autoGuardar();
+  }
+
+  /**
+   * Se llama cuando cambia la máquina seleccionada
+   */
+  protected async onMaquinaChange(): Promise<void> {
+    await this.autoGuardar();
+  }
+
+  /**
+   * Se llama cuando cambia el supervisor
+   */
+  protected async onSupervisorChange(supervisorId: number | null): Promise<void> {
+    console.log('🔄 onSupervisorChange llamado - iniciando debounce:', {
+      supervisorId,
+      inspeccionId: this.inspeccionId(),
+    });
+    await this.autoGuardar();
+  }
+
+  /**
+   * Se llama cuando cambian los técnicos
+   */
+  protected async onTecnicosChange(tecnicoIds: number[]): Promise<void> {
+    console.log('🔄 onTecnicosChange llamado - iniciando debounce:', {
+      tecnicoIds,
+      inspeccionId: this.inspeccionId(),
+    });
+    await this.autoGuardar();
+  }
+
+  /**
+   * Auto-guarda los cambios de la inspección
+   * Cancela el timeout anterior y programa un nuevo guardado
+   */
+  private async autoGuardar(): Promise<void> {
+    const id = this.inspeccionId();
+    if (!id) {
+      console.log('⚠️ No hay inspección ID para autoguardar');
+      return;
+    }
+
+    console.log('🔄 Autoguardado programado para inspección', id);
+
+    // Cancelar el timeout anterior si existe
+    if (this.autoGuardadoTimeout !== null) {
+      clearTimeout(this.autoGuardadoTimeout);
+    }
+
+    // Programar nuevo guardado después de 1.5 segundos
+    this.autoGuardadoTimeout = window.setTimeout(async () => {
+      try {
+        console.log('💾 Ejecutando guardado automático...');
+
+        // 1. Guardar datos básicos
+        const datos = {
+          fechaInicio: this.fechaHoraInicio().toISOString(),
+          numSerie: this.numSerie(),
+          maquinaId: this.maquinaId() ?? undefined,
+        };
+        console.log('📄 Guardando datos básicos:', datos);
+        await this.inspeccionService.actualizar(id, datos);
+        console.log('✅ Datos básicos guardados');
+
+        // 2. Guardar supervisor si está seleccionado
+        const supervisorId = this.supervisorId();
+        if (supervisorId !== null) {
+          console.log(`👤 Guardando supervisor ${supervisorId}`);
+          // Rol ID 3 = Supervisor (según seed)
+          await this.inspeccionService.asignarUsuario(id, supervisorId, 3);
+          console.log('✅ Supervisor guardado');
+        }
+
+        // 3. Sincronizar técnicos
+        const tecnicoIdsActuales = this.tecnicoIds();
+        const asignacionesActuales = this.inspeccionService.currentInspeccion()?.asignaciones || [];
+
+        // Obtener IDs de técnicos que ya están asignados (rol Técnico = ID 2)
+        const tecnicosAsignadosAntes = asignacionesActuales
+          .filter((a) => a.rolAsignacion?.nombre === 'Técnico' || a.rolAsignacion?.id === 2)
+          .map((a) => a.usuarioId);
+
+        console.log('👥 Técnicos actuales:', tecnicoIdsActuales);
+        console.log('👥 Técnicos asignados antes:', tecnicosAsignadosAntes);
+
+        // Agregar nuevos técnicos
+        const tecnicosAAgregar = tecnicoIdsActuales.filter(
+          (id) => !tecnicosAsignadosAntes.includes(id)
+        );
+        for (const tecnicoId of tecnicosAAgregar) {
+          console.log(`➕ Agregando técnico ${tecnicoId}`);
+          // Rol ID 2 = Técnico (según seed)
+          await this.inspeccionService.asignarUsuario(id, tecnicoId, 2);
+        }
+
+        // Eliminar técnicos deseleccionados
+        const tecnicosAEliminar = tecnicosAsignadosAntes.filter(
+          (id) => !tecnicoIdsActuales.includes(id)
+        );
+        for (const tecnicoId of tecnicosAEliminar) {
+          console.log(`➖ Eliminando técnico ${tecnicoId}`);
+          await this.inspeccionService.eliminarAsignacion(id, tecnicoId);
+        }
+
+        if (tecnicosAAgregar.length > 0 || tecnicosAEliminar.length > 0) {
+          console.log(
+            `✅ Técnicos sincronizados (+${tecnicosAAgregar.length}, -${tecnicosAEliminar.length})`
+          );
+        }
+
+        console.log('✅ Guardado automático completado');
+      } catch (error) {
+        console.error('❌ Error en guardado automático:', error);
+      } finally {
+        this.autoGuardadoTimeout = null;
+      }
+    }, 1500);
   }
 
   protected async onRespuestaChange(
@@ -386,18 +568,19 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     const id = this.inspeccionId();
     if (!id) return;
 
-    // TODO: Guardar en backend
-    console.log('Actualizando inspección...', {
-      id,
+    // Guardar cambios finales antes de terminar
+    await this.inspeccionService.actualizar(id, {
       fechaInicio: this.fechaHoraInicio().toISOString(),
       numSerie: this.numSerie(),
-      maquinaId: this.maquinaId(),
-      supervisorId: this.supervisorId(),
-      tecnicoIds: this.tecnicoIds(),
-      checklists: this.checklists(),
+      maquinaId: this.maquinaId() ?? undefined,
     });
 
-    this.router.navigate(['/historial']);
+    // Terminar la inspección
+    const terminada = await this.inspeccionService.terminar(id);
+
+    if (terminada) {
+      this.router.navigate(['/historial']);
+    }
   }
 
   protected cancelarTerminar(): void {

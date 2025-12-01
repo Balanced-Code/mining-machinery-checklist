@@ -209,9 +209,23 @@ export class CrearInspeccion implements OnInit, OnDestroy {
     template: ChecklistTemplate
   ): Promise<void> {
     if (this.isChecklistSelected(template.id)) return;
+
+    const inspeccion = this.inspeccionService.currentInspeccion();
+
+    // Si ya existe la inspección, agregar al backend
+    if (inspeccion) {
+      const agregado = await this.inspeccionService.agregarTemplateAInspeccion(
+        inspeccion.id,
+        template.id
+      );
+
+      if (!agregado) return;
+    }
+
+    // Actualizar localmente
     await this.inspeccionService.reemplazarChecklist(checklistIndex, template);
 
-    // Auto-guardar si ya existe inspección
+    // Auto-guardar si ya existe inspección (por si acaso hay otros cambios)
     await this.autoGuardarSiExiste();
   }
 
@@ -220,6 +234,20 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   }
 
   protected async eliminarChecklist(index: number): Promise<void> {
+    const inspeccion = this.inspeccionService.currentInspeccion();
+    const checklist = this.checklists()[index];
+
+    // Si ya existe la inspección y no es un placeholder, eliminar del backend
+    if (inspeccion && checklist && checklist.templateId > 0) {
+      const eliminado = await this.inspeccionService.eliminarTemplateDeInspeccion(
+        inspeccion.id,
+        checklist.templateId
+      );
+
+      if (!eliminado) return;
+    }
+
+    // Eliminar localmente
     await this.inspeccionService.eliminarChecklist(index);
 
     // Auto-guardar si ya existe inspección

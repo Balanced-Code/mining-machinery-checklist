@@ -36,7 +36,7 @@ export interface AsignacionInspeccion {
   usuarioId: number;
   rolAsignacionId: number;
   usuario?: UsuarioInspeccion;
-  rol?: RolAsignacion;
+  rolAsignacion?: RolAsignacion; // Nombre que usa Prisma en el backend
 }
 
 /**

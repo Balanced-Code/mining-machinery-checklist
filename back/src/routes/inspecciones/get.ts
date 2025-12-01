@@ -80,11 +80,28 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
           return reply.notFound('Inspección no encontrada');
         }
 
+        // Log para debugging
+        fastify.log.info({
+          msg: '🔍 Inspección obtenida',
+          id: inspeccion.id.toString(),
+          asignacionesCount: inspeccion.asignaciones?.length,
+        });
+
         // Serializar BigInt a string
         const inspeccionSerializada = {
           ...inspeccion,
           id: inspeccion.id.toString(),
+          asignaciones: inspeccion.asignaciones?.map(asignacion => ({
+            ...asignacion,
+            id: asignacion.id.toString(),
+            inspeccionId: asignacion.inspeccionId.toString(),
+          })),
         };
+
+        fastify.log.info({
+          msg: '📤 Enviando respuesta serializada',
+          asignacionesCount: inspeccionSerializada.asignaciones?.length,
+        });
 
         return reply.send(inspeccionSerializada);
       } catch (error) {
@@ -119,4 +136,23 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
       }
     }
   );
+
+  /**
+   * GET /inspecciones/roles
+   * Obtener roles de asignación disponibles
+   * Acceso: Automático (cualquier usuario autenticado)
+   */
+  fastify.get('/roles', async (request, reply) => {
+    try {
+      const roles = await fastify.services.inspecciones.getRolesAsignacion();
+
+      return reply.send({
+        roles,
+        total: roles.length,
+      });
+    } catch (error) {
+      fastify.log.error({ error }, 'Error al obtener roles:');
+      return reply.internalServerError('Error al obtener los roles');
+    }
+  });
 };

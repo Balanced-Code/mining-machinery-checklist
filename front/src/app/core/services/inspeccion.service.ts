@@ -182,8 +182,10 @@ export class InspeccionService {
         this.http.get<BackendInspeccion>(`${this.baseUrl}/inspecciones/${id}`)
       );
 
+      console.log('📥 Respuesta del backend para inspección:', response);
+      console.log('📋 Asignaciones recibidas:', response.asignaciones);
+
       // Mapear respuesta
-      // Nota: Ajustar según la respuesta real del backend
       const inspeccion: Inspeccion = {
         id: parseInt(response.id, 10),
         fechaInicio: response.fechaInicio,
@@ -201,7 +203,18 @@ export class InspeccionService {
               nombre: response.maquina.nombre,
             }
           : undefined,
+        asignaciones: response.asignaciones?.map((a) => ({
+          id: parseInt(a.id, 10),
+          inspeccionId: parseInt(a.inspeccionId, 10),
+          usuarioId: a.usuarioId,
+          rolAsignacionId: a.rolAsignacionId,
+          usuario: a.usuario,
+          rolAsignacion: a.rolAsignacion,
+        })),
       };
+
+      console.log('✅ Inspección mapeada:', inspeccion);
+      console.log('✅ Asignaciones mapeadas:', inspeccion.asignaciones);
 
       this.currentInspeccionSignal.set(inspeccion);
       return inspeccion;
@@ -221,7 +234,11 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      await firstValueFrom(this.http.put(`${this.baseUrl}/inspecciones/${id}`, data));
+      console.log(`📡 Enviando PATCH a /inspecciones/${id}`, data);
+
+      await firstValueFrom(this.http.patch(`${this.baseUrl}/inspecciones/${id}`, data));
+
+      console.log('✅ PATCH exitoso');
 
       // Actualizar estado local
       const current = this.currentInspeccionSignal();
@@ -235,6 +252,7 @@ export class InspeccionService {
 
       return true;
     } catch (err: unknown) {
+      console.error('❌ Error en PATCH:', err);
       this.handleError(err, 'Error al actualizar la inspección');
       return false;
     } finally {
@@ -469,6 +487,112 @@ export class InspeccionService {
       this.checklistsSignal.set(checklists);
     } catch (err: unknown) {
       this.handleError(err, 'Error al cargar los checklists');
+    } finally {
+      this.isLoadingSignal.set(false);
+    }
+  }
+
+  /**
+   * Agrega un template a una inspección existente
+   */
+  async agregarTemplateAInspeccion(inspeccionId: number, templateId: number): Promise<boolean> {
+    this.isLoadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    try {
+      console.log(`📡 Agregando template ${templateId} a inspección ${inspeccionId}`);
+
+      await firstValueFrom(
+        this.http.post(`${this.baseUrl}/inspecciones/${inspeccionId}/templates`, {
+          templateId,
+        })
+      );
+
+      console.log('✅ Template agregado exitosamente');
+      return true;
+    } catch (err: unknown) {
+      console.error('❌ Error al agregar template:', err);
+      this.handleError(err, 'Error al agregar el checklist');
+      return false;
+    } finally {
+      this.isLoadingSignal.set(false);
+    }
+  }
+
+  /**
+   * Elimina un template de una inspección
+   */
+  async eliminarTemplateDeInspeccion(inspeccionId: number, templateId: number): Promise<boolean> {
+    this.isLoadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    try {
+      console.log(`📡 Eliminando template ${templateId} de inspección ${inspeccionId}`);
+
+      await firstValueFrom(
+        this.http.delete(`${this.baseUrl}/inspecciones/${inspeccionId}/templates/${templateId}`)
+      );
+
+      console.log('✅ Template eliminado exitosamente');
+      return true;
+    } catch (err: unknown) {
+      console.error('❌ Error al eliminar template:', err);
+      this.handleError(err, 'Error al eliminar el checklist');
+      return false;
+    } finally {
+      this.isLoadingSignal.set(false);
+    }
+  }
+
+  /**
+   * Asigna un usuario con un rol a una inspección
+   */
+  async asignarUsuario(
+    inspeccionId: number,
+    usuarioId: number,
+    rolAsignacionId: number
+  ): Promise<boolean> {
+    this.isLoadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    try {
+      console.log(
+        `📡 Asignando usuario ${usuarioId} con rol ${rolAsignacionId} a inspección ${inspeccionId}`
+      );
+
+      await firstValueFrom(
+        this.http.post(`${this.baseUrl}/inspecciones/${inspeccionId}/asignaciones`, {
+          usuarioId,
+          rolAsignacionId,
+        })
+      );
+
+      console.log('✅ Usuario asignado exitosamente');
+      return true;
+    } catch (err: unknown) {
+      console.error('❌ Error al asignar usuario:', err);
+      this.handleError(err, 'Error al asignar usuario');
+      return false;
+    } finally {
+      this.isLoadingSignal.set(false);
+    }
+  }
+
+  /**
+   * Elimina una asignación de usuario de una inspección
+   */
+  async eliminarAsignacion(inspeccionId: number, usuarioId: number): Promise<boolean> {
+    this.isLoadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    try {
+      await firstValueFrom(
+        this.http.delete(`${this.baseUrl}/inspecciones/${inspeccionId}/asignaciones/${usuarioId}`)
+      );
+      return true;
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al eliminar asignación');
+      return false;
     } finally {
       this.isLoadingSignal.set(false);
     }

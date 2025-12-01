@@ -150,26 +150,26 @@ async function main() {
 
   // Crear roles de asignación
   console.log('👷 Creando roles de asignación...');
-  await Promise.all([
-    prisma.rolAsignacion.create({
-      data: {
-        nombre: 'Inspector Principal',
-        creadoPor: adminUser.id,
-      },
-    }),
-    prisma.rolAsignacion.create({
-      data: {
-        nombre: 'Inspector Asistente',
-        creadoPor: adminUser.id,
-      },
-    }),
-    prisma.rolAsignacion.create({
-      data: {
-        nombre: 'Supervisor',
-        creadoPor: adminUser.id,
-      },
-    }),
-  ]);
+  const rolInspectorPrincipal = await prisma.rolAsignacion.create({
+    data: {
+      nombre: 'Inspector Principal',
+      creadoPor: adminUser.id,
+    },
+  });
+
+  const rolTecnico = await prisma.rolAsignacion.create({
+    data: {
+      nombre: 'Técnico',
+      creadoPor: adminUser.id,
+    },
+  });
+
+  const rolSupervisor = await prisma.rolAsignacion.create({
+    data: {
+      nombre: 'Supervisor',
+      creadoPor: adminUser.id,
+    },
+  });
 
   // Crear templates de ejemplo basados en los mocks del frontend
   console.log('Creando templates de checklist...');
@@ -367,8 +367,8 @@ async function main() {
     }),
   ]);
 
-  console.log('ed completado exitosamente!');
-  console.log('\nos creados:');
+  console.log('Seed completado exitosamente!');
+  console.log('\nRecursos creados:');
   console.log(`   - 6 Cargos:`);
   console.log(`     • Nivel 4: Administrador (ID: ${cargoAdmin.id})`);
   console.log(`     • Nivel 3: Inspector (ID: ${cargoInspector.id})`);
@@ -386,10 +386,17 @@ async function main() {
   console.log(`     • Operador (Nivel 1): ${operadorUser.correo}`);
   console.log(`     • Invitado (Nivel 1): ${invitadoUser.correo}`);
   console.log(`   - ${maquinas.length} Máquinas`);
-  console.log(`   - 3 Roles de asignación`);
+  console.log(`   - 3 Roles de asignación:`);
+  console.log(
+    `     • ID ${rolInspectorPrincipal.id}: Inspector Principal (solo 1 por inspección)`
+  );
+  console.log(`     • ID ${rolTecnico.id}: Técnico (varios permitidos)`);
+  console.log(
+    `     • ID ${rolSupervisor.id}: Supervisor (solo 1 por inspección)`
+  );
   console.log(`   - 7 Templates de checklist con sus secciones`);
-  console.log('\ndenciales de acceso (todos tienen la misma contraseña):');
-  console.log('   Password: admin123');
+  console.log('\nCredenciales de acceso (todos tienen la misma contraseña):');
+  console.log('   Password: admin123?');
 }
 
 main()

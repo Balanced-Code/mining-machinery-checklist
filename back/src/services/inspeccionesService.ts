@@ -453,6 +453,224 @@ export class InspeccionesService {
   }
 
   /**
+   * Agregar un template (checklist) a una inspección
+   */
+  async agregarTemplate(
+    inspeccionId: bigint,
+    templateId: number,
+    userId: number
+  ) {
+    // Verificar que la inspección existe y no está finalizada
+    const inspeccion = await this.prisma.inspeccion.findUnique({
+      where: { id: inspeccionId, eliminadoEn: null },
+    });
+
+    if (!inspeccion) {
+      throw new Error('Inspección no encontrada');
+    }
+
+    if (inspeccion.fechaFinalizacion) {
+      throw new Error('No se puede modificar una inspección finalizada');
+    }
+
+    // Verificar que el template existe
+    const template = await this.prisma.template.findUnique({
+      where: { id: templateId, eliminadoEn: null },
+    });
+
+    if (!template) {
+      throw new Error('Template no encontrado');
+    }
+
+    // Verificar que no esté ya agregado
+    const existente = await this.prisma.eleccionTemplate.findFirst({
+      where: {
+        inspeccionId,
+        templateId,
+        eliminadoEn: null,
+      },
+    });
+
+    if (existente) {
+      throw new Error('Este checklist ya está agregado a la inspección');
+    }
+
+    // Crear la elección de template
+    const eleccionTemplate = await this.prisma.eleccionTemplate.create({
+      data: {
+        inspeccionId,
+        templateId,
+        creadoPor: userId,
+      },
+    });
+
+    return eleccionTemplate;
+  }
+
+  /**
+   * Eliminar un template (checklist) de una inspección
+   */
+  async eliminarTemplate(
+    inspeccionId: bigint,
+    templateId: number,
+    userId: number
+  ) {
+    // Verificar que la inspección existe y no está finalizada
+    const inspeccion = await this.prisma.inspeccion.findUnique({
+      where: { id: inspeccionId, eliminadoEn: null },
+    });
+
+    if (!inspeccion) {
+      throw new Error('Inspección no encontrada');
+    }
+
+    if (inspeccion.fechaFinalizacion) {
+      throw new Error('No se puede modificar una inspección finalizada');
+    }
+
+    // Buscar la elección de template
+    const eleccionTemplate = await this.prisma.eleccionTemplate.findFirst({
+      where: {
+        inspeccionId,
+        templateId,
+        eliminadoEn: null,
+      },
+    });
+
+    if (!eleccionTemplate) {
+      throw new Error('Template no encontrado en esta inspección');
+    }
+
+    // Soft delete
+    await this.prisma.eleccionTemplate.update({
+      where: { id: eleccionTemplate.id },
+      data: {
+        eliminadoPor: userId,
+        eliminadoEn: new Date(),
+      },
+    });
+
+    return { success: true };
+  }
+
+  /**
+   * Asignar o actualizar un usuario con un rol a una inspección
+   */
+  async asignarUsuario(
+    inspeccionId: bigint,
+    usuarioId: number,
+    rolAsignacionId: number,
+    userId: number
+  ) {
+    // Verificar que la inspección existe
+    const inspeccion = await this.prisma.inspeccion.findUnique({
+      where: { id: inspeccionId, eliminadoEn: null },
+    });
+
+    if (!inspeccion) {
+      throw new Error('Inspección no encontrada');
+    }
+
+    // Verificar que el usuario existe
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: usuarioId, eliminadoEn: null },
+    });
+
+    if (!usuario) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    // Verificar que el rol existe
+    const rol = await this.prisma.rolAsignacion.findUnique({
+      where: { id: rolAsignacionId, eliminadoEn: null },
+    });
+
+    if (!rol) {
+      throw new Error('Rol de asignación no encontrado');
+    }
+
+    // Verificar si ya existe una asignación activa
+    const existente = await this.prisma.asignacionInspeccion.findFirst({
+      where: {
+        inspeccionId,
+        usuarioId,
+        eliminadoEn: null,
+      },
+    });
+
+    if (existente) {
+      // Actualizar el rol existente
+      const actualizada = await this.prisma.asignacionInspeccion.update({
+        where: { id: existente.id },
+        data: {
+          rolAsignacionId,
+          actualizadoPor: userId,
+          actualizadoEn: new Date(),
+        },
+      });
+      return actualizada;
+    }
+
+    // Crear nueva asignación
+    const asignacion = await this.prisma.asignacionInspeccion.create({
+      data: {
+        inspeccionId,
+        usuarioId,
+        rolAsignacionId,
+        creadoPor: userId,
+      },
+    });
+
+    return asignacion;
+  }
+
+  /**
+   * Obtener roles de asignación disponibles
+   */
+  async getRolesAsignacion() {
+    return this.prisma.rolAsignacion.findMany({
+      where: { eliminadoEn: null },
+      select: {
+        id: true,
+        nombre: true,
+      },
+      orderBy: { nombre: 'asc' },
+    });
+  }
+
+  /**
+   * Eliminar una asignación de usuario de una inspección
+   */
+  async eliminarAsignacion(
+    inspeccionId: bigint,
+    usuarioId: number,
+    userId: number
+  ) {
+    const asignacion = await this.prisma.asignacionInspeccion.findFirst({
+      where: {
+        inspeccionId,
+        usuarioId,
+        eliminadoEn: null,
+      },
+    });
+
+    if (!asignacion) {
+      throw new Error('Asignación no encontrada');
+    }
+
+    // Soft delete
+    await this.prisma.asignacionInspeccion.update({
+      where: { id: asignacion.id },
+      data: {
+        eliminadoPor: userId,
+        eliminadoEn: new Date(),
+      },
+    });
+
+    return { success: true };
+  }
+
+  /**
    * Terminar una inspección (establecer fecha de finalización)
    */
   async terminarInspeccion(id: bigint, userId: number) {

@@ -32,6 +32,33 @@ export const inspeccionVistaSchema = {
         correo: { type: 'string' },
       },
     },
+    asignaciones: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' }, // BigInt serializado
+          inspeccionId: { type: 'string' }, // BigInt serializado
+          usuarioId: { type: 'number' },
+          rolAsignacionId: { type: 'number' },
+          usuario: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              nombre: { type: 'string' },
+              correo: { type: 'string' },
+            },
+          },
+          rolAsignacion: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              nombre: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
   },
 } as const;
 

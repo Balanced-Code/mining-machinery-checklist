@@ -30,6 +30,21 @@ export interface InspeccionData {
     nombre: string;
     correo: string;
   };
+  asignaciones?: Array<{
+    id: bigint;
+    inspeccionId: bigint;
+    usuarioId: number;
+    rolAsignacionId: number;
+    usuario: {
+      id: number;
+      nombre: string;
+      correo: string;
+    };
+    rolAsignacion: {
+      id: number;
+      nombre: string;
+    };
+  }>;
 }
 
 /**
