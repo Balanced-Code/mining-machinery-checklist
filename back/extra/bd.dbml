@@ -270,9 +270,11 @@ Table archivo {
   id bigint [pk, increment]
   nombre varchar(255) [not null]
   tipo varchar(50) [not null]
-  tamano bigint [not null, note: "Tamaño en bytes"]
-  ruta varchar(500) [not null]
-  hash char(64) [unique, not null, note: "SHA-256 para deduplicación"]
+  tamano bigint [not null, note: "Tamaño en bytes (0 si es URL externa)"]
+  ruta varchar(500) [null, note: "Ruta del archivo en disco (NULL si es URL externa)"]
+  url varchar(1000) [null, note: "URL pública del archivo (NULL si es archivo local)"]
+  categoria varchar(50) [not null, note: "Categoría: imagen, documento, pdf, video, etc."]
+  hash char(64) [unique, not null, note: "SHA-256 para deduplicación (hash del contenido o de la URL)"]
   observacion_id bigint [ref: > observacion.id, null]
 
   creado_por int [ref: > usuario.id, not null]
@@ -284,7 +286,15 @@ Table archivo {
     observacion_id
     hash
     creado_por
+    categoria
   }
+
+  Note: '''
+  Almacenamiento flexible de archivos:
+  - Archivo local: ruta NOT NULL, url NULL
+  - URL externa: url NOT NULL, ruta NULL
+  - Validación a nivel de aplicación: al menos uno debe existir
+  '''
 }
 
 Table auditoria_operacion {

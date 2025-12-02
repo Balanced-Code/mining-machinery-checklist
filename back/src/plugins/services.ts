@@ -3,6 +3,7 @@ import { TemplatesService } from '@/services/templatesService';
 import { UsuariosService } from '@/services/usuariosService';
 import { InspeccionesService } from '@/services/inspeccionesService';
 import { MaquinasService } from '@/services/maquinasService';
+import { ArchivosService } from '@/services/archivosService';
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 
@@ -24,8 +25,7 @@ declare module 'fastify' {
       templates: TemplatesService;
       inspecciones: InspeccionesService;
       maquinas: MaquinasService;
-      // Aquí puedes agregar más servicios en el futuro:
-      // checklist: ChecklistService;
+      archivos: ArchivosService;
     };
   }
 }
@@ -48,6 +48,7 @@ async function servicesPlugin(fastify: FastifyInstance) {
   const templatesService = new TemplatesService(fastify.prisma);
   const inspeccionesService = new InspeccionesService(fastify.prisma);
   const maquinasService = new MaquinasService(fastify.prisma);
+  const archivosService = new ArchivosService(fastify.prisma);
 
   // Decorar fastify con el objeto services
   fastify.decorate('services', {
@@ -56,7 +57,7 @@ async function servicesPlugin(fastify: FastifyInstance) {
     templates: templatesService,
     inspecciones: inspeccionesService,
     maquinas: maquinasService,
-    // Agregar más servicios aquí según sea necesario
+    archivos: archivosService,
   });
 
   fastify.log.info('Servicios registrados correctamente');

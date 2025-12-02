@@ -511,11 +511,7 @@ export class InspeccionesService {
   /**
    * Eliminar un template (checklist) de una inspección (hard delete)
    */
-  async eliminarTemplate(
-    inspeccionId: bigint,
-    templateId: number,
-    userId: number
-  ) {
+  async eliminarTemplate(inspeccionId: bigint, templateId: number) {
     // Verificar que la inspección existe y no está finalizada
     const inspeccion = await this.prisma.inspeccion.findUnique({
       where: { id: inspeccionId, eliminadoEn: null },

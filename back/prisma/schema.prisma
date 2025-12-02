@@ -372,10 +372,15 @@ model Archivo {
   id             BigInt    @id @default(autoincrement())
   nombre         String    @db.VarChar(255)
   tipo           String    @db.VarChar(50)
-  /// Tamaño en bytes
+  /// Tamaño en bytes (0 si es URL externa)
   tamano         BigInt
-  ruta           String    @db.VarChar(500)
-  /// SHA-256 para deduplicación
+  /// Ruta del archivo en disco (NULL si es URL externa)
+  ruta           String?   @db.VarChar(500)
+  /// URL pública del archivo (NULL si es archivo local)
+  url            String?   @db.VarChar(1000)
+  /// Categoría del archivo: imagen, documento, pdf, video, etc.
+  categoria      String    @db.VarChar(50)
+  /// SHA-256 para deduplicación (hash del contenido o de la URL)
   hash           String    @unique @db.Char(64)
   observacionId  BigInt?   @map("observacion_id")
   creadoPor      Int       @map("creado_por")
@@ -391,6 +396,7 @@ model Archivo {
   @@index([observacionId])
   @@index([hash])
   @@index([creadoPor])
+  @@index([categoria])
   @@map("archivo")
 }
 

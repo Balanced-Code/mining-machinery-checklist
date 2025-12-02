@@ -7,16 +7,19 @@ import corsPlugin from './plugins/cors';
 import envPlugin from './plugins/env';
 import helmetPlugin from './plugins/helmet';
 import jwtPlugin from './plugins/jwt';
+import multipartPlugin from './plugins/multipart';
 import normalizationPlugin from './plugins/normalization';
 import prismaPlugin from './plugins/prisma';
 import rateLimitPlugin from './plugins/rateLimit';
 import servicesPlugin from './plugins/services';
+import staticPlugin from './plugins/static';
 import swaggerPlugin from './plugins/swagger';
 import authRoutes from './routes/auth/index';
 import usuariosRoutes from './routes/usuarios';
 import templateRoutes from './routes/checklists_template';
 import inspeccionesRoutes from './routes/inspecciones';
 import maquinasRoutes from './routes/maquinas';
+import archivosRoutes from './routes/archivos';
 
 const app = Fastify({
   logger: {
@@ -49,7 +52,9 @@ async function start() {
     await app.register(corsPlugin); // 9. CORS
     await app.register(jwtPlugin); // 10. Autenticación JWT
     await app.register(authPlugin); // 11. Plugin de autenticación global
-    await app.register(swaggerPlugin); // 12. Swagger
+    await app.register(multipartPlugin); // 12. Manejo de archivos multipart
+    await app.register(staticPlugin); // 13. Servir archivos estáticos
+    await app.register(swaggerPlugin); // 14. Swagger
 
     // Ruta raíz - Redirección a documentación (oculta de Swagger)
     app.get(
@@ -68,6 +73,7 @@ async function start() {
     await app.register(templateRoutes, { prefix: '/templates' }); // Gestion de Templates de Checklist
     await app.register(inspeccionesRoutes, { prefix: '/inspecciones' }); // Gestión de Inspecciones
     await app.register(maquinasRoutes, { prefix: '/maquinas' }); // Gestión de Máquinas
+    await app.register(archivosRoutes, { prefix: '/archivos' }); // Gestión de Archivos
 
     // Iniciar servidor
     await app.listen({

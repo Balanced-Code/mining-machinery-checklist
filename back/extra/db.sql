@@ -148,7 +148,9 @@ CREATE TABLE "archivo" (
   "nombre" varchar(255) NOT NULL,
   "tipo" varchar(50) NOT NULL,
   "tamano" bigint NOT NULL,
-  "ruta" varchar(500) NOT NULL,
+  "ruta" varchar(500),
+  "url" varchar(1000),
+  "categoria" varchar(50) NOT NULL,
   "hash" char(64) UNIQUE NOT NULL,
   "observacion_id" bigint,
   "creado_por" int NOT NULL,
@@ -249,6 +251,8 @@ CREATE INDEX ON "archivo" ("hash");
 
 CREATE INDEX ON "archivo" ("creado_por");
 
+CREATE INDEX ON "archivo" ("categoria");
+
 CREATE INDEX ON "auditoria_operacion" ("usuario_id");
 
 CREATE INDEX ON "auditoria_operacion" ("tabla_afectada", "id_registro");
@@ -312,9 +316,21 @@ COMMENT ON TABLE "asignacion_inspeccion" IS 'Un usuario solo puede tener un rol 
 Si se necesita cambiar el rol, se elimina lógicamente el anterior y se crea uno nuevo
 ';
 
-COMMENT ON COLUMN "archivo"."tamano" IS 'Tamaño en bytes';
+COMMENT ON TABLE "archivo" IS 'Almacenamiento flexible de archivos:
+- Archivo local: ruta NOT NULL, url NULL
+- URL externa: url NOT NULL, ruta NULL
+- Validación a nivel de aplicación: al menos uno debe existir
+';
 
-COMMENT ON COLUMN "archivo"."hash" IS 'SHA-256 para deduplicación';
+COMMENT ON COLUMN "archivo"."tamano" IS 'Tamaño en bytes (0 si es URL externa)';
+
+COMMENT ON COLUMN "archivo"."ruta" IS 'Ruta del archivo en disco (NULL si es URL externa)';
+
+COMMENT ON COLUMN "archivo"."url" IS 'URL pública del archivo (NULL si es archivo local)';
+
+COMMENT ON COLUMN "archivo"."categoria" IS 'Categoría: imagen, documento, pdf, video, etc.';
+
+COMMENT ON COLUMN "archivo"."hash" IS 'SHA-256 para deduplicación (hash del contenido o de la URL)';
 
 COMMENT ON TABLE "auditoria_operacion" IS 'Auditoría centralizada de todas las operaciones
 Considerar particionamiento por fecha para tablas grandes
