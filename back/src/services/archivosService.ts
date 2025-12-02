@@ -366,4 +366,152 @@ export class ArchivosService {
 
     return { archivos: archivos as ArchivoDetails[], total };
   }
+
+  /**
+   * Duplica archivos físicamente con nombre incrementado si ya están vinculados a otra observación
+   * Retorna los IDs de los nuevos archivos creados o los originales si no estaban vinculados
+   */
+  async duplicarArchivosParaObservacion(
+    archivosIds: number[],
+    observacionId: bigint,
+    usuarioId: number
+  ): Promise<number[]> {
+    const archivosNuevos: number[] = [];
+
+    for (const archivoId of archivosIds) {
+      const archivo = await this.prisma.archivo.findUnique({
+        where: { id: archivoId },
+      });
+
+      if (!archivo) {
+        throw new Error(`Archivo ${archivoId} no encontrado`);
+      }
+
+      // Si el archivo ya está vinculado a otra observación, duplicarlo
+      if (
+        archivo.observacionId !== null &&
+        archivo.observacionId !== observacionId
+      ) {
+        // Generar nuevo nombre con sufijo numérico
+        const nuevoNombre = await this.generarNombreIncrementado(
+          archivo.nombre
+        );
+
+        // Si es un archivo físico, copiarlo
+        let nuevaRuta: string | null = null;
+        let nuevoHash: string = archivo.hash;
+
+        if (archivo.ruta) {
+          // Copiar archivo físico
+          const rutaOriginal = path.join(this.uploadsDir, archivo.ruta);
+          const extension = path.extname(archivo.ruta);
+          const timestamp = Date.now();
+          const randomSuffix = Math.random().toString(36).substring(7);
+          const nombreArchivoNuevo = `${timestamp}_${randomSuffix}${extension}`;
+
+          const categoria = archivo.categoria as CategoriaArchivo;
+          const categoriaDir = await this.asegurarDirectorioUploads(categoria);
+          const rutaNueva = path.join(categoriaDir, nombreArchivoNuevo);
+
+          // Copiar archivo
+          const { copyFile } = await import('node:fs/promises');
+          await copyFile(rutaOriginal, rutaNueva);
+
+          // Generar hash único combinando contenido + timestamp + random
+          // Esto asegura que cada copia tenga un hash diferente
+          nuevoHash = createHash('sha256')
+            .update(archivo.hash)
+            .update(timestamp.toString())
+            .update(randomSuffix)
+            .digest('hex');
+          nuevaRuta = path.relative(this.uploadsDir, rutaNueva);
+        } else if (archivo.url) {
+          // Para URLs, generar hash único combinando URL + timestamp + random
+          const timestamp = Date.now();
+          const randomSuffix = Math.random().toString(36).substring(7);
+          nuevoHash = createHash('sha256')
+            .update(archivo.url)
+            .update(timestamp.toString())
+            .update(randomSuffix)
+            .digest('hex');
+        }
+
+        // Crear nuevo registro de archivo
+        const archivoNuevo = await this.prisma.archivo.create({
+          data: {
+            nombre: nuevoNombre,
+            tipo: archivo.tipo,
+            tamano: archivo.tamano,
+            ruta: nuevaRuta,
+            url: archivo.url,
+            categoria: archivo.categoria,
+            hash: nuevoHash,
+            observacionId,
+            creadoPor: usuarioId,
+          },
+        });
+
+        archivosNuevos.push(Number(archivoNuevo.id));
+      } else {
+        // Si no está vinculado o ya está vinculado a esta observación, solo actualizar observacionId
+        await this.prisma.archivo.update({
+          where: { id: archivoId },
+          data: {
+            observacionId,
+            actualizadoPor: usuarioId,
+            actualizadoEn: new Date(),
+          },
+        });
+        archivosNuevos.push(archivoId);
+      }
+    }
+
+    return archivosNuevos;
+  }
+
+  /**
+   * Genera un nombre incrementado (ArchivoA → ArchivoA1 → ArchivoA2)
+   */
+  private async generarNombreIncrementado(
+    nombreOriginal: string
+  ): Promise<string> {
+    // Extraer nombre base y extensión
+    const extension = path.extname(nombreOriginal);
+    const nombreSinExtension = path.basename(nombreOriginal, extension);
+
+    // Buscar archivos con nombres similares
+    const patron = `${nombreSinExtension}%`;
+    const archivosExistentes = await this.prisma.archivo.findMany({
+      where: {
+        nombre: {
+          startsWith: nombreSinExtension,
+        },
+      },
+      select: { nombre: true },
+    });
+
+    if (archivosExistentes.length === 0) {
+      return nombreOriginal;
+    }
+
+    // Extraer números de los nombres existentes
+    const numeros: number[] = [];
+    const regex = new RegExp(
+      `^${nombreSinExtension}(\\d*)${extension.replace('.', '\\.')}$`
+    );
+
+    for (const archivo of archivosExistentes) {
+      const match = archivo.nombre.match(regex);
+      if (match) {
+        const numero = match[1] ? parseInt(match[1], 10) : 0;
+        numeros.push(numero);
+      }
+    }
+
+    // Encontrar el siguiente número disponible
+    const maxNumero = numeros.length > 0 ? Math.max(...numeros) : 0;
+    const siguienteNumero = maxNumero + 1;
+
+    return `${nombreSinExtension}${siguienteNumero}${extension}`;
+  }
 }

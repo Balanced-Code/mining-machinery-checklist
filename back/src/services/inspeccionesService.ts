@@ -313,15 +313,17 @@ export class InspeccionesService {
               });
               observacionId = observacionActualizada.id;
 
-              // Vincular archivos existentes a la observación
+              // Duplicar archivos si están vinculados a otra observación
               if (
+                this.archivosService &&
                 data.observacion.archivosExistentes &&
                 data.observacion.archivosExistentes.length > 0
               ) {
-                await tx.archivo.updateMany({
-                  where: { id: { in: data.observacion.archivosExistentes } },
-                  data: { observacionId: observacionActualizada.id },
-                });
+                await this.archivosService.duplicarArchivosParaObservacion(
+                  data.observacion.archivosExistentes,
+                  observacionActualizada.id,
+                  data.userId
+                );
               }
             }
           }
@@ -336,15 +338,17 @@ export class InspeccionesService {
         });
         observacionId = nuevaObservacion.id;
 
-        // Vincular archivos existentes a la nueva observación
+        // Duplicar archivos si están vinculados a otra observación
         if (
+          this.archivosService &&
           data.observacion.archivosExistentes &&
           data.observacion.archivosExistentes.length > 0
         ) {
-          await tx.archivo.updateMany({
-            where: { id: { in: data.observacion.archivosExistentes } },
-            data: { observacionId: nuevaObservacion.id },
-          });
+          await this.archivosService.duplicarArchivosParaObservacion(
+            data.observacion.archivosExistentes,
+            nuevaObservacion.id,
+            data.userId
+          );
         }
       }
 
