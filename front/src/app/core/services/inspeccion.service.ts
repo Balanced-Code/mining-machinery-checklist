@@ -245,7 +245,7 @@ export class InspeccionService {
 
       return true;
     } catch (err: unknown) {
-      console.error('❌ Error en PATCH:', err);
+      console.error('Error en PATCH:', err);
       this.handleError(err, 'Error al actualizar la inspección');
       return false;
     } finally {
@@ -591,7 +591,7 @@ export class InspeccionService {
 
       return true;
     } catch (err: unknown) {
-      console.error('❌ Error al agregar template:', err);
+      console.error('Error al agregar template:', err);
       this.handleError(err, 'Error al agregar el checklist');
       return false;
     } finally {
@@ -613,7 +613,7 @@ export class InspeccionService {
 
       return true;
     } catch (err: unknown) {
-      console.error('❌ Error al eliminar template:', err);
+      console.error('Error al eliminar template:', err);
       this.handleError(err, 'Error al eliminar el checklist');
       return false;
     } finally {
@@ -646,7 +646,7 @@ export class InspeccionService {
 
       return true;
     } catch (err: unknown) {
-      console.error('❌ Error al asignar usuario:', err);
+      console.error('Error al asignar usuario:', err);
       this.handleError(err, 'Error al asignar usuario');
       return false;
     } finally {

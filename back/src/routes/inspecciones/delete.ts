@@ -120,7 +120,7 @@ export const deleteInspeccionesRoutes: FastifyPluginAsync = async (
             usuarioId,
             currentUserId: currentUser.id,
           },
-          '🗑️ DELETE /inspecciones/:id/asignaciones/:usuarioId - Eliminar asignación'
+          'DELETE /inspecciones/:id/asignaciones/:usuarioId - Eliminar asignación'
         );
 
         await fastify.services.inspecciones.eliminarAsignacion(

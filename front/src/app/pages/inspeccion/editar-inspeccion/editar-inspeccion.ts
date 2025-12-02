@@ -489,7 +489,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
    * Se llama cuando cambia el supervisor
    */
   protected async onSupervisorChange(supervisorId: number | null): Promise<void> {
-    console.log('🔄 onSupervisorChange llamado - iniciando debounce:', {
+    console.log('onSupervisorChange llamado - iniciando debounce:', {
       supervisorId,
       inspeccionId: this.inspeccionId(),
     });
@@ -500,7 +500,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
    * Se llama cuando cambian los técnicos
    */
   protected async onTecnicosChange(tecnicoIds: number[]): Promise<void> {
-    console.log('🔄 onTecnicosChange llamado - iniciando debounce:', {
+    console.log('onTecnicosChange llamado - iniciando debounce:', {
       tecnicoIds,
       inspeccionId: this.inspeccionId(),
     });
@@ -583,11 +583,11 @@ export class EditarInspeccion implements OnInit, OnDestroy {
 
         if (tecnicosAAgregar.length > 0 || tecnicosAEliminar.length > 0) {
           console.log(
-            `✅ Técnicos sincronizados (+${tecnicosAAgregar.length}, -${tecnicosAEliminar.length})`
+            `Técnicos sincronizados (+${tecnicosAAgregar.length}, -${tecnicosAEliminar.length})`
           );
         }
       } catch (error) {
-        console.error('❌ Error en guardado automático:', error);
+        console.error('Error en guardado automático:', error);
       } finally {
         this.autoGuardadoTimeout = null;
       }

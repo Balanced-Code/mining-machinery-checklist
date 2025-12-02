@@ -704,7 +704,7 @@ export class InspeccionesService {
     usuarioId: number,
     userId: number
   ) {
-    console.log('🗑️ eliminarAsignacion - Parámetros recibidos:', {
+    console.log('eliminarAsignacion - Parámetros recibidos:', {
       inspeccionId: inspeccionId.toString(),
       usuarioId,
       userId,
@@ -720,7 +720,7 @@ export class InspeccionesService {
     });
 
     console.log(
-      '📋 TODAS las asignaciones de la inspección:',
+      'TODAS las asignaciones de la inspección:',
       JSON.stringify(
         todasAsignaciones,
         (key, value) => (typeof value === 'bigint' ? value.toString() : value),
@@ -738,7 +738,7 @@ export class InspeccionesService {
       });
 
     console.log(
-      '🔍 Asignaciones filtradas (sin verificar eliminadoEn):',
+      'Asignaciones filtradas (sin verificar eliminadoEn):',
       JSON.stringify(
         asignacionesFiltradas,
         (key, value) => (typeof value === 'bigint' ? value.toString() : value),

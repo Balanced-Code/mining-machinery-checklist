@@ -365,9 +365,9 @@ async function main() {
     }),
   ]);
 
-  console.log('✅ Seed completado exitosamente!');
-  console.log('\n📊 Resumen de datos creados:');
-  console.log('\n👥 Usuarios creados:');
+  console.log('Seed completado exitosamente!');
+  console.log('\nResumen de datos creados:');
+  console.log('\nUsuarios creados:');
   console.log(`   • Admin: admin@normet.com (Contraseña: Admin123?)`);
   console.log(`   • Inspector: inspector@normet.com`);
   console.log(`   • Supervisor: supervisor@normet.com`);
@@ -375,7 +375,7 @@ async function main() {
   console.log(`   • Operador: operador@normet.com`);
   console.log(`   • Invitado: invitado@normet.com`);
 
-  console.log('\n💼 Cargos creados:');
+  console.log('\nCargos creados:');
   console.log(`   • Nivel 4: Administrador (ID: ${cargoAdmin.id})`);
   console.log(`   • Nivel 3: Inspector (ID: ${cargoInspector.id})`);
   console.log(
@@ -390,10 +390,10 @@ async function main() {
   console.log(`   • Supervisor (ID: ${rolSupervisor.id})`);
   console.log(`   • Técnico (ID: ${rolTecnico.id})`);
 
-  console.log('\n🚜 Máquinas creadas:');
+  console.log('\nMáquinas creadas:');
   console.log(`   • ${maquinas.length} máquinas de ejemplo`);
 
-  console.log('\n📋 Templates creados:');
+  console.log('\nTemplates creados:');
   console.log(`   • 7 checklists de ejemplo`);
 }
 

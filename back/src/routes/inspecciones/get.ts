@@ -96,7 +96,7 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
 
         // Log para debugging
         fastify.log.info({
-          msg: '🔍 Inspección obtenida',
+          msg: 'Inspección obtenida',
           id: inspeccion.id.toString(),
           asignacionesCount: inspeccion.asignaciones?.length,
         });
