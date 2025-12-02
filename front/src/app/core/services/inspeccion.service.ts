@@ -182,9 +182,6 @@ export class InspeccionService {
         this.http.get<BackendInspeccion>(`${this.baseUrl}/inspecciones/${id}`)
       );
 
-      console.log('📥 Respuesta del backend para inspección:', response);
-      console.log('📋 Asignaciones recibidas:', response.asignaciones);
-
       // Mapear respuesta
       const inspeccion: Inspeccion = {
         id: parseInt(response.id, 10),
@@ -213,9 +210,6 @@ export class InspeccionService {
         })),
       };
 
-      console.log('✅ Inspección mapeada:', inspeccion);
-      console.log('✅ Asignaciones mapeadas:', inspeccion.asignaciones);
-
       this.currentInspeccionSignal.set(inspeccion);
       return inspeccion;
     } catch (err: unknown) {
@@ -234,11 +228,7 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      console.log(`📡 Enviando PATCH a /inspecciones/${id}`, data);
-
       await firstValueFrom(this.http.patch(`${this.baseUrl}/inspecciones/${id}`, data));
-
-      console.log('✅ PATCH exitoso');
 
       // Actualizar estado local
       const current = this.currentInspeccionSignal();
@@ -550,15 +540,12 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      console.log(`📡 Agregando template ${templateId} a inspección ${inspeccionId}`);
-
       await firstValueFrom(
         this.http.post(`${this.baseUrl}/inspecciones/${inspeccionId}/templates`, {
           templateId,
         })
       );
 
-      console.log('✅ Template agregado exitosamente');
       return true;
     } catch (err: unknown) {
       console.error('❌ Error al agregar template:', err);
@@ -577,13 +564,10 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      console.log(`📡 Eliminando template ${templateId} de inspección ${inspeccionId}`);
-
       await firstValueFrom(
         this.http.delete(`${this.baseUrl}/inspecciones/${inspeccionId}/templates/${templateId}`)
       );
 
-      console.log('✅ Template eliminado exitosamente');
       return true;
     } catch (err: unknown) {
       console.error('❌ Error al eliminar template:', err);
@@ -617,7 +601,6 @@ export class InspeccionService {
         })
       );
 
-      console.log('✅ Usuario asignado exitosamente');
       return true;
     } catch (err: unknown) {
       console.error('❌ Error al asignar usuario:', err);

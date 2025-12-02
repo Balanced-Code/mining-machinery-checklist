@@ -248,7 +248,6 @@ export class Historial {
    * Descargar reporte de inspección (exportar a Excel)
    */
   protected descargarInspeccion(inspeccion: Inspeccion): void {
-    console.log('Descargar inspección:', inspeccion);
     // TODO: Implementar exportación a Excel
     alert(`Funcionalidad de descarga pendiente para inspección ${inspeccion.numSerie}`);
   }

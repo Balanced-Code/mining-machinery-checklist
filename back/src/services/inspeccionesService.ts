@@ -701,8 +701,6 @@ export class InspeccionesService {
       },
     });
 
-    console.log('✅ Asignaciones eliminadas:', resultado.count);
-
     if (resultado.count === 0) {
       throw new Error('Asignación no encontrada');
     }

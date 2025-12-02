@@ -1,25 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
-import { AuthService } from '@core/services/auth.service';
-
-interface DashboardCard {
-  title: string;
-  value: number | string;
-  icon: string;
-  color: string;
-  description: string;
-  route?: string;
-}
-
-interface QuickAction {
-  title: string;
-  description: string;
-  icon: string;
-  route: string;
-  color: string;
-  requiredLevel?: number;
-}
+import { Inspeccion } from '@core/models/inspeccion.model';
+import { InspeccionesService } from '@core/services/inspecciones.service';
+import { MaquinariaService } from '@core/services/maquinaria.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -28,149 +19,155 @@ interface QuickAction {
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Dashboard {
-  private readonly authService = inject(AuthService);
+export class Dashboard implements OnInit {
+  private readonly inspeccionesService = inject(InspeccionesService);
+  private readonly maquinariaService = inject(MaquinariaService);
   private readonly router = inject(Router);
 
-  // Usuario actual
-  protected readonly user = this.authService.user;
-  protected readonly currentCargo = this.authService.currentCargo;
+  // ============================================================================
+  // ESTADO
+  // ============================================================================
 
-  // Mock data - En producción vendría del backend
-  private readonly mockStats = signal({
-    totalInspecciones: 127,
-    inspeccionesEnProgreso: 8,
-    inspeccionesCompletadas: 119,
-    inspeccionesHoy: 3,
-    totalMaquinas: 45,
-    totalUsuarios: 23,
-  });
+  protected readonly loading = signal(false);
+  protected readonly error = signal<string | null>(null);
 
-  // Tarjetas de estadísticas
-  protected readonly statsCards = computed<DashboardCard[]>(() => {
-    const stats = this.mockStats();
-    const nivel = this.user()?.cargo.nivel ?? 1;
+  // ============================================================================
+  // COMPUTED - ESTADÍSTICAS
+  // ============================================================================
 
-    const cards: DashboardCard[] = [
-      {
-        title: 'Inspecciones Totales',
-        value: stats.totalInspecciones,
-        icon: 'assignment',
-        color: '#3b82f6',
-        description: 'Total de inspecciones realizadas',
-        route: '/historial',
-      },
-      {
-        title: 'En Progreso',
-        value: stats.inspeccionesEnProgreso,
-        icon: 'pending',
-        color: '#f59e0b',
-        description: 'Inspecciones sin finalizar',
-        route: '/historial',
-      },
-      {
-        title: 'Completadas',
-        value: stats.inspeccionesCompletadas,
-        icon: 'check_circle',
-        color: '#10b981',
-        description: 'Inspecciones finalizadas',
-        route: '/historial',
-      },
-      {
-        title: 'Hoy',
-        value: stats.inspeccionesHoy,
-        icon: 'today',
-        color: '#8b5cf6',
-        description: 'Inspecciones de hoy',
-        route: '/historial',
-      },
-    ];
-
-    // Mostrar tarjeta de máquinas solo para nivel 2+
-    if (nivel >= 2) {
-      cards.push({
-        title: 'Máquinas',
-        value: stats.totalMaquinas,
-        icon: 'precision_manufacturing',
-        color: '#06b6d4',
-        description: 'Total de maquinaria',
-      });
-    }
-
-    // Mostrar tarjeta de usuarios solo para nivel 3+
-    if (nivel >= 3) {
-      cards.push({
-        title: 'Usuarios',
-        value: stats.totalUsuarios,
-        icon: 'group',
-        color: '#ec4899',
-        description: 'Usuarios del sistema',
-        route: '/usuarios',
-      });
-    }
-
-    return cards;
-  });
-
-  // Acciones rápidas
-  protected readonly quickActions = computed<QuickAction[]>(() => {
-    const nivel = this.user()?.cargo.nivel ?? 1;
-
-    const actions: QuickAction[] = [
-      {
-        title: 'Ver Historial',
-        description: 'Consulta el historial completo de inspecciones',
-        icon: 'history',
-        route: '/historial',
-        color: '#3b82f6',
-      },
-      {
-        title: 'Checklists',
-        description: 'Gestiona las listas de verificación',
-        icon: 'checklist',
-        route: '/checklist',
-        color: '#10b981',
-      },
-    ];
-
-    // Crear inspección solo para nivel 2+
-    if (nivel >= 2) {
-      actions.unshift({
-        title: 'Nueva Inspección',
-        description: 'Crear una nueva inspección de maquinaria',
-        icon: 'add_circle',
-        route: '/inspeccion/crear',
-        color: '#ed1b2e',
-      });
-    }
-
-    // Gestión de usuarios solo para nivel 3+
-    if (nivel >= 3) {
-      actions.push({
-        title: 'Gestionar Usuarios',
-        description: 'Administra los usuarios del sistema',
-        icon: 'manage_accounts',
-        route: '/usuarios',
-        color: '#8b5cf6',
-        requiredLevel: 3,
-      });
-    }
-
-    return actions;
-  });
-
-  // Saludo según hora del día
-  protected readonly greeting = computed(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Buenos días';
-    if (hour < 18) return 'Buenas tardes';
-    return 'Buenas noches';
+  /**
+   * Total de inspecciones completadas (con fecha de finalización)
+   */
+  protected readonly totalInspeccionesCompletadas = computed(() => {
+    return this.inspeccionesService
+      .inspecciones()
+      .filter((insp) => insp.fechaFinalizacion !== null && !insp.eliminadoEn).length;
   });
 
   /**
-   * Navegar a una ruta
+   * Total de máquinas disponibles
    */
-  protected navigateTo(route: string): void {
-    this.router.navigate([route]);
+  protected readonly totalMaquinarias = computed(() => {
+    return this.maquinariaService.maquinas().length;
+  });
+
+  /**
+   * Últimas 5 inspecciones (sin importar estado)
+   */
+  protected readonly ultimasInspecciones = computed(() => {
+    const inspecciones = this.inspeccionesService
+      .inspecciones()
+      .filter((insp) => !insp.eliminadoEn)
+      .sort((a, b) => {
+        // Ordenar por fecha de inicio descendente (más reciente primero)
+        const fechaA = new Date(a.fechaInicio).getTime();
+        const fechaB = new Date(b.fechaInicio).getTime();
+        return fechaB - fechaA;
+      });
+
+    return inspecciones.slice(0, 5);
+  });
+
+  /**
+   * Verificar si una inspección está completada
+   */
+  protected isCompletada(inspeccion: Inspeccion): boolean {
+    return inspeccion.fechaFinalizacion !== null;
+  }
+
+  /**
+   * Obtener clase de badge según estado
+   */
+  protected getBadgeClass(inspeccion: Inspeccion): string {
+    return this.isCompletada(inspeccion) ? 'badge-completed' : 'badge-in-progress';
+  }
+
+  /**
+   * Obtener texto del estado
+   */
+  protected getEstadoText(inspeccion: Inspeccion): string {
+    return this.isCompletada(inspeccion) ? 'Completada' : 'En progreso';
+  }
+
+  // ============================================================================
+  // LIFECYCLE
+  // ============================================================================
+
+  async ngOnInit(): Promise<void> {
+    await this.cargarDatos();
+  }
+
+  // ============================================================================
+  // MÉTODOS PRIVADOS
+  // ============================================================================
+
+  private async cargarDatos(): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      // Cargar inspecciones y maquinaria en paralelo
+      await Promise.all([
+        this.inspeccionesService.getAll(),
+        this.maquinariaService.obtenerMaquinas(),
+      ]);
+    } catch (err) {
+      console.error('Error al cargar datos del dashboard:', err);
+      this.error.set('Error al cargar los datos del dashboard');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  // ============================================================================
+  // FORMATEO DE DATOS
+  // ============================================================================
+
+  /**
+   * Formatear fecha para mostrar día
+   */
+  protected formatearFechaDia(fecha: string | null): string {
+    if (!fecha) return '-';
+    return new Date(fecha).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
+
+  /**
+   * Formatear fecha para mostrar hora
+   */
+  protected formatearFechaHora(fecha: string | null): string {
+    if (!fecha) return '-';
+    return new Date(fecha).toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  // ============================================================================
+  // NAVEGACIÓN
+  // ============================================================================
+
+  /**
+   * Ver detalle de una inspección
+   */
+  protected verDetalle(inspeccion: Inspeccion): void {
+    this.router.navigate(['/inspeccion/ver', inspeccion.id]);
+  }
+
+  /**
+   * Navegar al historial completo
+   */
+  protected verHistorialCompleto(): void {
+    this.router.navigate(['/historial']);
+  }
+
+  /**
+   * Crear nueva inspección
+   */
+  protected crearInspeccion(): void {
+    this.router.navigate(['/inspeccion/crear']);
   }
 }

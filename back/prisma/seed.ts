@@ -4,15 +4,13 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Iniciando seed de la base de datos...');
-
   // Limpiar datos existentes (opcional, comentar si no deseas eliminar)
   // await prisma.usuario.deleteMany();
   // await prisma.cargo.deleteMany();
   // await prisma.maquina.deleteMany();
 
   // Crear cargos (niveles más altos = mayor jerarquía)
-  console.log('ando cargos...');
+
   const cargoInvitado = await prisma.cargo.create({
     data: {
       nombre: 'Invitado',
@@ -62,7 +60,7 @@ async function main() {
   });
 
   // Crear usuarios
-  console.log('ando usuarios...');
+
   const hashedPassword = await bcrypt.hash('Admin123?', 10);
 
   const adminUser = await prisma.usuario.create({
@@ -126,7 +124,7 @@ async function main() {
   });
 
   // Crear algunas máquinas de ejemplo
-  console.log('Creando máquinas...');
+
   const maquinas = await Promise.all([
     prisma.maquina.create({
       data: {
@@ -149,7 +147,7 @@ async function main() {
   ]);
 
   // Crear roles de asignación
-  console.log('👷 Creando roles de asignación...');
+
   const rolInspectorPrincipal = await prisma.rolAsignacion.create({
     data: {
       nombre: 'Inspector Principal',
@@ -172,7 +170,7 @@ async function main() {
   });
 
   // Crear templates de ejemplo basados en los mocks del frontend
-  console.log('Creando templates de checklist...');
+
   await Promise.all([
     // Checklist 1
     prisma.template.create({
@@ -367,36 +365,20 @@ async function main() {
     }),
   ]);
 
-  console.log('Seed completado exitosamente!');
-  console.log('\nRecursos creados:');
-  console.log(`   - 6 Cargos:`);
-  console.log(`     • Nivel 4: Administrador (ID: ${cargoAdmin.id})`);
-  console.log(`     • Nivel 3: Inspector (ID: ${cargoInspector.id})`);
   console.log(
     `     • Nivel 2: Supervisor (ID: ${cargoSupervisor.id}), Técnico Mecánico (ID: ${cargoTecnicoMecanico.id})`
   );
   console.log(
     `     • Nivel 1: Operador (ID: ${cargoOperador.id}), Invitado (ID: ${cargoInvitado.id})`
   );
-  console.log(`   - 6 Usuarios:`);
-  console.log(`     • Administrador (Nivel 4): ${adminUser.correo}`);
-  console.log(`     • Inspector (Nivel 3): ${inspectorUser.correo}`);
-  console.log(`     • Técnico Mecánico (Nivel 2): ${tecnicoUser.correo}`);
-  console.log(`     • Supervisor (Nivel 2): ${supervisorUser.correo}`);
-  console.log(`     • Operador (Nivel 1): ${operadorUser.correo}`);
-  console.log(`     • Invitado (Nivel 1): ${invitadoUser.correo}`);
-  console.log(`   - ${maquinas.length} Máquinas`);
-  console.log(`   - 3 Roles de asignación:`);
+
   console.log(
     `     • ID ${rolInspectorPrincipal.id}: Inspector Principal (solo 1 por inspección)`
   );
-  console.log(`     • ID ${rolTecnico.id}: Técnico (varios permitidos)`);
+
   console.log(
     `     • ID ${rolSupervisor.id}: Supervisor (solo 1 por inspección)`
   );
-  console.log(`   - 7 Templates de checklist con sus secciones`);
-  console.log('\nCredenciales de acceso (todos tienen la misma contraseña):');
-  console.log('   Password: admin123?');
 }
 
 main()

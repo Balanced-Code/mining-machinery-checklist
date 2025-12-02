@@ -17,8 +17,6 @@ const checkAuthAndRole = async (route: ActivatedRouteSnapshot): Promise<boolean>
 
   // 2. Esperar a que la configuración de cargos esté cargada
   if (!authService.configLoaded()) {
-    console.log('⏳ Esperando carga de configuración de cargos...');
-
     // Esperar hasta 5 segundos máximo
     const timeout = 5000;
     const startTime = Date.now();
@@ -34,7 +32,6 @@ const checkAuthAndRole = async (route: ActivatedRouteSnapshot): Promise<boolean>
         console.warn('⚠ando configuración fallback');
       }
     } else {
-      console.log('nfiguración de cargos lista');
     }
   }
 

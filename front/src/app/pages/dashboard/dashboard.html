@@ -1,90 +1,128 @@
-<div class="dashboard">
-  <!-- Header de bienvenida -->
-  <div class="welcome-section">
-    <div class="welcome-content">
-      <h1 class="welcome-title">{{ greeting() }}, {{ user()?.nombre }}!</h1>
-      <p class="welcome-subtitle">{{ currentCargo()?.nombre }} • Sistema de Gestión de Checklist</p>
-    </div>
-    <div class="welcome-icon">
-      <mat-icon>dashboard</mat-icon>
-    </div>
+<!-- Loading overlay -->
+@if (loading()) {
+<div class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <p>Cargando...</p>
+</div>
+}
+
+<!-- Error banner -->
+@if (error()) {
+<div class="error-banner">
+  <mat-icon>error_outline</mat-icon>
+  <span>{{ error() }}</span>
+</div>
+}
+
+<div class="dashboard-container">
+  <!-- Título -->
+  <div class="dashboard-header">
+    <h1>Panel de Control</h1>
+    <p class="subtitle">Resumen general de inspecciones y maquinaria</p>
   </div>
 
   <!-- Tarjetas de estadísticas -->
   <div class="stats-grid">
-    @for (card of statsCards(); track card.title) {
-    <div
-      class="stat-card"
-      [class.clickable]="card.route"
-      (click)="card.route && navigateTo(card.route)"
-    >
-      <div class="stat-icon" [style.background-color]="card.color + '15'">
-        <mat-icon [style.color]="card.color">{{ card.icon }}</mat-icon>
+    <!-- Total de inspecciones completadas -->
+    <div class="stat-card">
+      <div class="stat-icon completed">
+        <mat-icon>check_circle</mat-icon>
       </div>
       <div class="stat-content">
-        <p class="stat-label">{{ card.title }}</p>
-        <h2 class="stat-value">{{ card.value }}</h2>
-        <p class="stat-description">{{ card.description }}</p>
+        <h3 class="stat-value">{{ totalInspeccionesCompletadas() }}</h3>
+        <p class="stat-label">Inspecciones Completadas</p>
       </div>
+    </div>
+
+    <!-- Total de maquinarias -->
+    <div class="stat-card">
+      <div class="stat-icon machinery">
+        <mat-icon>precision_manufacturing</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-value">{{ totalMaquinarias() }}</h3>
+        <p class="stat-label">Maquinarias Registradas</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección de últimas inspecciones -->
+  <div class="recent-section">
+    <div class="section-header">
+      <h2>Últimas Inspecciones</h2>
+      <button class="btn-view-all" (click)="verHistorialCompleto()">
+        <span>Ver todo</span>
+        <mat-icon>arrow_forward</mat-icon>
+      </button>
+    </div>
+
+    <!-- Tabla de inspecciones -->
+    @if (ultimasInspecciones().length > 0) {
+    <div class="table-container">
+      <table class="inspecciones-table">
+        <thead>
+          <tr>
+            <th>SERIE</th>
+            <th>MÁQUINA</th>
+            <th>FECHA INICIO</th>
+            <th>FECHA FIN</th>
+            <th>INSPECTOR</th>
+            <th>ESTADO</th>
+            <th class="acciones-header">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (inspeccion of ultimasInspecciones(); track inspeccion.id) {
+          <tr class="table-row">
+            <td>
+              <span class="serie">{{ inspeccion.numSerie }}</span>
+            </td>
+            <td>{{ inspeccion.maquina?.nombre || '-' }}</td>
+            <td>
+              <div class="fecha-container">
+                <div class="fecha-dia">{{ formatearFechaDia(inspeccion.fechaInicio) }}</div>
+                <div class="fecha-hora">{{ formatearFechaHora(inspeccion.fechaInicio) }}</div>
+              </div>
+            </td>
+            <td>
+              <div class="fecha-container">
+                <div class="fecha-dia">{{ formatearFechaDia(inspeccion.fechaFinalizacion) }}</div>
+                <div class="fecha-hora">{{ formatearFechaHora(inspeccion.fechaFinalizacion) }}</div>
+              </div>
+            </td>
+            <td>
+              <div class="inspector-container">
+                <div class="inspector-nombre">{{ inspeccion.inspector?.nombre || '-' }}</div>
+                <div class="inspector-correo">{{ inspeccion.inspector?.correo || '-' }}</div>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [class]="getBadgeClass(inspeccion)">
+                {{ getEstadoText(inspeccion) }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-icon" (click)="verDetalle(inspeccion)" title="Ver detalle">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    } @else {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">inbox</mat-icon>
+      <h3>No hay inspecciones registradas</h3>
+      <p>Comienza creando una nueva inspección</p>
+      <button class="btn-create" (click)="crearInspeccion()">
+        <mat-icon>add</mat-icon>
+        <span>Crear Inspección</span>
+      </button>
     </div>
     }
-  </div>
-
-  <!-- Acciones rápidas -->
-  <div class="quick-actions-section">
-    <h2 class="section-title">Acciones Rápidas</h2>
-    <div class="quick-actions-grid">
-      @for (action of quickActions(); track action.title) {
-      <div class="quick-action-card" (click)="navigateTo(action.route)">
-        <div class="action-icon" [style.background-color]="action.color">
-          <mat-icon>{{ action.icon }}</mat-icon>
-        </div>
-        <div class="action-content">
-          <h3 class="action-title">{{ action.title }}</h3>
-          <p class="action-description">{{ action.description }}</p>
-        </div>
-        <div class="action-arrow">
-          <mat-icon>arrow_forward</mat-icon>
-        </div>
-      </div>
-      }
-    </div>
-  </div>
-
-  <!-- Información adicional -->
-  <div class="info-section">
-    <div class="info-card">
-      <div class="info-header">
-        <mat-icon>info</mat-icon>
-        <h3>Información</h3>
-      </div>
-      <div class="info-content">
-        <p>
-          Bienvenido al Sistema de Gestión de Checklist de Maquinaria. Desde aquí puedes acceder
-          rápidamente a todas las funcionalidades del sistema.
-        </p>
-        <ul>
-          <li>
-            <mat-icon>check</mat-icon>
-            <span>Consulta el historial de inspecciones</span>
-          </li>
-          <li>
-            <mat-icon>check</mat-icon>
-            <span>Gestiona las listas de verificación</span>
-          </li>
-          @if (currentCargo()?.nivel ?? 0 >= 2) {
-          <li>
-            <mat-icon>check</mat-icon>
-            <span>Crea nuevas inspecciones de maquinaria</span>
-          </li>
-          } @if (currentCargo()?.nivel ?? 0 >= 3) {
-          <li>
-            <mat-icon>check</mat-icon>
-            <span>Administra usuarios del sistema</span>
-          </li>
-          }
-        </ul>
-      </div>
-    </div>
   </div>
 </div>

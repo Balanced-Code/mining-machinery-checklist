@@ -313,14 +313,11 @@ export class EditarInspeccion implements OnInit, OnDestroy {
 
     // Cargar supervisor y técnicos desde asignaciones
     if (inspeccion.asignaciones && inspeccion.asignaciones.length > 0) {
-      console.log('📋 Cargando asignaciones:', inspeccion.asignaciones);
-
       // Buscar supervisor (rol id 3 o nombre "Supervisor")
       const supervisorAsignacion = inspeccion.asignaciones.find(
         (a) => a.rolAsignacion?.id === 3 || a.rolAsignacion?.nombre === 'Supervisor'
       );
       if (supervisorAsignacion) {
-        console.log('👤 Supervisor encontrado:', supervisorAsignacion.usuarioId);
         this.supervisorId.set(supervisorAsignacion.usuarioId);
       }
 
@@ -330,7 +327,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
       );
       if (tecnicoAsignaciones.length > 0) {
         const tecnicoIds = tecnicoAsignaciones.map((a) => a.usuarioId);
-        console.log('👥 Técnicos encontrados:', tecnicoIds);
+
         this.tecnicoIds.set(tecnicoIds);
       }
     }
@@ -477,11 +474,8 @@ export class EditarInspeccion implements OnInit, OnDestroy {
   private async autoGuardar(): Promise<void> {
     const id = this.inspeccionId();
     if (!id) {
-      console.log('⚠️ No hay inspección ID para autoguardar');
       return;
     }
-
-    console.log('🔄 Autoguardado programado para inspección', id);
 
     // Cancelar el timeout anterior si existe
     if (this.autoGuardadoTimeout !== null) {
@@ -491,8 +485,6 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     // Programar nuevo guardado después de 1.5 segundos
     this.autoGuardadoTimeout = window.setTimeout(async () => {
       try {
-        console.log('💾 Ejecutando guardado automático...');
-
         // 1. Guardar datos básicos
         const datos = {
           fechaInicio: this.fechaHoraInicio().toISOString(),
@@ -502,9 +494,8 @@ export class EditarInspeccion implements OnInit, OnDestroy {
           cabinado: this.cabinado() ?? undefined,
           horometro: this.horometro() ?? undefined,
         };
-        console.log('📄 Guardando datos básicos:', datos);
+
         await this.inspeccionService.actualizar(id, datos);
-        console.log('✅ Datos básicos guardados');
 
         // 2. Sincronizar supervisor
         const supervisorId = this.supervisorId();
@@ -517,14 +508,12 @@ export class EditarInspeccion implements OnInit, OnDestroy {
 
         if (supervisorId !== null) {
           // Asignar nuevo supervisor o actualizar
-          console.log(`👤 Guardando supervisor ${supervisorId}`);
+
           await this.inspeccionService.asignarUsuario(id, supervisorId, 3);
-          console.log('✅ Supervisor guardado');
         } else if (supervisorAsignadoAntes) {
           // Eliminar supervisor si había uno y ahora es null
-          console.log(`➖ Eliminando supervisor ${supervisorAsignadoAntes.usuarioId}`);
+
           await this.inspeccionService.eliminarAsignacion(id, supervisorAsignadoAntes.usuarioId);
-          console.log('✅ Supervisor eliminado');
         }
 
         // 3. Sincronizar técnicos
@@ -535,15 +524,11 @@ export class EditarInspeccion implements OnInit, OnDestroy {
           .filter((a) => a.rolAsignacion?.nombre === 'Técnico' || a.rolAsignacion?.id === 2)
           .map((a) => a.usuarioId);
 
-        console.log('👥 Técnicos actuales:', tecnicoIdsActuales);
-        console.log('👥 Técnicos asignados antes:', tecnicosAsignadosAntes);
-
         // Agregar nuevos técnicos
         const tecnicosAAgregar = tecnicoIdsActuales.filter(
           (id) => !tecnicosAsignadosAntes.includes(id)
         );
         for (const tecnicoId of tecnicosAAgregar) {
-          console.log(`➕ Agregando técnico ${tecnicoId}`);
           // Rol ID 2 = Técnico (según seed)
           await this.inspeccionService.asignarUsuario(id, tecnicoId, 2);
         }
@@ -553,7 +538,6 @@ export class EditarInspeccion implements OnInit, OnDestroy {
           (id) => !tecnicoIdsActuales.includes(id)
         );
         for (const tecnicoId of tecnicosAEliminar) {
-          console.log(`➖ Eliminando técnico ${tecnicoId}`);
           await this.inspeccionService.eliminarAsignacion(id, tecnicoId);
         }
 
@@ -562,8 +546,6 @@ export class EditarInspeccion implements OnInit, OnDestroy {
             `✅ Técnicos sincronizados (+${tecnicosAAgregar.length}, -${tecnicosAEliminar.length})`
           );
         }
-
-        console.log('✅ Guardado automático completado');
       } catch (error) {
         console.error('❌ Error en guardado automático:', error);
       } finally {

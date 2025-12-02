@@ -434,7 +434,6 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
     // Si se quitó el supervisor (null)
     if (supervisorIdActual === null && supervisorAnterior) {
-      console.log('➖ Eliminando supervisor', supervisorAnterior.usuarioId);
       await this.inspeccionService.eliminarAsignacion(inspeccion.id, supervisorAnterior.usuarioId);
       return;
     }

@@ -10,8 +10,6 @@ async function main() {
       maquina: true,
     },
   });
-
-  console.log(JSON.stringify(inspecciones, null, 2));
 }
 
 main()

@@ -204,13 +204,12 @@ export class AuthService {
           this.cargosHierarchySignal.set(JSON.parse(cached));
           this.configLoadedSignal.set(true);
           const hoursRemaining = Math.round((MAX_AGE - age) / 1000 / 60 / 60);
-          console.log(`Cache válido (navegador abierto, expira en ${hoursRemaining}h)`);
+
           return;
         } catch (err) {
           console.warn('Error al parsear cache, recargando:', err);
         }
       } else {
-        console.log('Cache expirado (>24h), recargando...');
       }
     } else {
       // Diagnóstico de qué falta
@@ -218,7 +217,6 @@ export class AuthService {
       if (!cached) missing.push('datos');
       if (!cacheTime) missing.push('timestamp');
       if (!sessionActive) missing.push('sesión');
-      console.log(`Recargando cargos (falta: ${missing.join(', ')})`);
     }
 
     // Alguna condición falló, recargar desde backend
@@ -254,7 +252,6 @@ export class AuthService {
             localStorage.setItem('cargos_hierarchy', JSON.stringify(response.hierarchy));
             localStorage.setItem('cargos_cache_time', Date.now().toString());
 
-            console.log('Cargos cargados desde backend y guardados en cache');
             return;
           } else {
             console.warn('Jerarquía inválida del backend');
@@ -298,7 +295,6 @@ export class AuthService {
     };
     this.cargosHierarchySignal.set(fallback);
     this.configLoadedSignal.set(true);
-    console.log('Usando jerarquía de cargos por defecto (fallback)');
   }
 
   /**
@@ -306,7 +302,6 @@ export class AuthService {
    * Limpia cache y recarga desde backend
    */
   async refreshCargos(): Promise<void> {
-    console.log('Forzando recarga de cargos...');
     localStorage.removeItem('cargos_hierarchy');
     localStorage.removeItem('cargos_cache_time');
     sessionStorage.removeItem('session_active');
