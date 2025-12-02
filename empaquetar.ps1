@@ -158,27 +158,39 @@ Write-Host "`nCopiando frontend..." -ForegroundColor Cyan
 Copy-Item "front\dist\checklist\browser" "$DIST_DIR\$APP_NAME\backend\public" -Recurse
 Write-Host "Frontend copiado" -ForegroundColor Green
 
-# 4. Descargar PostgreSQL Portable
-Write-Host "`nDescargando PostgreSQL Portable..." -ForegroundColor Cyan
-$POSTGRES_ZIP = "$DIST_DIR\postgres.zip"
-$POSTGRES_CACHE = ".cache\postgresql-$POSTGRES_VERSION-windows-x64-binaries.zip"
+# 4. Copiar PostgreSQL
+Write-Host "`nPreparando PostgreSQL..." -ForegroundColor Cyan
 
-# Verificar si existe en cache
-if (Test-Path $POSTGRES_CACHE) {
-    Write-Host "Usando PostgreSQL desde cache..." -ForegroundColor Green
-    Copy-Item $POSTGRES_CACHE $POSTGRES_ZIP
-} else {
+# Prioridad 1: Copiar desde carpeta pre-extraida (mas rapido)
+if (Test-Path ".cache\postgresql-extracted\pgsql") {
+    Write-Host "Copiando PostgreSQL pre-extraido..." -ForegroundColor Cyan
+    Copy-Item ".cache\postgresql-extracted\*" "$DIST_DIR\$APP_NAME\database\postgresql\" -Recurse -Force
+    Write-Host "PostgreSQL copiado (rapido)" -ForegroundColor Green
+}
+# Prioridad 2: Usar ZIP en cache
+elseif (Test-Path ".cache\postgresql-$POSTGRES_VERSION-windows-x64-binaries.zip") {
+    Write-Host "Extrayendo PostgreSQL desde cache..." -ForegroundColor Cyan
+    Expand-Archive -Path ".cache\postgresql-$POSTGRES_VERSION-windows-x64-binaries.zip" -DestinationPath "$DIST_DIR\$APP_NAME\database\postgresql" -Force
+    Write-Host "PostgreSQL extraido correctamente" -ForegroundColor Green
+}
+# Prioridad 3: Descargar y extraer
+else {
     try {
         Write-Host "Descargando PostgreSQL (esto puede tomar varios minutos)..." -ForegroundColor Yellow
         New-Item -ItemType Directory -Path ".cache" -Force | Out-Null
+        $POSTGRES_CACHE = ".cache\postgresql-$POSTGRES_VERSION-windows-x64-binaries.zip"
         Invoke-WebRequest -Uri $POSTGRES_PORTABLE_URL -OutFile $POSTGRES_CACHE -UseBasicParsing
-        Copy-Item $POSTGRES_CACHE $POSTGRES_ZIP
         Write-Host "PostgreSQL descargado y guardado en cache" -ForegroundColor Green
+        
+        Write-Host "Extrayendo PostgreSQL..." -ForegroundColor Cyan
+        Expand-Archive -Path $POSTGRES_CACHE -DestinationPath "$DIST_DIR\$APP_NAME\database\postgresql" -Force
+        Write-Host "PostgreSQL extraido correctamente" -ForegroundColor Green
     } catch {
         Write-Host "No se pudo descargar automaticamente" -ForegroundColor Yellow
         Write-Host "   Descarga manualmente desde:" -ForegroundColor Yellow
         Write-Host "   $POSTGRES_PORTABLE_URL" -ForegroundColor White
-        Write-Host "   Y colocalo en: $POSTGRES_ZIP" -ForegroundColor White
+        Write-Host "   Y guardalo en: .cache\postgresql-$POSTGRES_VERSION-windows-x64-binaries.zip" -ForegroundColor White
+        Write-Host "   O extrae PostgreSQL a: .cache\postgresql-extracted\" -ForegroundColor White
         $response = Read-Host "`n¿Continuar sin PostgreSQL? (S/N)"
         if ($response -ne "S" -and $response -ne "s") {
             exit 1
@@ -186,28 +198,7 @@ if (Test-Path $POSTGRES_CACHE) {
     }
 }
 
-# 5. Copiar PostgreSQL
-# Prioridad 1: Copiar desde carpeta pre-extraida (mas rapido)
-if (Test-Path ".cache\postgresql-extracted") {
-    Write-Host "`nCopiando PostgreSQL pre-extraido..." -ForegroundColor Cyan
-    Copy-Item ".cache\postgresql-extracted\*" "$DIST_DIR\$APP_NAME\database\postgresql\" -Recurse -Force
-    Write-Host "PostgreSQL copiado (rapido)" -ForegroundColor Green
-}
-# Prioridad 2: Extraer desde ZIP descargado
-elseif (Test-Path $POSTGRES_ZIP) {
-    Write-Host "`nExtrayendo PostgreSQL desde ZIP..." -ForegroundColor Cyan
-    Expand-Archive -Path $POSTGRES_ZIP -DestinationPath "$DIST_DIR\$APP_NAME\database\postgresql" -Force
-    Remove-Item $POSTGRES_ZIP
-    Write-Host "PostgreSQL extraido correctamente" -ForegroundColor Green
-}
-else {
-    Write-Host "`nAdvertencia: PostgreSQL no encontrado" -ForegroundColor Yellow
-    Write-Host "Opciones:" -ForegroundColor White
-    Write-Host "  1. El script descargara automaticamente (puede tardar)" -ForegroundColor Gray
-    Write-Host "  2. Extrae manualmente el ZIP a: .cache\postgresql-extracted\" -ForegroundColor Gray
-}
-
-# 6. Crear archivo .env de produccion
+# 5. Crear archivo .env de produccion
 Write-Host "`nCreando configuracion..." -ForegroundColor Cyan
 $random1 = Get-Random -Minimum 10000000 -Maximum 99999999
 $random2 = Get-Random -Minimum 10000000 -Maximum 99999999
@@ -215,7 +206,7 @@ $envContent = "JWT_SECRET=mining-checklist-jwt-secret-$random1`r`nCOOKIE_SECRET=
 $envContent | Out-File -FilePath "$DIST_DIR\$APP_NAME\backend\.env" -Encoding UTF8
 Write-Host "Configuracion creada" -ForegroundColor Green
 
-# 7. Crear scripts de inicio
+# 6. Crear scripts de inicio
 Write-Host "`nCreando scripts de inicio..." -ForegroundColor Cyan
 
 # Script principal de inicio
@@ -229,7 +220,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 `$APP_DIR = `$PSScriptRoot
-`$PG_DIR = "`$APP_DIR\database\postgresql\pgsql"
+`$PG_DIR = "`$APP_DIR\database\postgresql"
 `$PG_DATA = "`$APP_DIR\data\pgdata"
 `$PG_PORT = 5433
 
@@ -290,7 +281,7 @@ Write-Host "  Setup - Mining Machinery Checklist   " -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 `$APP_DIR = `$PSScriptRoot
-`$PG_DIR = "`$APP_DIR\database\postgresql\pgsql"
+`$PG_DIR = "`$APP_DIR\database\postgresql"
 `$PG_DATA = "`$APP_DIR\data\pgdata"
 `$PG_PORT = 5433
 
@@ -322,7 +313,7 @@ if (`$LASTEXITCODE -eq 0) {
 $setupContent | Out-File -FilePath $setupScriptPath -Encoding UTF8
 Write-Host "Script de setup creado" -ForegroundColor Green
 
-# 8. Crear archivo README
+# 7. Crear archivo README
 Write-Host "`nCreando documentacion..." -ForegroundColor Cyan
 
 $readmeContent = @"

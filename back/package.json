@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch --tsconfig tsconfig.json -r tsconfig-paths/register src/server.ts",
-    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json --resolve-full-paths",
     "build:frontend": "cd ../front && npm run build && cd ../back",
     "build:copy-frontend": "node -e \"const fs=require('fs');const path=require('path');const src=path.join(__dirname,'..','front','dist','checklist','browser');const dest=path.join(__dirname,'public');if(fs.existsSync(dest))fs.rmSync(dest,{recursive:true});fs.cpSync(src,dest,{recursive:true});console.log('Frontend copiado a public/')\"",
     "build:full": "pnpm run build:frontend && pnpm run build:copy-frontend && pnpm run build",
