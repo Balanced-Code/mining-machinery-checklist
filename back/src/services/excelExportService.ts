@@ -653,17 +653,27 @@ export class ExcelExportService {
 
         if (hasArchivos && item.observacion?.archivos) {
           const archivos = item.observacion.archivos;
-
-          // En Excel, solo se puede tener un hipervínculo por celda
-          // Mostraremos todos los archivos numerados con hipervínculo al primero
           const primerArchivo = archivos[0];
+
           if (primerArchivo) {
+            // Lista numerada de todos los archivos
             const archivosList = archivos
               .map((a, idx) => `${idx + 1}. ${a.nombre}`)
               .join('\n');
+
+            // Ruta relativa desde el Excel hacia la carpeta archivos/
+            const relativePath = `archivos/${primerArchivo.nombre}`;
+
+            // Tooltip informativo
+            const tooltip =
+              archivos.length > 1
+                ? `Clic para abrir ${primerArchivo.nombre} (primer archivo de ${archivos.length})`
+                : `Abrir ${primerArchivo.nombre}`;
+
             archivosCell.value = {
               text: archivosList,
-              hyperlink: `archivos/${primerArchivo.nombre}`,
+              hyperlink: relativePath,
+              tooltip: tooltip,
             };
             archivosCell.font = {
               underline: true,
