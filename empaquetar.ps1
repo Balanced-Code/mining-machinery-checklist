@@ -16,6 +16,9 @@ param(
 # Configuracion
 $APP_NAME = "MiningChecklistApp"
 $DIST_DIR = "dist-release"
+# Mejor descargar directamente desde "https://www.enterprisedb.com/download-postgresql-binaries"
+# Luego guardar en .cache para evitar descargas repetidas
+# .cache\postgresql-18.1-1-windows-x64-binaries.zip o .cache\postgresql-extracted\lo_que_contenga (paso 5)
 $POSTGRES_VERSION = "18.1-1"
 $POSTGRES_PORTABLE_URL = "https://get.enterprisedb.com/postgresql/postgresql-$POSTGRES_VERSION-windows-x64-binaries.zip"
 
@@ -183,12 +186,25 @@ if (Test-Path $POSTGRES_CACHE) {
     }
 }
 
-# 5. Extraer PostgreSQL
-if (Test-Path $POSTGRES_ZIP) {
-    Write-Host "`nExtrayendo PostgreSQL..." -ForegroundColor Cyan
+# 5. Copiar PostgreSQL
+# Prioridad 1: Copiar desde carpeta pre-extraida (mas rapido)
+if (Test-Path ".cache\postgresql-extracted") {
+    Write-Host "`nCopiando PostgreSQL pre-extraido..." -ForegroundColor Cyan
+    Copy-Item ".cache\postgresql-extracted\*" "$DIST_DIR\$APP_NAME\database\postgresql\" -Recurse -Force
+    Write-Host "PostgreSQL copiado (rapido)" -ForegroundColor Green
+}
+# Prioridad 2: Extraer desde ZIP descargado
+elseif (Test-Path $POSTGRES_ZIP) {
+    Write-Host "`nExtrayendo PostgreSQL desde ZIP..." -ForegroundColor Cyan
     Expand-Archive -Path $POSTGRES_ZIP -DestinationPath "$DIST_DIR\$APP_NAME\database\postgresql" -Force
     Remove-Item $POSTGRES_ZIP
-    Write-Host "PostgreSQL extraido" -ForegroundColor Green
+    Write-Host "PostgreSQL extraido correctamente" -ForegroundColor Green
+}
+else {
+    Write-Host "`nAdvertencia: PostgreSQL no encontrado" -ForegroundColor Yellow
+    Write-Host "Opciones:" -ForegroundColor White
+    Write-Host "  1. El script descargara automaticamente (puede tardar)" -ForegroundColor Gray
+    Write-Host "  2. Extrae manualmente el ZIP a: .cache\postgresql-extracted\" -ForegroundColor Gray
 }
 
 # 6. Crear archivo .env de produccion
