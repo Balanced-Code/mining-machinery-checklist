@@ -104,6 +104,7 @@ export class InspeccionesService {
 
   /**
    * Eliminar una inspección (soft delete)
+   * Nota: No actualiza el estado local. El componente debe llamar a getAll() para refrescar.
    */
   async delete(id: number): Promise<boolean> {
     this.loadingSignal.set(true);
@@ -117,13 +118,7 @@ export class InspeccionesService {
         }>(`${this.baseUrl}/inspecciones/${id}`)
       );
 
-      if (response?.success) {
-        // Eliminar localmente
-        this.inspeccionesSignal.update((inspecciones) => inspecciones.filter((i) => i.id !== id));
-        return true;
-      }
-
-      return false;
+      return response?.success || false;
     } catch (err: unknown) {
       this.handleError(err, 'Error al eliminar la inspección');
       throw err;
@@ -247,6 +242,45 @@ export class InspeccionesService {
     } catch (err: unknown) {
       this.handleError(err, 'Error al exportar la inspección');
       throw err;
+    }
+  }
+
+  /**
+   * Validar si un número de serie está disponible
+   * @param numSerie - Número de serie a validar
+   * @param excludeId - ID de inspección a excluir (opcional, para edición)
+   * @returns Objeto con información de disponibilidad
+   */
+  async validarNumeroSerie(
+    numSerie: string,
+    excludeId?: number
+  ): Promise<{
+    disponible: boolean;
+    eliminado?: boolean;
+    message: string;
+    detalles?: { maquina?: string };
+  }> {
+    try {
+      const params = excludeId ? { excludeId: excludeId.toString() } : undefined;
+
+      const response = await firstValueFrom(
+        this.http.get<{
+          disponible: boolean;
+          eliminado?: boolean;
+          message: string;
+          detalles?: { maquina?: string };
+        }>(`${this.baseUrl}/inspecciones/validar-num-serie/${numSerie}`, {
+          params,
+        })
+      );
+
+      return response;
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al validar el número de serie');
+      return {
+        disponible: false,
+        message: 'Error al validar el número de serie',
+      };
     }
   }
 

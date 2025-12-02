@@ -517,9 +517,10 @@ export class InspeccionesService {
   async agregarTemplate(
     inspeccionId: bigint,
     templateId: number,
-    userId: number
+    userId: number,
+    userLevel: number = 0
   ) {
-    // Verificar que la inspección existe y no está finalizada
+    // Verificar que la inspección existe
     const inspeccion = await this.prisma.inspeccion.findUnique({
       where: { id: inspeccionId, eliminadoEn: null },
     });
@@ -528,7 +529,8 @@ export class InspeccionesService {
       throw new Error('Inspección no encontrada');
     }
 
-    if (inspeccion.fechaFinalizacion) {
+    // Si la inspección está finalizada, solo nivel 4 (administradores) pueden modificarla
+    if (inspeccion.fechaFinalizacion && userLevel < 4) {
       throw new Error('No se puede modificar una inspección finalizada');
     }
 
@@ -568,8 +570,12 @@ export class InspeccionesService {
   /**
    * Eliminar un template (checklist) de una inspección (hard delete)
    */
-  async eliminarTemplate(inspeccionId: bigint, templateId: number) {
-    // Verificar que la inspección existe y no está finalizada
+  async eliminarTemplate(
+    inspeccionId: bigint,
+    templateId: number,
+    userLevel: number = 0
+  ) {
+    // Verificar que la inspección existe
     const inspeccion = await this.prisma.inspeccion.findUnique({
       where: { id: inspeccionId, eliminadoEn: null },
     });
@@ -578,7 +584,8 @@ export class InspeccionesService {
       throw new Error('Inspección no encontrada');
     }
 
-    if (inspeccion.fechaFinalizacion) {
+    // Si la inspección está finalizada, solo nivel 4 (administradores) pueden modificarla
+    if (inspeccion.fechaFinalizacion && userLevel < 4) {
       throw new Error('No se puede modificar una inspección finalizada');
     }
 

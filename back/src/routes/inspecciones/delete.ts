@@ -71,7 +71,7 @@ export const deleteInspeccionesRoutes: FastifyPluginAsync = async (
         await fastify.services.inspecciones.eliminarTemplate(
           inspeccionId,
           Number(templateId),
-          currentUser.id
+          currentUser.cargoNivel
         );
 
         return reply.send({

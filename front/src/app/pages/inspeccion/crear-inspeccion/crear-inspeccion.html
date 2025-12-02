@@ -50,13 +50,17 @@
         <input
           type="text"
           class="field-input"
-          [class.field-input-error]="errorNumSerie()"
+          [class.field-input-error]="errorNumSerie() || numSerieError()"
           placeholder="Ej: EQA-0332"
           [value]="numSerie()"
           (input)="numSerie.set($any($event.target).value); onNumSerieChange()"
-          (blur)="onNumSerieBlur()"
+          (blur)="validarNumeroSerie()"
         />
-        @if (errorNumSerie()) {
+        @if (numSerieValidando()) {
+        <span class="field-hint">Validando...</span>
+        } @else if (numSerieError()) {
+        <span class="field-error">{{ numSerieError() }}</span>
+        } @else if (errorNumSerie()) {
         <span class="field-error">{{ errorNumSerie() }}</span>
         }
       </div>

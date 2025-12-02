@@ -14,6 +14,7 @@ import {
 } from '@core/models/inspeccion.model';
 import { firstValueFrom } from 'rxjs';
 import { ArchivoService } from './archivo.service';
+import { AuthService } from './auth.service';
 import { BackendInspeccion } from './inspecciones.service';
 
 interface BackendTemplateSeccion {
@@ -44,6 +45,7 @@ interface UsuariosResponse {
 export class InspeccionService {
   private readonly http = inject(HttpClient);
   private readonly archivoService = inject(ArchivoService);
+  private readonly authService = inject(AuthService);
 
   // Signals para estado reactivo
   private readonly currentInspeccionSignal = signal<Inspeccion | null>(null);
@@ -225,13 +227,27 @@ export class InspeccionService {
 
   /**
    * Actualiza una inspección existente
+   * Si la inspección está finalizada y el usuario es administrador (nivel 4),
+   * usa el endpoint /admin que permite editar inspecciones finalizadas
    */
   async actualizar(id: number, data: Partial<InspeccionFormDTO>): Promise<boolean> {
     this.isLoadingSignal.set(true);
     this.errorSignal.set(null);
 
     try {
-      await firstValueFrom(this.http.patch(`${this.baseUrl}/inspecciones/${id}`, data));
+      const currentInspeccion = this.currentInspeccionSignal();
+      const userLevel = this.authService.user()?.cargo?.nivel ?? 0;
+
+      // Determinar qué endpoint usar
+      let endpoint = `${this.baseUrl}/inspecciones/${id}`;
+
+      // Si la inspección está finalizada y el usuario es nivel 4 (administrador),
+      // usar el endpoint admin
+      if (currentInspeccion?.fechaFinalizacion && userLevel >= 4) {
+        endpoint = `${this.baseUrl}/inspecciones/${id}/admin`;
+      }
+
+      await firstValueFrom(this.http.patch(endpoint, data));
 
       // Actualizar estado local
       const current = this.currentInspeccionSignal();
@@ -772,6 +788,42 @@ export class InspeccionService {
     } catch (err: unknown) {
       this.handleError(err, 'Error al obtener los templates');
       return [];
+    }
+  }
+
+  /**
+   * Validar número de serie (verifica si existe y si está eliminado)
+   */
+  async validarNumeroSerie(
+    numSerie: string,
+    excludeId?: number
+  ): Promise<{
+    disponible: boolean;
+    eliminado?: boolean;
+    message: string;
+    detalles?: { maquina?: string };
+  }> {
+    try {
+      const url = excludeId
+        ? `${this.baseUrl}/inspecciones/validar-num-serie/${numSerie}?excludeId=${excludeId}`
+        : `${this.baseUrl}/inspecciones/validar-num-serie/${numSerie}`;
+
+      const response = await firstValueFrom(
+        this.http.get<{
+          disponible: boolean;
+          eliminado?: boolean;
+          message: string;
+          detalles?: { maquina?: string };
+        }>(url)
+      );
+
+      return response;
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al validar el número de serie');
+      return {
+        disponible: false,
+        message: 'Error al validar el número de serie',
+      };
     }
   }
 

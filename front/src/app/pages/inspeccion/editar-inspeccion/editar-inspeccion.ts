@@ -60,6 +60,8 @@ export class EditarInspeccion implements OnInit, OnDestroy {
   protected readonly fechaFin = signal<Date | null>(null);
   protected readonly horaFin = signal<Date | null>(null);
   protected readonly numSerie = signal('');
+  protected readonly numSerieValidando = signal(false);
+  protected readonly numSerieError = signal<string | null>(null);
   protected readonly maquinaId = signal<number | null>(null);
   protected readonly nSerieMotor = signal<string | null>(null);
   protected readonly cabinado = signal<boolean | null>(null);
@@ -165,19 +167,46 @@ export class EditarInspeccion implements OnInit, OnDestroy {
       .filter((id) => id > 0);
   });
 
+  // Verificar si la inspección ya está terminada
+  protected readonly inspeccionYaTerminada = computed(() => {
+    const inspeccion = this.inspeccionService.currentInspeccion();
+    return !!inspeccion?.fechaFinalizacion;
+  });
+
+  // Verificar si puede editar checklists
+  protected readonly puedeEditarChecklists = computed(() => {
+    const inspeccion = this.inspeccionService.currentInspeccion();
+    const userLevel = this.authService.user()?.cargo?.nivel ?? 0;
+
+    // Si la inspección está finalizada, solo nivel 4 puede editar
+    if (inspeccion?.fechaFinalizacion) {
+      return userLevel >= 4;
+    }
+
+    // Si no está finalizada, nivel 3+ puede editar
+    return userLevel >= 3;
+  });
+
   // Usuario actual (inspector)
   protected readonly inspector = this.authService.user;
 
   // Validaciones
   protected readonly formularioValido = computed(() => {
-    return (
+    const validacionBasica =
       this.fechaInicio() !== null &&
       this.horaInicio() !== null &&
       this.numSerie().trim().length > 0 &&
+      this.numSerieError() === null && // No debe haber error de validación
       this.maquinaId() !== null &&
       this.checklists().length > 0 &&
-      this.checklists().every((c) => c.templateId > 0) // No placeholders
-    );
+      this.checklists().every((c) => c.templateId > 0); // No placeholders
+
+    // Si la inspección ya está terminada, también validar fecha fin
+    if (this.inspeccionYaTerminada()) {
+      return validacionBasica && this.fechaFin() !== null && this.horaFin() !== null;
+    }
+
+    return validacionBasica;
   });
 
   // Combinar fecha y hora de inicio en un solo Date
@@ -444,9 +473,53 @@ export class EditarInspeccion implements OnInit, OnDestroy {
   }
 
   /**
+   * Validar número de serie cuando pierde el foco
+   */
+  protected async validarNumeroSerie(): Promise<void> {
+    const numSerie = this.numSerie().trim();
+    const inspeccionId = this.inspeccionId();
+
+    if (!numSerie) {
+      this.numSerieError.set(null);
+      return;
+    }
+
+    this.numSerieValidando.set(true);
+    this.numSerieError.set(null);
+
+    try {
+      const resultado = await this.inspeccionService.validarNumeroSerie(
+        numSerie,
+        inspeccionId ?? undefined
+      );
+
+      if (!resultado.disponible) {
+        if (resultado.eliminado) {
+          this.numSerieError.set(
+            'El número de serie existe en una inspección eliminada. Solo un administrador puede recuperarla.'
+          );
+        } else {
+          this.numSerieError.set('El número de serie ya existe en una inspección activa.');
+        }
+      }
+    } catch (error) {
+      console.error('Error al validar número de serie:', error);
+    } finally {
+      this.numSerieValidando.set(false);
+    }
+  }
+
+  /**
    * Se llama cuando cambia la fecha o hora de inicio
    */
   protected async onFechaHoraChange(): Promise<void> {
+    await this.autoGuardar();
+  }
+
+  /**
+   * Se llama cuando cambia la fecha o hora de fin
+   */
+  protected async onFechaHoraFinChange(): Promise<void> {
     await this.autoGuardar();
   }
 
@@ -526,7 +599,15 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     this.autoGuardadoTimeout = window.setTimeout(async () => {
       try {
         // 1. Guardar datos básicos
-        const datos = {
+        const datos: Partial<{
+          fechaInicio: string;
+          fechaFinalizacion?: string;
+          numSerie: string;
+          maquinaId?: number;
+          nSerieMotor?: string;
+          cabinado?: boolean;
+          horometro?: number;
+        }> = {
           fechaInicio: this.fechaHoraInicio().toISOString(),
           numSerie: this.numSerie(),
           maquinaId: this.maquinaId() ?? undefined,
@@ -534,6 +615,14 @@ export class EditarInspeccion implements OnInit, OnDestroy {
           cabinado: this.cabinado() ?? undefined,
           horometro: this.horometro() ?? undefined,
         };
+
+        // Si la inspección ya está terminada, incluir fechaFinalizacion
+        if (this.inspeccionYaTerminada()) {
+          const fechaHoraFin = this.fechaHoraFin();
+          if (fechaHoraFin) {
+            datos.fechaFinalizacion = fechaHoraFin.toISOString();
+          }
+        }
 
         await this.inspeccionService.actualizar(id, datos);
 
@@ -729,18 +818,52 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     const id = this.inspeccionId();
     if (!id) return;
 
-    // Guardar cambios finales antes de terminar
-    await this.inspeccionService.actualizar(id, {
-      fechaInicio: this.fechaHoraInicio().toISOString(),
-      numSerie: this.numSerie(),
-      maquinaId: this.maquinaId() ?? undefined,
-    });
+    // Si la inspección ya está terminada, solo guardar cambios (incluyendo fecha fin editada)
+    if (this.inspeccionYaTerminada()) {
+      const datos: Partial<{
+        fechaInicio: string;
+        fechaFinalizacion?: string;
+        numSerie: string;
+        maquinaId?: number;
+        nSerieMotor?: string;
+        cabinado?: boolean;
+        horometro?: number;
+      }> = {
+        fechaInicio: this.fechaHoraInicio().toISOString(),
+        numSerie: this.numSerie(),
+        maquinaId: this.maquinaId() ?? undefined,
+        nSerieMotor: this.nSerieMotor() || undefined,
+        cabinado: this.cabinado() ?? undefined,
+        horometro: this.horometro() ?? undefined,
+      };
 
-    // Terminar la inspección
-    const terminada = await this.inspeccionService.terminar(id);
+      const fechaHoraFin = this.fechaHoraFin();
+      if (fechaHoraFin) {
+        datos.fechaFinalizacion = fechaHoraFin.toISOString();
+      }
 
-    if (terminada) {
-      this.router.navigate(['/historial']);
+      const guardado = await this.inspeccionService.actualizar(id, datos);
+
+      if (guardado) {
+        this.router.navigate(['/historial']);
+      }
+    } else {
+      // Si NO está terminada, guardar cambios y luego terminar (genera fecha fin automáticamente)
+      await this.inspeccionService.actualizar(id, {
+        fechaInicio: this.fechaHoraInicio().toISOString(),
+        numSerie: this.numSerie(),
+        maquinaId: this.maquinaId() ?? undefined,
+        nSerieMotor: this.nSerieMotor() || undefined,
+        cabinado: this.cabinado() ?? undefined,
+        horometro: this.horometro() ?? undefined,
+      });
+
+      // Terminar la inspección (genera fecha fin automáticamente)
+      const terminada = await this.inspeccionService.terminar(id);
+
+      if (terminada) {
+        this.router.navigate(['/historial']);
+      }
     }
   }
 

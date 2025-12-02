@@ -309,10 +309,8 @@ export class Historial {
       const deleted = await this.inspeccionesService.delete(inspeccion.id);
 
       if (deleted) {
-        // Actualizar estado local
-        this.inspecciones.update((inspecciones) =>
-          inspecciones.filter((i) => i.id !== inspeccion.id)
-        );
+        // Recargar inspecciones desde el backend para reflejar el soft delete
+        await this.loadInspecciones();
       } else {
         alert('Error al eliminar la inspección');
       }
@@ -530,16 +528,13 @@ export class Historial {
    * Verificar si una inspección puede ser exportada
    */
   protected puedeExportar(inspeccion: Inspeccion): boolean {
-    return inspeccion.fechaFinalizacion !== null && !inspeccion.eliminadoEn;
+    return inspeccion.fechaFinalizacion !== null;
   }
 
   /**
    * Obtener título del botón de exportación
    */
   protected getExportButtonTitle(inspeccion: Inspeccion): string {
-    if (inspeccion.eliminadoEn) {
-      return 'No se puede exportar una inspección eliminada';
-    }
     if (!inspeccion.fechaFinalizacion) {
       return 'Solo se pueden exportar inspecciones finalizadas';
     }

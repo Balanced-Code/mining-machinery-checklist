@@ -53,6 +53,8 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   protected readonly fechaInicio = signal<Date>(new Date());
   protected readonly horaInicio = signal<Date>(new Date());
   protected readonly numSerie = signal('');
+  protected readonly numSerieValidando = signal(false);
+  protected readonly numSerieError = signal<string | null>(null);
   protected readonly maquinaNombre = signal(''); // Nombre de la máquina (puede ser nueva)
   protected readonly maquinaId = signal<number | null>(null); // ID solo si existe
   protected readonly nSerieMotor = signal('');
@@ -209,6 +211,7 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   protected readonly formularioValido = computed(() => {
     return (
       this.camposObligatoriosCompletos() &&
+      this.numSerieError() === null && // No debe haber error de validación
       this.checklists().length > 0 &&
       this.checklists().every((c) => c.templateId > 0) // No placeholders
     );
@@ -783,6 +786,39 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
   protected requiereObservacion(item: InspeccionItemDTO): boolean {
     return item.cumple === false;
+  }
+
+  /**
+   * Validar número de serie cuando pierde el foco
+   */
+  protected async validarNumeroSerie(): Promise<void> {
+    const numSerie = this.numSerie().trim();
+
+    if (!numSerie) {
+      this.numSerieError.set(null);
+      return;
+    }
+
+    this.numSerieValidando.set(true);
+    this.numSerieError.set(null);
+
+    try {
+      const resultado = await this.inspeccionService.validarNumeroSerie(numSerie);
+
+      if (!resultado.disponible) {
+        if (resultado.eliminado) {
+          this.numSerieError.set(
+            'El número de serie existe en una inspección eliminada. Solo un administrador puede recuperarla.'
+          );
+        } else {
+          this.numSerieError.set('El número de serie ya existe en una inspección activa.');
+        }
+      }
+    } catch (error) {
+      console.error('Error al validar número de serie:', error);
+    } finally {
+      this.numSerieValidando.set(false);
+    }
   }
 
   protected formatUsuario(usuario: UsuarioInspeccion): string {

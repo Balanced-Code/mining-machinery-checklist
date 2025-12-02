@@ -45,15 +45,50 @@
           styleClass="w-full"
         />
       </div>
+      @if (inspeccionYaTerminada()) {
+      <div class="form-field">
+        <label class="field-label"> Fecha de Fin <span class="required">*</span> </label>
+        <p-datepicker
+          [(ngModel)]="fechaFin"
+          (ngModelChange)="onFechaHoraFinChange()"
+          dateFormat="dd/mm/yy"
+          placeholder="Seleccione fecha"
+          [showIcon]="true"
+          iconDisplay="input"
+          [readonlyInput]="true"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="form-field">
+        <label class="field-label"> Hora de Fin <span class="required">*</span> </label>
+        <p-datepicker
+          [(ngModel)]="horaFin"
+          (ngModelChange)="onFechaHoraFinChange()"
+          [timeOnly]="true"
+          hourFormat="24"
+          placeholder="Seleccione hora"
+          [showIcon]="true"
+          iconDisplay="input"
+          styleClass="w-full"
+        />
+      </div>
+      }
       <div class="form-field">
         <label class="field-label"> Número de Serie <span class="required">*</span> </label>
         <input
           type="text"
           class="field-input"
+          [class.field-input-error]="numSerieError()"
           placeholder="Ej: EQA-0332"
           [value]="numSerie()"
           (input)="numSerie.set($any($event.target).value); onNumSerieChange()"
+          (blur)="validarNumeroSerie()"
         />
+        @if (numSerieValidando()) {
+        <span class="field-hint">Validando...</span>
+        } @else if (numSerieError()) {
+        <span class="field-error">{{ numSerieError() }}</span>
+        }
       </div>
       <div class="form-field">
         <label class="field-label"> Máquina <span class="required">*</span> </label>
@@ -183,7 +218,11 @@
         <mat-icon>checklist</mat-icon>
         <h2 class="section-title">Checklists de la Inspección</h2>
       </div>
-      <button class="btn-primary" (click)="agregarChecklist()">
+      <button
+        class="btn-primary"
+        (click)="agregarChecklist()"
+        [disabled]="!puedeEditarChecklists()"
+      >
         <mat-icon>add</mat-icon>
         Agregar Checklist
       </button>
@@ -232,6 +271,7 @@
           <button
             class="btn-delete-checklist"
             (click)="eliminarChecklist(checklistIndex)"
+            [disabled]="!puedeEditarChecklists()"
             title="Eliminar"
           >
             <mat-icon>close</mat-icon>
@@ -259,6 +299,7 @@
           <button
             class="btn-delete-checklist"
             (click)="eliminarChecklist(checklistIndex)"
+            [disabled]="!puedeEditarChecklists()"
             title="Eliminar checklist"
           >
             <mat-icon>close</mat-icon>
@@ -295,6 +336,7 @@
               <button
                 class="btn-response btn-si"
                 [class.active]="item.cumple === true"
+                [disabled]="!puedeEditarChecklists()"
                 (click)="onRespuestaChange(checklistIndex, itemIndex, true)"
                 title="Cumple"
               >
@@ -304,6 +346,7 @@
               <button
                 class="btn-response btn-no"
                 [class.active]="item.cumple === false"
+                [disabled]="!puedeEditarChecklists()"
                 (click)="onRespuestaChange(checklistIndex, itemIndex, false)"
                 title="No cumple"
               >
@@ -313,6 +356,7 @@
               <button
                 class="btn-response btn-na"
                 [class.active]="item.cumple === null && item.eleccionRespuestaId"
+                [disabled]="!puedeEditarChecklists()"
                 (click)="onRespuestaChange(checklistIndex, itemIndex, null)"
                 title="No aplica"
               >
@@ -322,6 +366,7 @@
               <button
                 class="btn-observacion"
                 [class.required]="requiereObservacion(item) && !item.observacion"
+                [disabled]="!puedeEditarChecklists()"
                 (click)="abrirObservacion(checklistIndex, itemIndex)"
                 [title]="
                   requiereObservacion(item) && !item.observacion

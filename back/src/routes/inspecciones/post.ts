@@ -162,9 +162,10 @@ export const guardarRespuestaRoute: FastifyPluginAsync = async fastify => {
     async (request, reply) => {
       try {
         const userId = request.currentUser!.id;
+        const userLevel = request.currentUser!.cargoNivel;
         const body = request.body;
 
-        // Verificar que la inspección existe y no está finalizada
+        // Verificar que la inspección existe
         const inspeccion =
           await fastify.services.inspecciones.getInspeccionById(
             BigInt(body.inspeccionId)
@@ -178,7 +179,8 @@ export const guardarRespuestaRoute: FastifyPluginAsync = async fastify => {
           });
         }
 
-        if (inspeccion.fechaFinalizacion) {
+        // Si la inspección está finalizada, solo nivel 4 (administradores) pueden guardar respuestas
+        if (inspeccion.fechaFinalizacion && userLevel < 4) {
           return reply.code(403).send({
             statusCode: 403,
             error: 'Forbidden',
@@ -267,6 +269,7 @@ export const guardarRespuestaRoute: FastifyPluginAsync = async fastify => {
     async (request, reply) => {
       try {
         const userId = request.currentUser!.id;
+        const userLevel = request.currentUser!.cargoNivel;
         const { id } = request.params;
         const { templateId } = request.body;
         const inspeccionId = BigInt(id);
@@ -275,7 +278,8 @@ export const guardarRespuestaRoute: FastifyPluginAsync = async fastify => {
           await fastify.services.inspecciones.agregarTemplate(
             inspeccionId,
             templateId,
-            userId
+            userId,
+            userLevel
           );
 
         return reply.code(201).send({
