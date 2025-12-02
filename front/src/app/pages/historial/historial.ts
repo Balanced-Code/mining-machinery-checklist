@@ -238,10 +238,44 @@ export class Historial {
 
   /**
    * Editar una inspección
+   * Solo se puede editar si no está finalizada, excepto para administradores (nivel 4)
    */
   protected editarInspeccion(inspeccion: Inspeccion): void {
-    if (!this.canEdit()) return;
+    if (!this.canEdit()) {
+      alert('No tiene permisos para editar inspecciones.');
+      return;
+    }
+
+    if (inspeccion.eliminadoEn) {
+      alert('No se puede editar una inspección eliminada.');
+      return;
+    }
+
+    // Si está finalizada y no es admin, bloquear
+    if (inspeccion.fechaFinalizacion && !this.isAdmin()) {
+      alert(
+        'Esta inspección está finalizada y no puede ser editada. Solo los administradores pueden modificarla.'
+      );
+      return;
+    }
+
     this.router.navigate(['/inspeccion/editar', inspeccion.id]);
+  }
+
+  /**
+   * Obtener el título del botón de edición según el estado de la inspección
+   */
+  protected getEditButtonTitle(inspeccion: Inspeccion): string {
+    if (!this.canEdit()) {
+      return 'No tiene permisos para editar';
+    }
+    if (inspeccion.eliminadoEn) {
+      return 'No se puede editar una inspección eliminada';
+    }
+    if (inspeccion.fechaFinalizacion && !this.isAdmin()) {
+      return 'La inspección está finalizada. Solo los administradores pueden editarla';
+    }
+    return 'Editar inspección';
   }
 
   /**

@@ -355,9 +355,25 @@
   color: black;
 }
 
+.btn-icon:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+  color: rgb(0 0 0 / 30%);
+}
+
+.btn-icon:disabled:hover {
+  background: transparent;
+  color: rgb(0 0 0 / 30%);
+}
+
 .btn-icon.btn-delete:hover {
   background: rgb(237 27 46 / 10%);
   color: #ed1b2e;
+}
+
+.btn-icon.btn-delete:disabled:hover {
+  background: transparent;
+  color: rgb(0 0 0 / 30%);
 }
 
 .btn-icon mat-icon {

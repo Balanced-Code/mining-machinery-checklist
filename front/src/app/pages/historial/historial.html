@@ -157,38 +157,49 @@
                 <mat-icon>visibility</mat-icon>
               </button>
 
-              <!-- Editar (solo nivel 3+ y no eliminadas) -->
-              @if (canEdit() && !inspeccion.eliminadoEn) {
+              <!-- Editar -->
               <button
                 class="btn-icon"
+                [disabled]="
+                  !canEdit() ||
+                  inspeccion.eliminadoEn ||
+                  (inspeccion.fechaFinalizacion && !isAdmin())
+                "
                 (click)="editarInspeccion(inspeccion)"
-                title="Editar inspección"
+                [title]="getEditButtonTitle(inspeccion)"
               >
                 <mat-icon>edit</mat-icon>
               </button>
-              }
 
-              <!-- Descargar (solo no eliminadas) -->
-              @if (!inspeccion.eliminadoEn) {
+              <!-- Descargar -->
               <button
                 class="btn-icon"
+                [disabled]="inspeccion.eliminadoEn"
                 (click)="descargarInspeccion(inspeccion)"
-                title="Descargar reporte"
+                [title]="
+                  inspeccion.eliminadoEn
+                    ? 'No se puede descargar una inspección eliminada'
+                    : 'Descargar reporte'
+                "
               >
                 <mat-icon>download</mat-icon>
               </button>
-              }
 
-              <!-- Eliminar (solo nivel 3+ y no eliminadas) -->
-              @if (canEdit() && !inspeccion.eliminadoEn) {
+              <!-- Eliminar -->
               <button
                 class="btn-icon btn-delete"
+                [disabled]="!canEdit() || inspeccion.eliminadoEn"
                 (click)="eliminarInspeccion(inspeccion)"
-                title="Eliminar inspección"
+                [title]="
+                  !canEdit()
+                    ? 'No tiene permisos para eliminar'
+                    : inspeccion.eliminadoEn
+                    ? 'Inspección ya eliminada'
+                    : 'Eliminar inspección'
+                "
               >
                 <mat-icon>delete</mat-icon>
               </button>
-              }
 
               <!-- Reactivar (solo admins y eliminadas) -->
               @if (canReactivate() && inspeccion.eliminadoEn) {
