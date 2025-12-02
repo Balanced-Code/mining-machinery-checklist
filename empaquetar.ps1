@@ -16,7 +16,7 @@ param(
 # Configuracion
 $APP_NAME = "MiningChecklistApp"
 $DIST_DIR = "dist-release"
-$POSTGRES_VERSION = "16.1-1"
+$POSTGRES_VERSION = "18.1-1"
 $POSTGRES_PORTABLE_URL = "https://get.enterprisedb.com/postgresql/postgresql-$POSTGRES_VERSION-windows-x64-binaries.zip"
 
 # ========================================
@@ -140,6 +140,12 @@ New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\data" -Force | Out-Null
 Write-Host "`nCopiando backend..." -ForegroundColor Cyan
 Copy-Item "back\dist" "$DIST_DIR\$APP_NAME\backend\" -Recurse
 Copy-Item "back\package.json" "$DIST_DIR\$APP_NAME\backend\"
+
+# Agregar "type": "module" al package.json
+$packageJson = Get-Content "$DIST_DIR\$APP_NAME\backend\package.json" | ConvertFrom-Json
+$packageJson | Add-Member -NotePropertyName "type" -NotePropertyValue "module" -Force
+$packageJson | ConvertTo-Json -Depth 10 | Set-Content "$DIST_DIR\$APP_NAME\backend\package.json"
+
 Copy-Item "back\prisma" "$DIST_DIR\$APP_NAME\backend\" -Recurse
 Copy-Item "back\node_modules" "$DIST_DIR\$APP_NAME\backend\" -Recurse
 Write-Host "Backend copiado" -ForegroundColor Green
@@ -152,18 +158,28 @@ Write-Host "Frontend copiado" -ForegroundColor Green
 # 4. Descargar PostgreSQL Portable
 Write-Host "`nDescargando PostgreSQL Portable..." -ForegroundColor Cyan
 $POSTGRES_ZIP = "$DIST_DIR\postgres.zip"
+$POSTGRES_CACHE = ".cache\postgresql-$POSTGRES_VERSION-windows-x64-binaries.zip"
 
-try {
-    Invoke-WebRequest -Uri $POSTGRES_PORTABLE_URL -OutFile $POSTGRES_ZIP -UseBasicParsing
-    Write-Host "PostgreSQL descargado" -ForegroundColor Green
-} catch {
-    Write-Host "No se pudo descargar automaticamente" -ForegroundColor Yellow
-    Write-Host "   Descarga manualmente desde:" -ForegroundColor Yellow
-    Write-Host "   $POSTGRES_PORTABLE_URL" -ForegroundColor White
-    Write-Host "   Y colocalo en: $POSTGRES_ZIP" -ForegroundColor White
-    $response = Read-Host "`n¿Continuar sin PostgreSQL? (S/N)"
-    if ($response -ne "S" -and $response -ne "s") {
-        exit 1
+# Verificar si existe en cache
+if (Test-Path $POSTGRES_CACHE) {
+    Write-Host "Usando PostgreSQL desde cache..." -ForegroundColor Green
+    Copy-Item $POSTGRES_CACHE $POSTGRES_ZIP
+} else {
+    try {
+        Write-Host "Descargando PostgreSQL (esto puede tomar varios minutos)..." -ForegroundColor Yellow
+        New-Item -ItemType Directory -Path ".cache" -Force | Out-Null
+        Invoke-WebRequest -Uri $POSTGRES_PORTABLE_URL -OutFile $POSTGRES_CACHE -UseBasicParsing
+        Copy-Item $POSTGRES_CACHE $POSTGRES_ZIP
+        Write-Host "PostgreSQL descargado y guardado en cache" -ForegroundColor Green
+    } catch {
+        Write-Host "No se pudo descargar automaticamente" -ForegroundColor Yellow
+        Write-Host "   Descarga manualmente desde:" -ForegroundColor Yellow
+        Write-Host "   $POSTGRES_PORTABLE_URL" -ForegroundColor White
+        Write-Host "   Y colocalo en: $POSTGRES_ZIP" -ForegroundColor White
+        $response = Read-Host "`n¿Continuar sin PostgreSQL? (S/N)"
+        if ($response -ne "S" -and $response -ne "s") {
+            exit 1
+        }
     }
 }
 
@@ -209,7 +225,12 @@ if (`$PRIMERA_VEZ) {
     
     New-Item -ItemType Directory -Path `$PG_DATA -Force | Out-Null
     
-    & "`$PG_DIR\bin\initdb.exe" -D "`$PG_DATA" -U postgres -P -w -E UTF8
+    # Crear archivo de contraseña temporal
+    `$pwdFile = "`$APP_DIR\data\pwd.tmp"
+    "admin" | Out-File -FilePath `$pwdFile -Encoding ASCII -NoNewline
+    
+    & "`$PG_DIR\bin\initdb.exe" -D "`$PG_DATA" -U postgres --pwfile=`$pwdFile -E UTF8
+    Remove-Item `$pwdFile -Force
     
     if (`$LASTEXITCODE -eq 0) {
         Write-Host "Base de datos inicializada correctamente" -ForegroundColor Green
@@ -220,13 +241,18 @@ if (`$PRIMERA_VEZ) {
 }
 
 Write-Host "`nIniciando PostgreSQL en puerto `$PG_PORT..." -ForegroundColor Cyan
-`$pgProcess = Start-Process -FilePath "`$PG_DIR\bin\pg_ctl.exe" ``
-    -ArgumentList "start", "-D", "`$PG_DATA", "-l", "`$APP_DIR\data\postgres.log", "-p", `$PG_PORT ``
-    -PassThru -NoNewWindow
+& "`$PG_DIR\bin\pg_ctl.exe" start -D "`$PG_DATA" -l "`$APP_DIR\data\postgres.log" -o "-p `$PG_PORT"
 
 Start-Sleep -Seconds 3
 
-Write-Host "PostgreSQL iniciado (PID: `$(`$pgProcess.Id))" -ForegroundColor Green
+# Verificar si PostgreSQL inicio correctamente
+`$pgRunning = Test-Path "`$PG_DATA\postmaster.pid"
+if (`$pgRunning) {
+    Write-Host "PostgreSQL iniciado correctamente" -ForegroundColor Green
+} else {
+    Write-Host "Error: PostgreSQL no inicio. Revisa data\postgres.log" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "`nIniciando backend..." -ForegroundColor Cyan
 Set-Location "`$APP_DIR\backend"
@@ -256,7 +282,12 @@ New-Item -ItemType Directory -Path `$PG_DATA -Force | Out-Null
 
 Write-Host "Inicializando base de datos PostgreSQL..." -ForegroundColor Cyan
 
-& "`$PG_DIR\bin\initdb.exe" -D "`$PG_DATA" -U postgres -P -w -E UTF8
+# Crear archivo de contraseña temporal
+`$pwdFile = "`$APP_DIR\data\pwd.tmp"
+"admin" | Out-File -FilePath `$pwdFile -Encoding ASCII -NoNewline
+
+& "`$PG_DIR\bin\initdb.exe" -D "`$PG_DATA" -U postgres --pwfile=`$pwdFile -E UTF8
+Remove-Item `$pwdFile -Force
 
 if (`$LASTEXITCODE -eq 0) {
     Write-Host "Base de datos inicializada correctamente" -ForegroundColor Green

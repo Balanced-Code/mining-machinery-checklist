@@ -7,6 +7,9 @@ coverage/
 e2e/test-output/
 .angular/
 
+# Cache
+.cache/
+
 # Node modules and dependency files
 node_modules/
 package-lock.json
