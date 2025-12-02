@@ -4,9 +4,13 @@ import type {
   CreateInspeccionCompleteData,
   UpdateInspeccionData,
 } from '@/models/inspeccion';
+import type { ArchivosService } from './archivosService';
 
 export class InspeccionesService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly archivosService?: ArchivosService
+  ) {}
 
   /**
    * Obtener todas las inspecciones (no eliminadas)
@@ -210,6 +214,7 @@ export class InspeccionesService {
       | {
           id?: number;
           descripcion: string;
+          archivosExistentes?: number[];
         }
       | undefined;
     userId: number;
@@ -285,6 +290,21 @@ export class InspeccionesService {
             },
           });
           observacionId = observacionActualizada.id;
+
+          // Vincular archivos existentes a la observación
+          if (
+            data.observacion.archivosExistentes &&
+            data.observacion.archivosExistentes.length > 0
+          ) {
+            await tx.archivo.updateMany({
+              where: {
+                id: { in: data.observacion.archivosExistentes },
+              },
+              data: {
+                observacionId: observacionActualizada.id,
+              },
+            });
+          }
         } else {
           // Crear nueva observación
           const nuevaObservacion = await tx.observacion.create({
@@ -294,6 +314,21 @@ export class InspeccionesService {
             },
           });
           observacionId = nuevaObservacion.id;
+
+          // Vincular archivos existentes a la nueva observación
+          if (
+            data.observacion.archivosExistentes &&
+            data.observacion.archivosExistentes.length > 0
+          ) {
+            await tx.archivo.updateMany({
+              where: {
+                id: { in: data.observacion.archivosExistentes },
+              },
+              data: {
+                observacionId: nuevaObservacion.id,
+              },
+            });
+          }
         }
       }
 
@@ -788,26 +823,91 @@ export class InspeccionesService {
     // Si NO está finalizada: hard delete
     // Primero eliminar las relaciones en cascada
     await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Eliminar asignaciones
+      // 1. Obtener todas las observaciones asociadas a esta inspección
+      const eleccionesTemplate = await tx.eleccionTemplate.findMany({
+        where: { inspeccionId: id },
+        include: {
+          eleccionRespuestas: {
+            include: {
+              resultadoAtributo: {
+                include: {
+                  observacion: {
+                    include: {
+                      archivos: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // 2. Recolectar todos los archivos que deben eliminarse
+      const archivosIds: bigint[] = [];
+      const observacionesIds: bigint[] = [];
+
+      eleccionesTemplate.forEach(eleccion => {
+        eleccion.eleccionRespuestas.forEach(respuesta => {
+          const observacion = respuesta.resultadoAtributo.observacion;
+          if (observacion) {
+            observacionesIds.push(observacion.id);
+            observacion.archivos.forEach(archivo => {
+              archivosIds.push(archivo.id);
+            });
+          }
+        });
+      });
+
+      // 3. Eliminar archivos físicos y registros
+      if (this.archivosService && archivosIds.length > 0) {
+        for (const archivoId of archivosIds) {
+          try {
+            await this.archivosService.eliminarArchivo(archivoId, userId);
+          } catch (error) {
+            // Log pero continuar - el archivo podría estar compartido
+            console.warn(`Error eliminando archivo ${archivoId}:`, error);
+          }
+        }
+      }
+
+      // 4. Eliminar observaciones
+      if (observacionesIds.length > 0) {
+        await tx.observacion.deleteMany({
+          where: { id: { in: observacionesIds } },
+        });
+      }
+
+      // 5. Eliminar asignaciones
       await tx.asignacionInspeccion.deleteMany({
         where: { inspeccionId: id },
       });
 
-      // Eliminar elecciones de templates y sus respuestas
-      const eleccionesTemplate = await tx.eleccionTemplate.findMany({
-        where: { inspeccionId: id },
-        select: { id: true },
-      });
-
-      const eleccionTemplateIds = eleccionesTemplate.map(
-        (et: { id: bigint }) => et.id
-      );
+      // 6. Eliminar elecciones de templates y sus respuestas
+      const eleccionTemplateIds = eleccionesTemplate.map(et => et.id);
 
       if (eleccionTemplateIds.length > 0) {
+        // Obtener resultados para eliminarlos después
+        const respuestas = await tx.eleccionRespuesta.findMany({
+          where: { eleccionTemplateId: { in: eleccionTemplateIds } },
+          select: { resultadoAtributoChecklistId: true },
+        });
+
+        const resultadoIds = respuestas.map(
+          r => r.resultadoAtributoChecklistId
+        );
+
         // Eliminar respuestas
         await tx.eleccionRespuesta.deleteMany({
           where: { eleccionTemplateId: { in: eleccionTemplateIds } },
         });
+
+        // Eliminar resultados
+        if (resultadoIds.length > 0) {
+          await tx.resultadoAtributoChecklist.deleteMany({
+            where: { id: { in: resultadoIds } },
+          });
+        }
 
         // Eliminar elecciones de template
         await tx.eleccionTemplate.deleteMany({
@@ -815,7 +915,7 @@ export class InspeccionesService {
         });
       }
 
-      // Finalmente eliminar la inspección
+      // 7. Finalmente eliminar la inspección
       await tx.inspeccion.delete({
         where: { id },
       });

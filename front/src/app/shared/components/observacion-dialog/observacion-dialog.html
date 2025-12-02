@@ -52,10 +52,10 @@
         }
       </div>
 
-      <!-- Imágenes -->
+      <!-- Archivos Adjuntos -->
       <div class="form-field">
         <div class="field-label-row">
-          <label class="field-label">Imágenes</label>
+          <label class="field-label">Archivos Adjuntos</label>
           @if (esEditable()) {
           <span class="field-optional">(opcional)</span>
           }
@@ -66,12 +66,12 @@
         <label class="file-upload-label" for="file-upload">
           <mat-icon class="upload-icon">cloud_upload</mat-icon>
           <span class="upload-text">
-            Haz clic para subir imágenes (puedes seleccionar múltiples)
+            Haz clic para subir archivos (imágenes, PDFs, documentos)
           </span>
           <input
             type="file"
             id="file-upload"
-            accept="image/*"
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
             multiple
             (change)="onFileSelect($event)"
             hidden
@@ -79,48 +79,101 @@
         </label>
         }
 
-        <!-- Lista de imágenes -->
-        <div class="images-container">
-          <!-- Imágenes existentes -->
+        <!-- Lista de archivos -->
+        <div class="files-container">
+          <!-- Archivos existentes del servidor -->
           @for (archivo of archivosExistentes(); track archivo.id; let i = $index) {
-          <div class="image-item">
-            <img [src]="archivo.ruta" [alt]="archivo.nombre" class="image-preview" />
-            @if (esEditable()) {
-            <button
-              class="image-remove-btn"
-              (click)="eliminarArchivoExistente(i)"
-              type="button"
-              aria-label="Eliminar imagen"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
+          <div class="file-item">
+            <!-- Preview para imágenes -->
+            @if (archivo.tipo.startsWith('image/')) {
+            <div class="file-preview image-preview">
+              <img [src]="getArchivoUrl(archivo)" [alt]="archivo.nombre" />
+            </div>
+            } @else {
+            <!-- Ícono para otros tipos de archivo -->
+            <div class="file-preview icon-preview">
+              <mat-icon class="file-icon">{{
+                archivoService.getIconoPorTipo(archivo.tipo)
+              }}</mat-icon>
+            </div>
             }
-            <div class="image-name">{{ archivo.nombre }}</div>
+
+            <div class="file-info">
+              <div class="file-name" [title]="archivo.nombre">{{ archivo.nombre }}</div>
+              <div class="file-meta">
+                {{ archivoService.formatearTamano(archivo.tamano) }}
+              </div>
+            </div>
+
+            <div class="file-actions">
+              @if (!esEditable()) {
+              <button
+                class="file-action-btn"
+                (click)="descargarArchivo(archivo)"
+                type="button"
+                title="Descargar"
+                aria-label="Descargar archivo"
+              >
+                <mat-icon>download</mat-icon>
+              </button>
+              } @if (esEditable()) {
+              <button
+                class="file-action-btn delete"
+                (click)="eliminarArchivoExistente(i)"
+                type="button"
+                title="Eliminar"
+                aria-label="Eliminar archivo"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+              }
+            </div>
           </div>
           }
 
-          <!-- Imágenes nuevas (preview) -->
-          @for (preview of imagenesPreview(); track $index; let i = $index) {
-          <div class="image-item">
-            <img [src]="preview" alt="Preview" class="image-preview" />
-            @if (esEditable()) {
-            <button
-              class="image-remove-btn"
-              (click)="eliminarArchivoNuevo(i)"
-              type="button"
-              aria-label="Eliminar imagen"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
+          <!-- Archivos nuevos (pendientes de subir) -->
+          @for (file of archivosNuevos(); track $index; let i = $index) {
+          <div class="file-item new-file">
+            <!-- Preview para imágenes nuevas -->
+            @if (file.type.startsWith('image/')) {
+            <div class="file-preview image-preview">
+              <img [src]="getPreviewNuevo(file)" [alt]="file.name" />
+            </div>
+            } @else {
+            <!-- Ícono para otros tipos de archivo -->
+            <div class="file-preview icon-preview">
+              <mat-icon class="file-icon">{{ archivoService.getIconoPorTipo(file.type) }}</mat-icon>
+            </div>
             }
-            <div class="image-name">{{ archivosNuevos()[i]?.name }}</div>
+
+            <div class="file-info">
+              <div class="file-name" [title]="file.name">{{ file.name }}</div>
+              <div class="file-meta">
+                {{ archivoService.formatearTamano(file.size) }} • Pendiente
+              </div>
+            </div>
+
+            <div class="file-actions">
+              @if (esEditable()) {
+              <button
+                class="file-action-btn delete"
+                (click)="eliminarArchivoNuevo(i)"
+                type="button"
+                title="Eliminar"
+                aria-label="Eliminar archivo"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+              }
+            </div>
           </div>
           }
 
           <!-- Estado vacío -->
-          @if (archivosExistentes().length === 0 && imagenesPreview().length === 0) {
-          <div class="empty-images">
-            <p class="empty-text">No hay imágenes cargadas</p>
+          @if (archivosExistentes().length === 0 && archivosNuevos().length === 0) {
+          <div class="empty-files">
+            <mat-icon class="empty-icon">insert_drive_file</mat-icon>
+            <p class="empty-text">No hay archivos adjuntos</p>
           </div>
           }
         </div>

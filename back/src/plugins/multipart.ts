@@ -21,9 +21,7 @@ async function multipartPlugin(fastify: FastifyInstance) {
     attachFieldsToBody: false,
   });
 
-  fastify.log.info(
-    '📤 Plugin multipart configurado (límite: 50MB por archivo)'
-  );
+  fastify.log.info('Plugin multipart configurado (limite: 50MB por archivo)');
 }
 
 export default fp(multipartPlugin, {

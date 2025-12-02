@@ -27,10 +27,10 @@ async function staticPlugin(fastify: FastifyInstance) {
     index: false, // No servir index.html
   });
 
-  fastify.log.info(`📁 Archivos estáticos servidos desde: ${uploadsPath}`);
+  fastify.log.info(`Archivos estaticos servidos desde: ${uploadsPath}`);
 }
 
 export default fp(staticPlugin, {
   name: 'static-plugin',
-  dependencies: ['env-plugin'],
+  dependencies: ['env'],
 });

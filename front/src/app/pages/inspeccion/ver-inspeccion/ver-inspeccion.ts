@@ -9,7 +9,8 @@ import {
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Maquina, UsuarioInspeccion } from '@core/models/inspeccion.model';
+import { Archivo, Maquina, UsuarioInspeccion } from '@core/models/inspeccion.model';
+import { ArchivoService } from '@core/services/archivo.service';
 import { AuthService } from '@core/services/auth.service';
 import { InspeccionService } from '@core/services/inspeccion.service';
 
@@ -22,6 +23,7 @@ import { InspeccionService } from '@core/services/inspeccion.service';
 })
 export class VerInspeccion implements OnInit, OnDestroy {
   private readonly inspeccionService = inject(InspeccionService);
+  protected readonly archivoService = inject(ArchivoService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -216,5 +218,32 @@ export class VerInspeccion implements OnInit, OnDestroy {
 
   protected formatUsuario(usuario: UsuarioInspeccion): string {
     return `${usuario.nombre} (${usuario.correo})`;
+  }
+
+  /**
+   * Descarga un archivo adjunto
+   */
+  protected descargarArchivo(archivo: Archivo): void {
+    this.archivoService.descargarArchivo(archivo.id);
+  }
+
+  /**
+   * Obtiene la URL de visualización de un archivo
+   */
+  protected getArchivoUrl(archivo: Archivo): string {
+    if (archivo.url) {
+      return archivo.url;
+    }
+    if (archivo.ruta) {
+      return this.archivoService.getUrlVisualizacion(archivo.ruta);
+    }
+    return '';
+  }
+
+  /**
+   * Verifica si un archivo es una imagen
+   */
+  protected esImagen(archivo: Archivo): boolean {
+    return archivo.tipo.startsWith('image/');
   }
 }

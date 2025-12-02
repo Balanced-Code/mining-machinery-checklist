@@ -198,6 +198,9 @@ export const guardarRespuestaRoute: FastifyPluginAsync = async fastify => {
                   id: body.observacion.id,
                 }),
                 descripcion: body.observacion.descripcion,
+                ...(body.observacion.archivosExistentes && {
+                  archivosExistentes: body.observacion.archivosExistentes,
+                }),
               }
             : undefined,
           userId,
@@ -385,11 +388,10 @@ export const terminarInspeccionRoute: FastifyPluginAsync = async fastify => {
         const { id } = request.params;
         const inspeccionId = BigInt(id);
 
-        const inspeccion =
-          await fastify.services.inspecciones.terminarInspeccion(
-            inspeccionId,
-            userId
-          );
+        await fastify.services.inspecciones.terminarInspeccion(
+          inspeccionId,
+          userId
+        );
 
         // Obtener la inspección completa con relaciones
         const inspeccionCompleta =

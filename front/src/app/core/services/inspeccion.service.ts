@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { ChecklistTemplate } from '@core/models/checklist.model';
 import {
+  Archivo,
   Inspeccion,
   InspeccionChecklistDTO,
   InspeccionFormDTO,
@@ -12,6 +13,7 @@ import {
   UsuarioInspeccion,
 } from '@core/models/inspeccion.model';
 import { firstValueFrom } from 'rxjs';
+import { ArchivoService } from './archivo.service';
 import { BackendInspeccion } from './inspecciones.service';
 
 interface BackendTemplateSeccion {
@@ -41,6 +43,7 @@ interface UsuariosResponse {
 })
 export class InspeccionService {
   private readonly http = inject(HttpClient);
+  private readonly archivoService = inject(ArchivoService);
 
   // Signals para estado reactivo
   private readonly currentInspeccionSignal = signal<Inspeccion | null>(null);
@@ -435,6 +438,26 @@ export class InspeccionService {
     try {
       const currentInspeccion = this.currentInspeccionSignal();
 
+      // Subir archivos nuevos si existen
+      const archivosSubidos: Archivo[] = [];
+      if (respuesta.observacion?.archivosNuevos) {
+        for (const file of respuesta.observacion.archivosNuevos) {
+          try {
+            const archivoSubido = await this.archivoService.subirArchivo(file);
+            archivosSubidos.push(archivoSubido);
+          } catch (error) {
+            console.error('Error al subir archivo:', error);
+            // Continuar con los demás archivos
+          }
+        }
+      }
+
+      // Combinar IDs de archivos nuevos con existentes para enviar al backend
+      const todosLosArchivosIds = [
+        ...archivosSubidos.map((a) => parseInt(a.id, 10)),
+        ...(respuesta.observacion?.archivosExistentes || []),
+      ];
+
       // Solo enviar al backend si la inspección ya fue creada
       // En modo "crear", las respuestas se guardan solo localmente hasta que se cree la inspección
       if (currentInspeccion) {
@@ -443,6 +466,13 @@ export class InspeccionService {
             inspeccionId: currentInspeccion.id.toString(),
             templateId,
             ...respuesta,
+            observacion: respuesta.observacion
+              ? {
+                  ...(respuesta.observacion.id && { id: respuesta.observacion.id }),
+                  descripcion: respuesta.observacion.descripcion,
+                  archivosExistentes: todosLosArchivosIds,
+                }
+              : undefined,
           })
         );
       }
@@ -466,7 +496,7 @@ export class InspeccionService {
                     ? {
                         id: observacionIdLocal,
                         descripcion: respuesta.observacion.descripcion,
-                        archivos: respuesta.observacion.archivosExistentes || [],
+                        archivos: archivosSubidos || [],
                       }
                     : undefined,
                   eleccionRespuestaId: item.eleccionRespuestaId || Date.now(),

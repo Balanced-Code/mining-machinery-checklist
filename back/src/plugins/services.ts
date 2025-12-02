@@ -46,9 +46,12 @@ async function servicesPlugin(fastify: FastifyInstance) {
   const authService = new AuthService(fastify.prisma);
   const usuariosService = new UsuariosService(fastify.prisma);
   const templatesService = new TemplatesService(fastify.prisma);
-  const inspeccionesService = new InspeccionesService(fastify.prisma);
-  const maquinasService = new MaquinasService(fastify.prisma);
   const archivosService = new ArchivosService(fastify.prisma);
+  const inspeccionesService = new InspeccionesService(
+    fastify.prisma,
+    archivosService
+  );
+  const maquinasService = new MaquinasService(fastify.prisma);
 
   // Decorar fastify con el objeto services
   fastify.decorate('services', {

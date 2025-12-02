@@ -574,7 +574,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
         ? {
             id: observacionId,
             descripcion: item.observacion.descripcion,
-            archivosExistentes: item.observacion.archivos,
+            archivosExistentes: item.observacion.archivos?.map((a) => parseInt(a.id, 10)) || [],
           }
         : undefined,
     });

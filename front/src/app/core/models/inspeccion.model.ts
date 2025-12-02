@@ -43,13 +43,19 @@ export interface AsignacionInspeccion {
  * Archivo adjunto a una observación
  */
 export interface Archivo {
-  id: number;
+  id: string;
   nombre: string;
   tipo: string;
-  tamano: number; // bytes
-  ruta: string;
+  tamano: string; // bytes como string
+  ruta: string | null;
+  url: string | null;
+  categoria: string;
   hash: string;
-  observacionId?: number;
+  observacionId: string | null;
+  creadoPor: number;
+  creadoEn: string;
+  actualizadoPor: number | null;
+  actualizadoEn: string | null;
 }
 
 /**
@@ -238,7 +244,7 @@ export interface RespuestaItemDTO {
     id?: number; // Para edición de observación existente
     descripcion: string;
     archivosNuevos?: File[]; // Para upload de nuevas imágenes
-    archivosExistentes?: Archivo[]; // Para mantener imágenes existentes
+    archivosExistentes?: number[]; // IDs de archivos existentes a mantener
   };
 }
 
