@@ -320,7 +320,7 @@ export class Checklist {
       );
 
       if (newTemplate) {
-        this.templates.update((templates) => [...templates, newTemplate]);
+        this.templates.update((templates) => [newTemplate, ...templates]);
         this.expandedTemplates.update((expanded) => new Set([...expanded, newTemplate.id]));
 
         // Auto-editar el título

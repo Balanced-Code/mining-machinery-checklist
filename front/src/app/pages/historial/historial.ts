@@ -59,6 +59,28 @@ export class Historial {
     return this.authService.hasRequiredLevel(3);
   });
 
+  /**
+   * Nivel 4 (admin) puede ver inspecciones eliminadas y reactivarlas
+   */
+  protected readonly isAdmin = computed(() => {
+    return this.authService.hasRequiredLevel(4);
+  });
+
+  /**
+   * Puede eliminar una inspección (nivel 3+)
+   * El mensaje de confirmación variará según si está finalizada o no
+   */
+  protected readonly canDelete = computed(() => {
+    return this.authService.hasRequiredLevel(3);
+  });
+
+  /**
+   * Puede reactivar una inspección eliminada (solo nivel 4)
+   */
+  protected readonly canReactivate = computed(() => {
+    return this.authService.hasRequiredLevel(4);
+  });
+
   // ============================================================================
   // COMPUTED - FILTRADO Y ORDENAMIENTO
   // ============================================================================
@@ -81,11 +103,18 @@ export class Historial {
       );
     }
 
-    // 2. Filtro por estado (completadas vs en progreso)
+    // 2. Filtro por estado (completadas vs en progreso vs eliminadas)
     if (estado === 'completadas') {
-      resultado = resultado.filter((insp) => insp.fechaFinalizacion !== null);
+      resultado = resultado.filter((insp) => insp.fechaFinalizacion !== null && !insp.eliminadoEn);
     } else if (estado === 'en_progreso') {
-      resultado = resultado.filter((insp) => insp.fechaFinalizacion === null);
+      resultado = resultado.filter((insp) => insp.fechaFinalizacion === null && !insp.eliminadoEn);
+    } else if (estado === 'eliminadas') {
+      resultado = resultado.filter((insp) => insp.eliminadoEn !== undefined);
+    } else {
+      // 'todas': excluir eliminadas a menos que sea admin
+      if (!this.isAdmin()) {
+        resultado = resultado.filter((insp) => !insp.eliminadoEn);
+      }
     }
 
     // 3. Ordenamiento
@@ -265,6 +294,41 @@ export class Historial {
   protected cancelDelete(): void {
     this.showDeleteConfirm.set(false);
     this.inspeccionToDelete.set(undefined);
+  }
+
+  /**
+   * Reactivar inspección eliminada (solo admins)
+   */
+  protected async reactivarInspeccion(inspeccion: Inspeccion): Promise<void> {
+    if (!this.canReactivate()) return;
+
+    try {
+      const reactivada = await this.inspeccionesService.reactivate(inspeccion.id);
+
+      if (reactivada) {
+        // Recargar la lista
+        await this.loadInspecciones();
+      } else {
+        alert('Error al reactivar la inspección');
+      }
+    } catch (error) {
+      console.error('Error al reactivar inspección:', error);
+      alert('Error al reactivar la inspección');
+    }
+  }
+
+  /**
+   * Obtener mensaje de confirmación de eliminación
+   */
+  protected getDeleteMessage(): string {
+    const inspeccion = this.inspeccionToDelete();
+    if (!inspeccion) return '';
+
+    if (inspeccion.fechaFinalizacion) {
+      return `¿Estás seguro de que deseas eliminar la inspección ${inspeccion.numSerie}? Esta inspección está finalizada y se realizará una eliminación suave (puede ser reactivada por un administrador).`;
+    } else {
+      return `¿Estás seguro de que deseas eliminar la inspección ${inspeccion.numSerie}? Esta inspección NO está finalizada y se eliminará permanentemente junto con todos sus datos. Esta acción no se puede deshacer.`;
+    }
   }
 
   /**

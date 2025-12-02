@@ -40,6 +40,9 @@
         <option value="todas">Todos los estados</option>
         <option value="completadas">Completadas</option>
         <option value="en_progreso">En progreso</option>
+        @if (isAdmin()) {
+        <option value="eliminadas">Eliminadas</option>
+        }
       </select>
       <mat-icon class="dropdown-icon">expand_more</mat-icon>
     </div>
@@ -121,8 +124,13 @@
       </thead>
       <tbody>
         @for (inspeccion of inspeccionesPaginadas(); track inspeccion.id) {
-        <tr class="table-row">
-          <td>{{ inspeccion.numSerie }}</td>
+        <tr class="table-row" [class.deleted-row]="inspeccion.eliminadoEn">
+          <td>
+            {{ inspeccion.numSerie }}
+            @if (inspeccion.eliminadoEn) {
+            <span class="badge badge-deleted">Eliminada</span>
+            }
+          </td>
           <td>{{ inspeccion.maquina?.nombre }}</td>
           <td>
             <div class="fecha-container">
@@ -149,8 +157,8 @@
                 <mat-icon>visibility</mat-icon>
               </button>
 
-              <!-- Editar (solo nivel 3+) -->
-              @if (canEdit()) {
+              <!-- Editar (solo nivel 3+ y no eliminadas) -->
+              @if (canEdit() && !inspeccion.eliminadoEn) {
               <button
                 class="btn-icon"
                 (click)="editarInspeccion(inspeccion)"
@@ -160,7 +168,8 @@
               </button>
               }
 
-              <!-- Descargar -->
+              <!-- Descargar (solo no eliminadas) -->
+              @if (!inspeccion.eliminadoEn) {
               <button
                 class="btn-icon"
                 (click)="descargarInspeccion(inspeccion)"
@@ -168,15 +177,27 @@
               >
                 <mat-icon>download</mat-icon>
               </button>
+              }
 
-              <!-- Eliminar (solo nivel 3+) -->
-              @if (canEdit()) {
+              <!-- Eliminar (solo nivel 3+ y no eliminadas) -->
+              @if (canEdit() && !inspeccion.eliminadoEn) {
               <button
                 class="btn-icon btn-delete"
                 (click)="eliminarInspeccion(inspeccion)"
                 title="Eliminar inspección"
               >
                 <mat-icon>delete</mat-icon>
+              </button>
+              }
+
+              <!-- Reactivar (solo admins y eliminadas) -->
+              @if (canReactivate() && inspeccion.eliminadoEn) {
+              <button
+                class="btn-icon btn-reactivate"
+                (click)="reactivarInspeccion(inspeccion)"
+                title="Reactivar inspección"
+              >
+                <mat-icon>restore</mat-icon>
               </button>
               }
             </div>
@@ -238,11 +259,7 @@
 @if (showDeleteConfirm()) {
 <app-confirm-dialog
   [title]="'Eliminar Inspección'"
-  [message]="
-    '¿Estás seguro de que deseas eliminar la inspección ' +
-    inspeccionToDelete()?.numSerie +
-    '? Esta acción no se puede deshacer.'
-  "
+  [message]="getDeleteMessage()"
   [confirmText]="'Eliminar'"
   [cancelText]="'Cancelar'"
   [type]="'danger'"

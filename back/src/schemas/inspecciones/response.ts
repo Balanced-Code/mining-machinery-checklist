@@ -17,6 +17,8 @@ export const inspeccionVistaSchema = {
     cabinado: { type: ['boolean', 'null'] },
     horometro: { type: ['number', 'null'] },
     creadoPor: { type: 'number' },
+    creadoEn: { type: 'string' },
+    eliminadoEn: { type: ['string', 'null'] },
     maquina: {
       type: 'object',
       properties: {

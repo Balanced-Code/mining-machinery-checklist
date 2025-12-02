@@ -44,7 +44,7 @@ import { filter } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CrearInspeccion implements OnInit, OnDestroy {
-  private readonly inspeccionService = inject(InspeccionService);
+  protected readonly inspeccionService = inject(InspeccionService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
@@ -58,6 +58,8 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   protected readonly nSerieMotor = signal('');
   protected readonly cabinado = signal<boolean | null>(null);
   protected readonly horometro = signal<number | null>(null);
+  protected readonly supervisorId = signal<number | null>(null);
+  protected readonly tecnicoIds = signal<number[]>([]);
 
   // Datos del formulario
   protected readonly maquinas = signal<Maquina[]>([]);
@@ -66,6 +68,8 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
   // Filtros de búsqueda
   protected readonly searchMaquina = signal('');
+  protected readonly searchSupervisor = signal('');
+  protected readonly searchTecnicos = signal('');
 
   // Listas filtradas
   protected readonly maquinasFiltradas = computed(() => {
@@ -73,6 +77,28 @@ export class CrearInspeccion implements OnInit, OnDestroy {
     if (!search) return this.maquinas();
 
     return this.maquinas().filter((maquina) => maquina.nombre.toLowerCase().includes(search));
+  });
+
+  protected readonly supervisoresFiltrados = computed(() => {
+    const search = this.searchSupervisor().toLowerCase().trim();
+    if (!search) return this.usuarios();
+
+    return this.usuarios().filter(
+      (usuario) =>
+        usuario.nombre.toLowerCase().includes(search) ||
+        usuario.correo.toLowerCase().includes(search)
+    );
+  });
+
+  protected readonly tecnicosFiltrados = computed(() => {
+    const search = this.searchTecnicos().toLowerCase().trim();
+    if (!search) return this.usuarios();
+
+    return this.usuarios().filter(
+      (usuario) =>
+        usuario.nombre.toLowerCase().includes(search) ||
+        usuario.correo.toLowerCase().includes(search)
+    );
   });
 
   // Verifica si hay una máquina que coincida exactamente con la búsqueda
@@ -163,16 +189,62 @@ export class CrearInspeccion implements OnInit, OnDestroy {
     return resultado;
   });
 
+  // Validar que todos los items con "NO" tengan observación
+  protected readonly todosLosNoTienenObservacion = computed(() => {
+    const checklists = this.checklists();
+
+    for (const checklist of checklists) {
+      for (const item of checklist.items) {
+        // Si el item tiene cumple=false (NO) y no tiene observación, es inválido
+        if (item.cumple === false && !item.observacion?.descripcion?.trim()) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  });
+
   protected readonly puedeTerminar = computed(() => {
-    return this.formularioValido() && this.resumen().completado;
+    return (
+      this.formularioValido() && this.resumen().completado && this.todosLosNoTienenObservacion()
+    );
   });
 
   async ngOnInit() {
+    // Validar permisos antes de cargar datos
+    if (!this.validarPermisos()) {
+      return;
+    }
+
     this.inspeccionService.limpiarEstado();
     await this.cargarDatos();
   }
+
   ngOnDestroy() {
     this.inspeccionService.limpiarEstado();
+  }
+
+  /**
+   * Validar que el usuario tenga nivel 3+ para crear inspecciones
+   */
+  private validarPermisos(): boolean {
+    const userLevel = this.authService.user()?.cargo?.nivel ?? 0;
+
+    if (userLevel < 3) {
+      alert('No tienes permisos para crear inspecciones. Se requiere nivel 3 o superior.');
+      this.router.navigate(['/historial']);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Cerrar el banner de error
+   */
+  protected cerrarError(): void {
+    this.inspeccionService.limpiarError();
   }
 
   private async cargarDatos(): Promise<void> {
@@ -346,6 +418,76 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   }
 
   /**
+   * Se llama cuando cambia el supervisor
+   */
+  protected async onSupervisorChange(): Promise<void> {
+    const inspeccion = this.inspeccionService.currentInspeccion();
+    if (!inspeccion) return;
+
+    const supervisorIdActual = this.supervisorId();
+    const asignacionesActuales = inspeccion.asignaciones || [];
+
+    // Obtener el supervisor asignado anteriormente (rol Supervisor = ID 3)
+    const supervisorAnterior = asignacionesActuales.find(
+      (a) => a.rolAsignacion?.nombre === 'Supervisor' || a.rolAsignacion?.id === 3
+    );
+
+    // Si se quitó el supervisor (null)
+    if (supervisorIdActual === null && supervisorAnterior) {
+      console.log('➖ Eliminando supervisor', supervisorAnterior.usuarioId);
+      await this.inspeccionService.eliminarAsignacion(inspeccion.id, supervisorAnterior.usuarioId);
+      return;
+    }
+
+    // Si se asignó un nuevo supervisor
+    if (supervisorIdActual !== null) {
+      // Si es diferente al anterior, primero eliminar el anterior
+      if (supervisorAnterior && supervisorAnterior.usuarioId !== supervisorIdActual) {
+        await this.inspeccionService.eliminarAsignacion(
+          inspeccion.id,
+          supervisorAnterior.usuarioId
+        );
+      }
+
+      // Asignar el nuevo supervisor (Rol ID 3 = Supervisor)
+      await this.inspeccionService.asignarUsuario(inspeccion.id, supervisorIdActual, 3);
+    }
+  }
+
+  /**
+   * Se llama cuando cambian los técnicos
+   */
+  protected async onTecnicosChange(): Promise<void> {
+    const inspeccion = this.inspeccionService.currentInspeccion();
+    if (!inspeccion) return;
+
+    const tecnicoIdsActuales = this.tecnicoIds();
+    const asignacionesActuales = inspeccion.asignaciones || [];
+
+    // Obtener IDs de técnicos que ya están asignados (rol Técnico = ID 2)
+    const tecnicosAsignadosAntes = asignacionesActuales
+      .filter((a) => a.rolAsignacion?.nombre === 'Técnico' || a.rolAsignacion?.id === 2)
+      .map((a) => a.usuarioId);
+
+    // Agregar nuevos técnicos
+    const tecnicosAAgregar = tecnicoIdsActuales.filter(
+      (id) => !tecnicosAsignadosAntes.includes(id)
+    );
+    for (const tecnicoId of tecnicosAAgregar) {
+      // Rol ID 2 = Técnico (según seed)
+      await this.inspeccionService.asignarUsuario(inspeccion.id, tecnicoId, 2);
+    }
+
+    // Eliminar técnicos deseleccionados
+    const tecnicosAEliminar = tecnicosAsignadosAntes.filter(
+      (id) => !tecnicoIdsActuales.includes(id)
+    );
+    for (const tecnicoId of tecnicosAEliminar) {
+      await this.inspeccionService.eliminarAsignacion(inspeccion.id, tecnicoId);
+    }
+  }
+
+  /**
    * Auto-guarda los cambios si ya existe una inspección creada
    * Cancela el timeout anterior y programa un nuevo guardado
    */
@@ -419,7 +561,30 @@ export class CrearInspeccion implements OnInit, OnDestroy {
       templateIds: this.selectedTemplateIds(),
     };
 
-    await this.inspeccionService.crear(data);
+    const inspeccionCreada = await this.inspeccionService.crear(data);
+
+    // Si se creó correctamente, asignar supervisor y técnicos
+    if (inspeccionCreada) {
+      await this.asignarUsuariosIniciales(inspeccionCreada.id);
+    }
+  }
+
+  /**
+   * Asigna supervisor y técnicos a la inspección recién creada
+   */
+  private async asignarUsuariosIniciales(inspeccionId: number): Promise<void> {
+    const supervisorId = this.supervisorId();
+    const tecnicoIds = this.tecnicoIds();
+
+    // Asignar supervisor si fue seleccionado
+    if (supervisorId !== null) {
+      await this.inspeccionService.asignarUsuario(inspeccionId, supervisorId, 3);
+    }
+
+    // Asignar técnicos si fueron seleccionados
+    for (const tecnicoId of tecnicoIds) {
+      await this.inspeccionService.asignarUsuario(inspeccionId, tecnicoId, 2);
+    }
   }
 
   protected async onRespuestaChange(
@@ -431,12 +596,16 @@ export class CrearInspeccion implements OnInit, OnDestroy {
     const item = checklist?.items[itemIndex];
     if (!checklist || !item) return;
 
+    // Solo enviar observación si tiene un ID real de base de datos
+    const observacionId =
+      item.observacion?.id && item.observacion.id < 1000000000000 ? item.observacion.id : undefined;
+
     await this.inspeccionService.guardarRespuesta(checklist.templateId, {
       templateSeccionId: item.templateSeccionId,
       cumple,
       observacion: item.observacion
         ? {
-            id: item.observacion.id,
+            id: observacionId,
             descripcion: item.observacion.descripcion,
             archivosExistentes: item.observacion.archivos,
           }
@@ -462,13 +631,30 @@ export class CrearInspeccion implements OnInit, OnDestroy {
     dialogRef
       .afterClosed()
       .pipe(filter((result) => !!result))
-      .subscribe(async (result: Omit<Observacion, 'id'>) => {
+      .subscribe(async (result: Omit<Observacion, 'id'> | string) => {
+        // Si el resultado es 'DELETE', eliminar la observación
+        if (result === 'DELETE') {
+          await this.inspeccionService.guardarRespuesta(checklist.templateId, {
+            templateSeccionId: item.templateSeccionId,
+            cumple: item.cumple,
+            observacion: undefined, // Eliminar observación
+          });
+          return;
+        }
+
+        // Caso normal: guardar o actualizar observación
+        // Solo enviar el ID si es un ID real de base de datos (no temporal)
+        const observacionId =
+          item.observacion?.id && item.observacion.id < 1000000000000
+            ? item.observacion.id
+            : undefined;
+
         await this.inspeccionService.guardarRespuesta(checklist.templateId, {
           templateSeccionId: item.templateSeccionId,
           cumple: item.cumple,
           observacion: {
-            id: item.observacion?.id,
-            ...result,
+            id: observacionId,
+            ...(result as Omit<Observacion, 'id'>),
           },
         });
       });

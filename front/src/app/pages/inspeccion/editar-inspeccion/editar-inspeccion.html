@@ -1,4 +1,15 @@
 <div class="editar-inspeccion-container">
+  <!-- Banner de error -->
+  @if (inspeccionService.errorMessage()) {
+  <div class="error-banner">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ inspeccionService.errorMessage() }}</span>
+    <button class="btn-close-error" (click)="cerrarError()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  }
+
   <!-- Información General -->
   <div class="form-section">
     <div class="section-header">
@@ -35,16 +46,6 @@
         />
       </div>
       <div class="form-field">
-        <label class="field-label">Fecha de Fin</label>
-        <input
-          type="text"
-          class="field-input field-input-readonly"
-          [value]="fechaFinFormateada()"
-          readonly
-          tabindex="-1"
-        />
-      </div>
-      <div class="form-field">
         <label class="field-label"> Número de Serie <span class="required">*</span> </label>
         <input
           type="text"
@@ -75,6 +76,16 @@
             }
           </mat-select>
         </mat-form-field>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Inspector</label>
+        <input
+          type="text"
+          class="field-input field-input-readonly"
+          [value]="inspectorNombre"
+          readonly
+          tabindex="-1"
+        />
       </div>
       <div class="form-field">
         <label class="field-label">Supervisor</label>
@@ -123,13 +134,41 @@
         </mat-form-field>
       </div>
       <div class="form-field">
-        <label class="field-label">Inspector</label>
+        <label class="field-label">N° Serie Motor</label>
         <input
           type="text"
-          class="field-input field-input-readonly"
-          [value]="inspectorNombre"
-          readonly
-          tabindex="-1"
+          class="field-input"
+          placeholder="Ej: MOT-12345"
+          [value]="nSerieMotor() || ''"
+          (input)="nSerieMotor.set($any($event.target).value || null); onNSerieMotorChange()"
+        />
+      </div>
+      <div class="form-field">
+        <label class="field-label">Cabinado</label>
+        <mat-form-field class="field-select">
+          <mat-select
+            placeholder="Seleccione"
+            [value]="cabinado()"
+            (selectionChange)="cabinado.set($event.value); onCabinadoChange()"
+          >
+            <mat-option [value]="null">No especificado</mat-option>
+            <mat-option [value]="true">Sí</mat-option>
+            <mat-option [value]="false">No</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Horómetro (horas)</label>
+        <input
+          type="number"
+          class="field-input"
+          placeholder="Ej: 1250.5"
+          step="0.01"
+          [value]="horometro() ?? ''"
+          (input)="
+            horometro.set($any($event.target).value ? parseFloat($any($event.target).value) : null);
+            onHorometroChange()
+          "
         />
       </div>
     </div>

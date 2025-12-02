@@ -45,7 +45,7 @@ import { filter } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditarInspeccion implements OnInit, OnDestroy {
-  private readonly inspeccionService = inject(InspeccionService);
+  protected readonly inspeccionService = inject(InspeccionService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -61,6 +61,9 @@ export class EditarInspeccion implements OnInit, OnDestroy {
   protected readonly horaFin = signal<Date | null>(null);
   protected readonly numSerie = signal('');
   protected readonly maquinaId = signal<number | null>(null);
+  protected readonly nSerieMotor = signal<string | null>(null);
+  protected readonly cabinado = signal<boolean | null>(null);
+  protected readonly horometro = signal<number | null>(null);
   protected readonly supervisorId = signal<number | null>(null);
   protected readonly tecnicoIds = signal<number[]>([]);
 
@@ -181,8 +184,26 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     });
   });
 
+  // Validar que todos los items con "NO" tengan observación
+  protected readonly todosLosNoTienenObservacion = computed(() => {
+    const checklists = this.checklists();
+
+    for (const checklist of checklists) {
+      for (const item of checklist.items) {
+        // Si el item tiene cumple=false (NO) y no tiene observación, es inválido
+        if (item.cumple === false && !item.observacion?.descripcion?.trim()) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  });
+
   protected readonly puedeTerminar = computed(() => {
-    return this.formularioValido() && this.resumen().completado;
+    return (
+      this.formularioValido() && this.resumen().completado && this.todosLosNoTienenObservacion()
+    );
   });
 
   async ngOnInit() {
@@ -196,6 +217,9 @@ export class EditarInspeccion implements OnInit, OnDestroy {
 
     this.inspeccionId.set(Number(id));
     await this.cargarInspeccion(Number(id));
+
+    // Validar permisos después de cargar la inspección
+    this.validarPermisos();
   }
 
   ngOnDestroy() {
@@ -233,6 +257,40 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     this.poblarFormulario(inspeccion);
   }
 
+  /**
+   * Validar permisos de edición
+   * - Nivel 3+: puede editar si no está finalizada
+   * - Nivel 4: puede editar incluso si está finalizada
+   */
+  private validarPermisos(): void {
+    const inspeccion = this.inspeccionService.currentInspeccion();
+    if (!inspeccion) return;
+
+    const userLevel = this.authService.user()?.cargo?.nivel ?? 0;
+
+    // Si la inspección está finalizada y el usuario no es nivel 4
+    if (inspeccion.fechaFinalizacion && userLevel < 4) {
+      alert(
+        'Esta inspección está finalizada. Solo los administradores (nivel 4) pueden modificarla.'
+      );
+      this.router.navigate(['/inspeccion/ver', inspeccion.id]);
+      return;
+    }
+
+    // Si no tiene nivel 3+
+    if (userLevel < 3) {
+      alert('No tienes permisos para editar inspecciones.');
+      this.router.navigate(['/historial']);
+    }
+  }
+
+  /**
+   * Cerrar el banner de error
+   */
+  protected cerrarError(): void {
+    this.inspeccionService.limpiarError();
+  }
+
   private poblarFormulario(inspeccion: Inspeccion): void {
     // Fecha y hora de inicio
     const fechaInicio = new Date(inspeccion.fechaInicio);
@@ -249,6 +307,9 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     // Datos básicos
     this.numSerie.set(inspeccion.numSerie);
     this.maquinaId.set(inspeccion.maquinaId);
+    this.nSerieMotor.set(inspeccion.nSerieMotor || null);
+    this.cabinado.set(inspeccion.cabinado ?? null);
+    this.horometro.set(inspeccion.horometro ? Number(inspeccion.horometro) : null);
 
     // Cargar supervisor y técnicos desde asignaciones
     if (inspeccion.asignaciones && inspeccion.asignaciones.length > 0) {
@@ -276,26 +337,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
   }
 
   private async obtenerTemplates(): Promise<ChecklistTemplate[]> {
-    // TODO: Obtener del backend
-    return [
-      {
-        id: 1,
-        titulo: 'Revisión de cabina y controles',
-        items: [
-          { id: 1, orden: 1, descripcion: 'Limpieza y orden de la cabina.' },
-          { id: 2, orden: 2, descripcion: 'Estado de espejos y cámaras.' },
-          { id: 3, orden: 3, descripcion: 'Funcionamiento de luces y alarmas.' },
-        ],
-      },
-      {
-        id: 2,
-        titulo: 'Sistema hidráulico',
-        items: [
-          { id: 4, orden: 1, descripcion: 'Nivel de aceite hidráulico.' },
-          { id: 5, orden: 2, descripcion: 'Inspección de mangueras y conexiones.' },
-        ],
-      },
-    ];
+    return this.inspeccionService.obtenerTemplates();
   }
 
   protected async agregarChecklist(): Promise<void> {
@@ -379,6 +421,34 @@ export class EditarInspeccion implements OnInit, OnDestroy {
   }
 
   /**
+   * Se llama cuando cambia el número de serie del motor
+   */
+  protected async onNSerieMotorChange(): Promise<void> {
+    await this.autoGuardar();
+  }
+
+  /**
+   * Se llama cuando cambia el estado de cabinado
+   */
+  protected async onCabinadoChange(): Promise<void> {
+    await this.autoGuardar();
+  }
+
+  /**
+   * Se llama cuando cambia el horómetro
+   */
+  protected async onHorometroChange(): Promise<void> {
+    await this.autoGuardar();
+  }
+
+  /**
+   * Helper para parsear número decimal desde input
+   */
+  protected parseFloat(value: string): number {
+    return parseFloat(value);
+  }
+
+  /**
    * Se llama cuando cambia el supervisor
    */
   protected async onSupervisorChange(supervisorId: number | null): Promise<void> {
@@ -428,23 +498,37 @@ export class EditarInspeccion implements OnInit, OnDestroy {
           fechaInicio: this.fechaHoraInicio().toISOString(),
           numSerie: this.numSerie(),
           maquinaId: this.maquinaId() ?? undefined,
+          nSerieMotor: this.nSerieMotor() || undefined,
+          cabinado: this.cabinado() ?? undefined,
+          horometro: this.horometro() ?? undefined,
         };
         console.log('📄 Guardando datos básicos:', datos);
         await this.inspeccionService.actualizar(id, datos);
         console.log('✅ Datos básicos guardados');
 
-        // 2. Guardar supervisor si está seleccionado
+        // 2. Sincronizar supervisor
         const supervisorId = this.supervisorId();
+        const asignacionesActuales = this.inspeccionService.currentInspeccion()?.asignaciones || [];
+
+        // Buscar si ya hay un supervisor asignado
+        const supervisorAsignadoAntes = asignacionesActuales.find(
+          (a) => a.rolAsignacion?.id === 3 || a.rolAsignacion?.nombre === 'Supervisor'
+        );
+
         if (supervisorId !== null) {
+          // Asignar nuevo supervisor o actualizar
           console.log(`👤 Guardando supervisor ${supervisorId}`);
-          // Rol ID 3 = Supervisor (según seed)
           await this.inspeccionService.asignarUsuario(id, supervisorId, 3);
           console.log('✅ Supervisor guardado');
+        } else if (supervisorAsignadoAntes) {
+          // Eliminar supervisor si había uno y ahora es null
+          console.log(`➖ Eliminando supervisor ${supervisorAsignadoAntes.usuarioId}`);
+          await this.inspeccionService.eliminarAsignacion(id, supervisorAsignadoAntes.usuarioId);
+          console.log('✅ Supervisor eliminado');
         }
 
         // 3. Sincronizar técnicos
         const tecnicoIdsActuales = this.tecnicoIds();
-        const asignacionesActuales = this.inspeccionService.currentInspeccion()?.asignaciones || [];
 
         // Obtener IDs de técnicos que ya están asignados (rol Técnico = ID 2)
         const tecnicosAsignadosAntes = asignacionesActuales
@@ -497,12 +581,16 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     const item = checklist?.items[itemIndex];
     if (!checklist || !item) return;
 
+    // Solo enviar observación si tiene un ID real de base de datos
+    const observacionId =
+      item.observacion?.id && item.observacion.id < 1000000000000 ? item.observacion.id : undefined;
+
     await this.inspeccionService.guardarRespuesta(checklist.templateId, {
       templateSeccionId: item.templateSeccionId,
       cumple,
       observacion: item.observacion
         ? {
-            id: item.observacion.id,
+            id: observacionId,
             descripcion: item.observacion.descripcion,
             archivosExistentes: item.observacion.archivos,
           }
@@ -528,13 +616,30 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     dialogRef
       .afterClosed()
       .pipe(filter((result) => !!result))
-      .subscribe(async (result: Omit<Observacion, 'id'>) => {
+      .subscribe(async (result: Omit<Observacion, 'id'> | string) => {
+        // Si el resultado es 'DELETE', eliminar la observación
+        if (result === 'DELETE') {
+          await this.inspeccionService.guardarRespuesta(checklist.templateId, {
+            templateSeccionId: item.templateSeccionId,
+            cumple: item.cumple,
+            observacion: undefined, // Eliminar observación
+          });
+          return;
+        }
+
+        // Caso normal: guardar o actualizar observación
+        // Solo enviar el ID si es un ID real de base de datos (no temporal)
+        const observacionId =
+          item.observacion?.id && item.observacion.id < 1000000000000
+            ? item.observacion.id
+            : undefined;
+
         await this.inspeccionService.guardarRespuesta(checklist.templateId, {
           templateSeccionId: item.templateSeccionId,
           cumple: item.cumple,
           observacion: {
-            id: item.observacion?.id,
-            ...result,
+            id: observacionId,
+            ...(result as Omit<Observacion, 'id'>),
           },
         });
       });

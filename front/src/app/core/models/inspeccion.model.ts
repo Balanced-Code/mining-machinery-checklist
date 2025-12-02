@@ -127,7 +127,7 @@ export interface Inspeccion {
 /**
  * Estado de una inspección
  */
-export type EstadoInspeccion = 'todas' | 'completadas' | 'en_progreso';
+export type EstadoInspeccion = 'todas' | 'completadas' | 'en_progreso' | 'eliminadas';
 
 /**
  * Dirección de ordenamiento

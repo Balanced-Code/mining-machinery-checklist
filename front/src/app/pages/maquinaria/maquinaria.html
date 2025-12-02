@@ -1,0 +1,166 @@
+<div class="maquinaria-container">
+  <!-- Banner de error -->
+  @if (maquinariaService.error()) {
+  <div class="error-banner">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ maquinariaService.error() }}</span>
+    <button class="error-close" (click)="cerrarError()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  }
+
+  <!-- Barra de acciones superior -->
+  <div class="actions-bar">
+    <!-- Buscador -->
+    <div class="search-container">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Buscar máquina por nombre..."
+        [value]="searchQuery()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </div>
+
+    <!-- Botón limpiar filtros -->
+    @if (hayFiltrosActivos()) {
+    <button class="btn-clear" (click)="limpiarFiltros()" title="Limpiar filtros" type="button">
+      <mat-icon>clear</mat-icon>
+      <span>Limpiar</span>
+    </button>
+    }
+
+    <!-- Botón crear máquina -->
+    <button class="btn-create" (click)="abrirModalCrear()" type="button">
+      <mat-icon>add</mat-icon>
+      <span>Crear Máquina</span>
+    </button>
+  </div>
+
+  <!-- Tabla de maquinaria -->
+  <div class="table-container">
+    <table class="maquinaria-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>NOMBRE</th>
+          <th>INSPECCIONES</th>
+          <th class="acciones-header">ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (maquinariaService.loading()) {
+        <tr>
+          <td colspan="4" class="loading-cell">
+            <div class="loading-spinner"></div>
+            <span>Cargando maquinaria...</span>
+          </td>
+        </tr>
+        } @else if (maquinasFiltradas().length === 0) {
+        <tr>
+          <td colspan="4" class="empty-cell">
+            <div class="empty-state">
+              <mat-icon>search_off</mat-icon>
+              <p>
+                {{ hayFiltrosActivos() ? 'No se encontraron máquinas' : 'No hay máquinas creadas' }}
+              </p>
+            </div>
+          </td>
+        </tr>
+        } @else { @for (maquina of maquinasFiltradas(); track maquina.id) {
+        <tr>
+          <td>{{ maquina.id }}</td>
+          <td>{{ maquina.nombre }}</td>
+          <td>
+            {{ maquina._count?.inspecciones ?? 0 }}
+          </td>
+          <td>
+            <div class="acciones-container">
+              <button
+                class="btn-action btn-edit"
+                (click)="abrirModalEditar(maquina)"
+                [disabled]="estaEnUso(maquina)"
+                [title]="
+                  estaEnUso(maquina) ? 'No se puede editar una máquina en uso' : 'Editar máquina'
+                "
+                type="button"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                class="btn-action btn-delete"
+                (click)="eliminar(maquina)"
+                [disabled]="estaEnUso(maquina)"
+                [title]="
+                  estaEnUso(maquina)
+                    ? 'No se puede eliminar una máquina en uso'
+                    : 'Eliminar máquina'
+                "
+                type="button"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+@if (mostrarConfirmEliminar()) {
+<app-confirm-dialog
+  [title]="'Eliminar Máquina'"
+  [message]="mensajeConfirmEliminar()"
+  [confirmText]="'Eliminar'"
+  [cancelText]="'Cancelar'"
+  [type]="'danger'"
+  (onConfirm)="confirmarEliminar()"
+  (onCancel)="cancelarEliminar()"
+/>
+}
+
+<!-- Modal de crear/editar -->
+@if (modoEdicion()) {
+<div class="modal-overlay" (click)="cerrarModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ modoEdicion() === 'crear' ? 'Nueva Máquina' : 'Editar Máquina' }}</h2>
+      <button class="modal-close" (click)="cerrarModal()" type="button">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-field">
+        <label for="nombre-input">Nombre de la máquina</label>
+        <input
+          id="nombre-input"
+          type="text"
+          class="input-text"
+          placeholder="Ej: Excavadora CAT 320"
+          [value]="nombreInput()"
+          (input)="nombreInput.set($any($event.target).value)"
+          autofocus
+        />
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModal()" type="button">Cancelar</button>
+      <button
+        class="btn-primary"
+        (click)="guardar()"
+        [disabled]="!nombreInput().trim() || maquinariaService.loading()"
+        type="button"
+      >
+        {{ modoEdicion() === 'crear' ? 'Crear' : 'Guardar' }}
+      </button>
+    </div>
+  </div>
+</div>
+}

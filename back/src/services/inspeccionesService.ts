@@ -199,19 +199,6 @@ export class InspeccionesService {
   }
 
   /**
-   * Eliminar una inspección (soft delete)
-   */
-  async deleteInspeccion(id: bigint, userId: number): Promise<void> {
-    await this.prisma.inspeccion.update({
-      where: { id },
-      data: {
-        eliminadoEn: new Date(),
-        eliminadoPor: userId,
-      },
-    });
-  }
-
-  /**
    * Guardar o actualizar respuesta a un ítem del checklist
    */
   async guardarRespuesta(data: {
@@ -242,7 +229,6 @@ export class InspeccionesService {
         where: {
           inspeccionId: data.inspeccionId,
           templateId: data.templateId,
-          eliminadoEn: null,
         },
       });
 
@@ -269,10 +255,29 @@ export class InspeccionesService {
       // 4. Crear o actualizar observación si se proporciona
       let observacionId: bigint | null = null;
       if (data.observacion) {
-        if (data.observacion.id) {
+        // Validar si el ID es un número válido de base de datos (no temporal)
+        const idValido =
+          data.observacion.id &&
+          typeof data.observacion.id === 'number' &&
+          data.observacion.id > 0 &&
+          data.observacion.id < 1000000000000; // No es timestamp
+
+        let observacionExiste = false;
+        if (idValido) {
+          try {
+            const observacion = await tx.observacion.findUnique({
+              where: { id: BigInt(data.observacion.id!) },
+            });
+            observacionExiste = !!observacion;
+          } catch {
+            observacionExiste = false;
+          }
+        }
+
+        if (idValido && observacionExiste) {
           // Actualizar observación existente
           const observacionActualizada = await tx.observacion.update({
-            where: { id: BigInt(data.observacion.id) },
+            where: { id: BigInt(data.observacion.id!) },
             data: {
               descripcion: data.observacion.descripcion,
               actualizadoPor: data.userId,
@@ -297,7 +302,6 @@ export class InspeccionesService {
         where: {
           eleccionTemplateId: eleccionTemplate.id,
           templateSeccionId: data.templateSeccionId,
-          eliminadoEn: null,
         },
         include: {
           resultadoAtributo: true,
@@ -366,7 +370,6 @@ export class InspeccionesService {
     const eleccionesTemplate = await this.prisma.eleccionTemplate.findMany({
       where: {
         inspeccionId,
-        eliminadoEn: null,
       },
       include: {
         template: {
@@ -378,7 +381,6 @@ export class InspeccionesService {
           },
         },
         eleccionRespuestas: {
-          where: { eliminadoEn: null },
           include: {
             templateSeccion: true,
             resultadoAtributo: {
@@ -487,7 +489,6 @@ export class InspeccionesService {
       where: {
         inspeccionId,
         templateId,
-        eliminadoEn: null,
       },
     });
 
@@ -508,7 +509,7 @@ export class InspeccionesService {
   }
 
   /**
-   * Eliminar un template (checklist) de una inspección
+   * Eliminar un template (checklist) de una inspección (hard delete)
    */
   async eliminarTemplate(
     inspeccionId: bigint,
@@ -533,7 +534,6 @@ export class InspeccionesService {
       where: {
         inspeccionId,
         templateId,
-        eliminadoEn: null,
       },
     });
 
@@ -541,13 +541,19 @@ export class InspeccionesService {
       throw new Error('Template no encontrado en esta inspección');
     }
 
-    // Soft delete
-    await this.prisma.eleccionTemplate.update({
-      where: { id: eleccionTemplate.id },
-      data: {
-        eliminadoPor: userId,
-        eliminadoEn: new Date(),
-      },
+    // Hard delete - eliminar en cascada las respuestas primero
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Eliminar las respuestas asociadas
+      await tx.eleccionRespuesta.deleteMany({
+        where: {
+          eleccionTemplateId: eleccionTemplate.id,
+        },
+      });
+
+      // Eliminar la elección de template
+      await tx.eleccionTemplate.delete({
+        where: { id: eleccionTemplate.id },
+      });
     });
 
     return { success: true };
@@ -594,7 +600,6 @@ export class InspeccionesService {
       where: {
         inspeccionId,
         usuarioId,
-        eliminadoEn: null,
       },
     });
 
@@ -639,33 +644,68 @@ export class InspeccionesService {
   }
 
   /**
-   * Eliminar una asignación de usuario de una inspección
+   * Eliminar una asignación de usuario de una inspección (hard delete)
    */
   async eliminarAsignacion(
     inspeccionId: bigint,
     usuarioId: number,
     userId: number
   ) {
-    const asignacion = await this.prisma.asignacionInspeccion.findFirst({
+    console.log('🗑️ eliminarAsignacion - Parámetros recibidos:', {
+      inspeccionId: inspeccionId.toString(),
+      usuarioId,
+      userId,
+      tipos: {
+        inspeccionId: typeof inspeccionId,
+        usuarioId: typeof usuarioId,
+      },
+    });
+
+    // Primero veamos TODAS las asignaciones de esta inspección
+    const todasAsignaciones = await this.prisma.asignacionInspeccion.findMany({
+      where: { inspeccionId },
+    });
+
+    console.log(
+      '📋 TODAS las asignaciones de la inspección:',
+      JSON.stringify(
+        todasAsignaciones,
+        (key, value) => (typeof value === 'bigint' ? value.toString() : value),
+        2
+      )
+    );
+
+    // Ahora intentemos encontrar la específica
+    const asignacionesFiltradas =
+      await this.prisma.asignacionInspeccion.findMany({
+        where: {
+          inspeccionId,
+          usuarioId,
+        },
+      });
+
+    console.log(
+      '🔍 Asignaciones filtradas (sin verificar eliminadoEn):',
+      JSON.stringify(
+        asignacionesFiltradas,
+        (key, value) => (typeof value === 'bigint' ? value.toString() : value),
+        2
+      )
+    );
+
+    // Hard delete - eliminamos físicamente el registro (sin importar eliminadoEn)
+    const resultado = await this.prisma.asignacionInspeccion.deleteMany({
       where: {
         inspeccionId,
         usuarioId,
-        eliminadoEn: null,
       },
     });
 
-    if (!asignacion) {
+    console.log('✅ Asignaciones eliminadas:', resultado.count);
+
+    if (resultado.count === 0) {
       throw new Error('Asignación no encontrada');
     }
-
-    // Soft delete
-    await this.prisma.asignacionInspeccion.update({
-      where: { id: asignacion.id },
-      data: {
-        eliminadoPor: userId,
-        eliminadoEn: new Date(),
-      },
-    });
 
     return { success: true };
   }
@@ -713,5 +753,158 @@ export class InspeccionesService {
     });
 
     return inspeccionActualizada as unknown as InspeccionData;
+  }
+
+  /**
+   * Eliminar una inspección
+   * - Si está finalizada: soft delete (solo nivel 3+)
+   * - Si NO está finalizada: hard delete (solo nivel 3+)
+   */
+  async deleteInspeccion(
+    id: bigint,
+    userId: number
+  ): Promise<{ isHardDelete: boolean }> {
+    // Verificar que la inspección existe
+    const inspeccion = await this.prisma.inspeccion.findUnique({
+      where: { id },
+    });
+
+    if (!inspeccion) {
+      throw new Error('Inspección no encontrada');
+    }
+
+    // Si ya está eliminada (soft delete), no se puede eliminar de nuevo
+    if (inspeccion.eliminadoEn) {
+      throw new Error('La inspección ya está eliminada');
+    }
+
+    // Si está finalizada: soft delete
+    if (inspeccion.fechaFinalizacion) {
+      await this.prisma.inspeccion.update({
+        where: { id },
+        data: {
+          eliminadoPor: userId,
+          eliminadoEn: new Date(),
+        },
+      });
+
+      return { isHardDelete: false };
+    }
+
+    // Si NO está finalizada: hard delete
+    // Primero eliminar las relaciones en cascada
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Eliminar asignaciones
+      await tx.asignacionInspeccion.deleteMany({
+        where: { inspeccionId: id },
+      });
+
+      // Eliminar elecciones de templates y sus respuestas
+      const eleccionesTemplate = await tx.eleccionTemplate.findMany({
+        where: { inspeccionId: id },
+        select: { id: true },
+      });
+
+      const eleccionTemplateIds = eleccionesTemplate.map(
+        (et: { id: bigint }) => et.id
+      );
+
+      if (eleccionTemplateIds.length > 0) {
+        // Eliminar respuestas
+        await tx.eleccionRespuesta.deleteMany({
+          where: { eleccionTemplateId: { in: eleccionTemplateIds } },
+        });
+
+        // Eliminar elecciones de template
+        await tx.eleccionTemplate.deleteMany({
+          where: { inspeccionId: id },
+        });
+      }
+
+      // Finalmente eliminar la inspección
+      await tx.inspeccion.delete({
+        where: { id },
+      });
+    });
+
+    return { isHardDelete: true };
+  }
+
+  /**
+   * Reactivar una inspección eliminada (solo soft delete)
+   * Solo administradores (nivel 4)
+   */
+  async reactivarInspeccion(
+    id: bigint,
+    userId: number
+  ): Promise<InspeccionData> {
+    // Verificar que la inspección existe y está eliminada
+    const inspeccion = await this.prisma.inspeccion.findUnique({
+      where: { id },
+    });
+
+    if (!inspeccion) {
+      throw new Error('Inspección no encontrada');
+    }
+
+    if (!inspeccion.eliminadoEn) {
+      throw new Error('La inspección no está eliminada');
+    }
+
+    // Reactivar (quitar soft delete)
+    const inspeccionReactivada = await this.prisma.inspeccion.update({
+      where: { id },
+      data: {
+        eliminadoPor: null,
+        eliminadoEn: null,
+        actualizadoPor: userId,
+        actualizadoEn: new Date(),
+      },
+      include: {
+        maquina: {
+          select: {
+            id: true,
+            nombre: true,
+          },
+        },
+        creador: {
+          select: {
+            id: true,
+            nombre: true,
+            correo: true,
+          },
+        },
+      },
+    });
+
+    return inspeccionReactivada as unknown as InspeccionData;
+  }
+
+  /**
+   * Obtener todas las inspecciones incluyendo eliminadas (solo nivel 4)
+   */
+  async getAllInspeccionesIncludingDeleted(): Promise<InspeccionData[]> {
+    const inspecciones = await this.prisma.inspeccion.findMany({
+      include: {
+        maquina: {
+          select: {
+            id: true,
+            nombre: true,
+          },
+        },
+        creador: {
+          select: {
+            id: true,
+            nombre: true,
+            correo: true,
+          },
+        },
+      },
+      orderBy: {
+        fechaInicio: 'desc',
+      },
+    });
+
+    return inspecciones as unknown as InspeccionData[];
   }
 }

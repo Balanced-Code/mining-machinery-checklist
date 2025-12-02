@@ -7,10 +7,10 @@ export const deleteInspeccionesRoutes: FastifyPluginAsync = async (
 ) => {
   /**
    * DELETE /inspecciones/:id
-   * Eliminar una inspección (soft delete)
-   * Acceso:
-   * - Nivel 3 (inspectores): Solo inspecciones NO finalizadas
-   * - Nivel 4 (administradores): Todas las inspecciones
+   * Eliminar una inspección
+   * Lógica:
+   * - Si está finalizada: soft delete (requiere nivel 3+)
+   * - Si NO está finalizada: hard delete (requiere nivel 3+)
    */
   fastify.delete<{ Params: { id: string } }>(
     '/:id',
@@ -21,41 +21,33 @@ export const deleteInspeccionesRoutes: FastifyPluginAsync = async (
         const inspeccionId = BigInt(id);
         const currentUser = request.currentUser!;
 
-        // Verificar que la inspección existe
-        const inspeccion =
-          await fastify.services.inspecciones.getInspeccionById(inspeccionId);
-
-        if (!inspeccion) {
-          return reply.notFound('Inspección no encontrada');
-        }
-
-        // Verificar permisos según el nivel del usuario
-        const userCargo = await fastify.prisma.cargo.findUnique({
-          where: { id: currentUser.cargoId },
-        });
-
-        if (!userCargo) {
-          return reply.forbidden('No se pudo verificar el nivel de permisos');
-        }
-
-        // Si la inspección está finalizada y el usuario NO es nivel 4 (admin)
-        if (inspeccion.fechaFinalizacion && userCargo.nivel < 4) {
-          return reply.forbidden(
-            'Solo los administradores pueden eliminar inspecciones finalizadas'
-          );
-        }
-
-        // Soft delete
-        await fastify.services.inspecciones.deleteInspeccion(
+        const resultado = await fastify.services.inspecciones.deleteInspeccion(
           inspeccionId,
           currentUser.id
         );
 
         return reply.send({
           success: true,
-          message: 'Inspección eliminada exitosamente',
+          message: resultado.isHardDelete
+            ? 'Inspección eliminada permanentemente'
+            : 'Inspección eliminada (puede ser reactivada por un administrador)',
+          isHardDelete: resultado.isHardDelete,
         });
       } catch (error) {
+        if (error instanceof Error) {
+          if (
+            error.message.includes('no encontrada') ||
+            error.message.includes('ya está eliminada')
+          ) {
+            request.log.warn(`Error al eliminar inspección: ${error.message}`);
+            return reply.code(404).send({
+              statusCode: 404,
+              error: 'Not Found',
+              message: error.message,
+            });
+          }
+        }
+
         fastify.log.error({ error }, 'Error al eliminar inspección:');
         return reply.internalServerError('Error al eliminar la inspección');
       }
@@ -122,6 +114,15 @@ export const deleteInspeccionesRoutes: FastifyPluginAsync = async (
         const inspeccionId = BigInt(id);
         const currentUser = request.currentUser!;
 
+        request.log.info(
+          {
+            inspeccionId: id,
+            usuarioId,
+            currentUserId: currentUser.id,
+          },
+          '🗑️ DELETE /inspecciones/:id/asignaciones/:usuarioId - Eliminar asignación'
+        );
+
         await fastify.services.inspecciones.eliminarAsignacion(
           inspeccionId,
           Number(usuarioId),
@@ -146,6 +147,67 @@ export const deleteInspeccionesRoutes: FastifyPluginAsync = async (
 
         fastify.log.error({ error }, 'Error al eliminar asignación:');
         return reply.internalServerError('Error al eliminar la asignación');
+      }
+    }
+  );
+
+  /**
+   * POST /inspecciones/:id/reactivar
+   * Reactivar una inspección eliminada (soft delete)
+   * Solo administradores (nivel 4)
+   */
+  fastify.post<{ Params: { id: string } }>(
+    '/:id/reactivar',
+    { preHandler: requireCargoLevel(4) },
+    async (request, reply) => {
+      try {
+        const { id } = request.params;
+        const inspeccionId = BigInt(id);
+        const currentUser = request.currentUser!;
+
+        const inspeccion =
+          await fastify.services.inspecciones.reactivarInspeccion(
+            inspeccionId,
+            currentUser.id
+          );
+
+        return reply.send({
+          success: true,
+          message: 'Inspección reactivada exitosamente',
+          inspeccion: {
+            id: inspeccion.id.toString(),
+            fechaInicio: inspeccion.fechaInicio.toISOString(),
+            fechaFinalizacion:
+              inspeccion.fechaFinalizacion?.toISOString() ?? null,
+            maquinaId: inspeccion.maquinaId,
+            numSerie: inspeccion.numSerie,
+            nSerieMotor: inspeccion.nSerieMotor,
+            cabinado: inspeccion.cabinado,
+            horometro: inspeccion.horometro
+              ? Number(inspeccion.horometro)
+              : null,
+            creadoPor: inspeccion.creadoPor,
+            maquina: inspeccion.maquina,
+            creador: inspeccion.creador,
+          },
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          if (
+            error.message.includes('no encontrada') ||
+            error.message.includes('no está eliminada')
+          ) {
+            request.log.warn(`Error al reactivar inspección: ${error.message}`);
+            return reply.code(404).send({
+              statusCode: 404,
+              error: 'Not Found',
+              message: error.message,
+            });
+          }
+        }
+
+        fastify.log.error({ error }, 'Error al reactivar inspección:');
+        return reply.internalServerError('Error al reactivar la inspección');
       }
     }
   );

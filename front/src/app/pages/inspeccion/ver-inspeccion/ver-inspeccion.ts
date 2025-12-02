@@ -39,6 +39,9 @@ export class VerInspeccion implements OnInit, OnDestroy {
   protected readonly supervisorNombre = signal('');
   protected readonly tecnicosNombres = signal<string[]>([]);
   protected readonly inspectorNombre = signal('');
+  protected readonly nSerieMotor = signal<string | null>(null);
+  protected readonly cabinado = signal<boolean | null>(null);
+  protected readonly horometro = signal<number | null>(null);
 
   // Datos cargados
   protected readonly maquinas = signal<Maquina[]>([]);
@@ -160,6 +163,9 @@ export class VerInspeccion implements OnInit, OnDestroy {
     fechaFinalizacion: string | null;
     numSerie: string;
     maquinaId: number;
+    nSerieMotor?: string | null;
+    cabinado?: boolean | null;
+    horometro?: number | null;
   }): void {
     // Fecha y hora de inicio
     const fechaInicio = new Date(inspeccion.fechaInicio);
@@ -175,6 +181,11 @@ export class VerInspeccion implements OnInit, OnDestroy {
 
     // Datos básicos
     this.numSerie.set(inspeccion.numSerie);
+
+    // Campos adicionales de la máquina
+    this.nSerieMotor.set(inspeccion.nSerieMotor ?? null);
+    this.cabinado.set(inspeccion.cabinado ?? null);
+    this.horometro.set(inspeccion.horometro ?? null);
 
     // Buscar nombre de la máquina
     const maquina = this.maquinas().find((m) => m.id === inspeccion.maquinaId);

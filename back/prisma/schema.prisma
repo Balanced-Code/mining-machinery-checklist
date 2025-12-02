@@ -42,17 +42,14 @@ model Usuario {
   inspeccionesEliminadas         Inspeccion[]                 @relation("InspeccionEliminador")
   eleccionTemplatesCreados       EleccionTemplate[]           @relation("EleccionTemplateCreador")
   eleccionTemplatesActualizados  EleccionTemplate[]           @relation("EleccionTemplateActualizador")
-  eleccionTemplatesEliminados    EleccionTemplate[]           @relation("EleccionTemplateEliminador")
   resultadosCreados              ResultadoAtributoChecklist[] @relation("ResultadoCreador")
   resultadosActualizados         ResultadoAtributoChecklist[] @relation("ResultadoActualizador")
   eleccionRespuestasCreadas      EleccionRespuesta[]          @relation("EleccionRespuestaCreador")
   eleccionRespuestasActualizadas EleccionRespuesta[]          @relation("EleccionRespuestaActualizador")
-  eleccionRespuestasEliminadas   EleccionRespuesta[]          @relation("EleccionRespuestaEliminador")
   rolesAsignacionCreados         RolAsignacion[]              @relation("RolAsignacionCreador")
   rolesAsignacionActualizados    RolAsignacion[]              @relation("RolAsignacionActualizador")
   asignacionesCreadas            AsignacionInspeccion[]       @relation("AsignacionInspeccionCreador")
   asignacionesActualizadas       AsignacionInspeccion[]       @relation("AsignacionInspeccionActualizador")
-  asignacionesEliminadas         AsignacionInspeccion[]       @relation("AsignacionInspeccionEliminador")
   asignacionesInspeccion         AsignacionInspeccion[]       @relation("UsuarioAsignacion")
   observacionesCreadas           Observacion[]                @relation("ObservacionCreador")
   observacionesActualizadas      Observacion[]                @relation("ObservacionActualizador")
@@ -193,7 +190,7 @@ model Inspeccion {
   /// NULL si aún está en proceso
   fechaFinalizacion DateTime? @map("fecha_finalizacion") @db.Timestamp()
   maquinaId         Int       @map("maquina_id")
-  numSerie          String    @map("num_serie") @db.VarChar(50)
+  numSerie          String    @unique @map("num_serie") @db.VarChar(50)
   nSerieMotor       String?   @map("n_serie_motor") @db.VarChar(50)
   cabinado          Boolean?
   /// Horas de uso
@@ -214,7 +211,6 @@ model Inspeccion {
   eliminador         Usuario?               @relation("InspeccionEliminador", fields: [eliminadoPor], references: [id])
 
   @@index([maquinaId])
-  @@index([numSerie])
   @@index([fechaInicio])
   @@index([fechaFinalizacion])
   @@index([eliminadoEn])
@@ -233,8 +229,6 @@ model EleccionTemplate {
   creadoEn       DateTime  @default(now()) @map("creado_en") @db.Timestamp()
   actualizadoPor Int?      @map("actualizado_por")
   actualizadoEn  DateTime? @map("actualizado_en") @db.Timestamp()
-  eliminadoPor   Int?      @map("eliminado_por")
-  eliminadoEn    DateTime? @map("eliminado_en") @db.Timestamp()
 
   // Relaciones
   template           Template            @relation(fields: [templateId], references: [id])
@@ -242,12 +236,10 @@ model EleccionTemplate {
   eleccionRespuestas EleccionRespuesta[]
   creador            Usuario             @relation("EleccionTemplateCreador", fields: [creadoPor], references: [id])
   actualizador       Usuario?            @relation("EleccionTemplateActualizador", fields: [actualizadoPor], references: [id])
-  eliminador         Usuario?            @relation("EleccionTemplateEliminador", fields: [eliminadoPor], references: [id])
 
-  @@unique([inspeccionId, templateId, eliminadoEn], name: "idx_eleccion_template_unica")
+  @@unique([inspeccionId, templateId], name: "idx_eleccion_template_unica")
   @@index([inspeccionId])
   @@index([templateId])
-  @@index([eliminadoEn])
   @@map("eleccion_template")
 }
 
@@ -290,8 +282,6 @@ model EleccionRespuesta {
   creadoEn                     DateTime  @default(now()) @map("creado_en") @db.Timestamp()
   actualizadoPor               Int?      @map("actualizado_por")
   actualizadoEn                DateTime? @map("actualizado_en") @db.Timestamp()
-  eliminadoPor                 Int?      @map("eliminado_por")
-  eliminadoEn                  DateTime? @map("eliminado_en") @db.Timestamp()
 
   // Relaciones
   eleccionTemplate  EleccionTemplate           @relation(fields: [eleccionTemplateId], references: [id])
@@ -299,13 +289,11 @@ model EleccionRespuesta {
   resultadoAtributo ResultadoAtributoChecklist @relation(fields: [resultadoAtributoChecklistId], references: [id])
   creador           Usuario                    @relation("EleccionRespuestaCreador", fields: [creadoPor], references: [id])
   actualizador      Usuario?                   @relation("EleccionRespuestaActualizador", fields: [actualizadoPor], references: [id])
-  eliminador        Usuario?                   @relation("EleccionRespuestaEliminador", fields: [eliminadoPor], references: [id])
 
-  @@unique([eleccionTemplateId, templateSeccionId, eliminadoEn], name: "idx_respuesta_unica_por_atributo")
+  @@unique([eleccionTemplateId, templateSeccionId], name: "idx_respuesta_unica_por_atributo")
   @@index([eleccionTemplateId])
   @@index([templateSeccionId])
   @@index([resultadoAtributoChecklistId])
-  @@index([eliminadoEn])
   @@map("eleccion_respuesta")
 }
 
@@ -342,8 +330,6 @@ model AsignacionInspeccion {
   creadoEn        DateTime  @default(now()) @map("creado_en") @db.Timestamp()
   actualizadoPor  Int?      @map("actualizado_por")
   actualizadoEn   DateTime? @map("actualizado_en") @db.Timestamp()
-  eliminadoPor    Int?      @map("eliminado_por")
-  eliminadoEn     DateTime? @map("eliminado_en") @db.Timestamp()
 
   // Relaciones
   inspeccion    Inspeccion    @relation(fields: [inspeccionId], references: [id])
@@ -351,13 +337,11 @@ model AsignacionInspeccion {
   rolAsignacion RolAsignacion @relation(fields: [rolAsignacionId], references: [id])
   creador       Usuario       @relation("AsignacionInspeccionCreador", fields: [creadoPor], references: [id])
   actualizador  Usuario?      @relation("AsignacionInspeccionActualizador", fields: [actualizadoPor], references: [id])
-  eliminador    Usuario?      @relation("AsignacionInspeccionEliminador", fields: [eliminadoPor], references: [id])
 
-  @@unique([inspeccionId, usuarioId, eliminadoEn], name: "idx_usuario_unico_por_inspeccion")
+  @@unique([inspeccionId, usuarioId], name: "idx_usuario_unico_por_inspeccion")
   @@index([inspeccionId])
   @@index([usuarioId])
   @@index([rolAsignacionId])
-  @@index([eliminadoEn])
   @@map("asignacion_inspeccion")
 }
 

@@ -130,10 +130,20 @@
     <!-- Footer -->
     <div class="dialog-footer">
       @if (esEditable()) {
-      <button class="btn-cancel" (click)="cancelar()" type="button">Cancelar</button>
-      <button class="btn-confirm" (click)="guardar()" type="button" [disabled]="!puedeGuardar()">
-        Guardar
-      </button>
+      <div class="footer-left">
+        @if (modo() === 'editar') {
+        <button class="btn-delete" (click)="eliminar()" type="button" title="Eliminar observación">
+          <mat-icon>delete</mat-icon>
+          Eliminar
+        </button>
+        }
+      </div>
+      <div class="footer-right">
+        <button class="btn-cancel" (click)="cancelar()" type="button">Cancelar</button>
+        <button class="btn-confirm" (click)="guardar()" type="button" [disabled]="!puedeGuardar()">
+          Guardar
+        </button>
+      </div>
       } @else {
       <button class="btn-confirm" (click)="cancelar()" type="button">Cerrar</button>
       }

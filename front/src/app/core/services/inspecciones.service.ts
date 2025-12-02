@@ -17,6 +17,8 @@ export interface BackendInspeccion {
   horometro: number | null;
   creadoPor: number;
   creadoEn: string | null;
+  eliminadoPor: number | null;
+  eliminadoEn: string | null;
   maquina?: {
     id: number;
     nombre: string;
@@ -131,6 +133,47 @@ export class InspeccionesService {
   }
 
   /**
+   * Reactivar una inspección eliminada (solo admins)
+   */
+  async reactivate(id: number): Promise<boolean> {
+    this.loadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    try {
+      const response = await firstValueFrom(
+        this.http.post<{ inspeccion: BackendInspeccion }>(
+          `${this.baseUrl}/inspecciones/${id}/reactivar`,
+          {}
+        )
+      );
+
+      if (response?.inspeccion) {
+        // Actualizar localmente
+        const inspeccionReactivada = this.mapBackendToInspeccion(response.inspeccion);
+        this.inspeccionesSignal.update((inspecciones) => {
+          const index = inspecciones.findIndex((i) => i.id === id);
+          if (index !== -1) {
+            // Actualizar existente
+            const updated = [...inspecciones];
+            updated[index] = inspeccionReactivada;
+            return updated;
+          }
+          // Agregar si no existe
+          return [...inspecciones, inspeccionReactivada];
+        });
+        return true;
+      }
+
+      return false;
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al reactivar la inspección');
+      throw err;
+    } finally {
+      this.loadingSignal.set(false);
+    }
+  }
+
+  /**
    * Mapear una inspección del backend al formato del frontend
    */
   private mapBackendToInspeccion(backend: BackendInspeccion): Inspeccion {
@@ -145,6 +188,8 @@ export class InspeccionesService {
       horometro: backend.horometro,
       creadoPor: backend.creadoPor,
       creadoEn: backend.creadoEn ? new Date(backend.creadoEn) : undefined,
+      eliminadoPor: backend.eliminadoPor ?? undefined,
+      eliminadoEn: backend.eliminadoEn ? new Date(backend.eliminadoEn) : undefined,
       // Mapear relaciones
       maquina: backend.maquina
         ? {

@@ -11,15 +11,28 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
   /**
    * GET /inspecciones
    * Listar todas las inspecciones
-   * Acceso: Automático (cualquier usuario autenticado)
+   * - Usuarios normales: solo inspecciones NO eliminadas
+   * - Administradores (nivel 4): todas las inspecciones (incluidas eliminadas)
    */
   fastify.get(
     '/',
     { schema: getInspeccionesSchema },
     async (request, reply) => {
       try {
-        const inspecciones =
-          await fastify.services.inspecciones.getAllInspecciones();
+        const currentUser = request.currentUser!;
+
+        // Verificar nivel del usuario
+        const userCargo = await fastify.prisma.cargo.findUnique({
+          where: { id: currentUser.cargoId },
+          select: { nivel: true },
+        });
+
+        const isAdmin = userCargo?.nivel === 4;
+
+        // Administradores ven todas, otros solo las no eliminadas
+        const inspecciones = isAdmin
+          ? await fastify.services.inspecciones.getAllInspeccionesIncludingDeleted()
+          : await fastify.services.inspecciones.getAllInspecciones();
 
         // Serializar manualmente para preservar todas las propiedades
         const inspeccionesSerializadas = inspecciones.map(insp => ({
@@ -33,6 +46,7 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
           horometro: insp.horometro,
           creadoPor: insp.creadoPor,
           creadoEn: insp.creadoEn,
+          eliminadoEn: insp.eliminadoEn, // Incluir estado de eliminación
           // Incluir relaciones explícitamente
           maquina: insp.maquina
             ? {

@@ -63,6 +63,20 @@
         <label class="field-label">Inspector</label>
         <div class="field-value">{{ inspectorNombre() }}</div>
       </div>
+      <div class="form-field">
+        <label class="field-label">N° Serie Motor</label>
+        <div class="field-value">{{ nSerieMotor() || '-' }}</div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Cabinado</label>
+        <div class="field-value">
+          @if (cabinado() === true) { Sí } @else if (cabinado() === false) { No } @else { - }
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="field-label">Horómetro (horas)</label>
+        <div class="field-value">{{ horometro() ?? '-' }}</div>
+      </div>
     </div>
   </div>
 

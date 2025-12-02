@@ -70,7 +70,7 @@ CREATE TABLE "inspeccion" (
   "fecha_inicio" timestamp NOT NULL,
   "fecha_finalizacion" timestamp,
   "maquina_id" int NOT NULL,
-  "num_serie" varchar(50) NOT NULL,
+  "num_serie" varchar(50) UNIQUE NOT NULL,
   "n_serie_motor" varchar(50),
   "cabinado" boolean,
   "horometro" decimal(10,2),
@@ -89,9 +89,7 @@ CREATE TABLE "eleccion_template" (
   "creado_por" int NOT NULL,
   "creado_en" timestamp DEFAULT (now()),
   "actualizado_por" int,
-  "actualizado_en" timestamp,
-  "eliminado_por" int,
-  "eliminado_en" timestamp
+  "actualizado_en" timestamp
 );
 
 CREATE TABLE "resultado_atributo_checklist" (
@@ -112,9 +110,7 @@ CREATE TABLE "eleccion_respuesta" (
   "creado_por" int NOT NULL,
   "creado_en" timestamp DEFAULT (now()),
   "actualizado_por" int,
-  "actualizado_en" timestamp,
-  "eliminado_por" int,
-  "eliminado_en" timestamp
+  "actualizado_en" timestamp
 );
 
 CREATE TABLE "rol_asignacion" (
@@ -135,9 +131,7 @@ CREATE TABLE "asignacion_inspeccion" (
   "creado_por" int NOT NULL,
   "creado_en" timestamp DEFAULT (now()),
   "actualizado_por" int,
-  "actualizado_en" timestamp,
-  "eliminado_por" int,
-  "eliminado_en" timestamp
+  "actualizado_en" timestamp
 );
 
 CREATE TABLE "observacion" (
@@ -207,8 +201,6 @@ CREATE INDEX ON "template_seccion" ("eliminado_en");
 
 CREATE INDEX ON "inspeccion" ("maquina_id");
 
-CREATE INDEX ON "inspeccion" ("num_serie");
-
 CREATE INDEX ON "inspeccion" ("fecha_inicio");
 
 CREATE INDEX ON "inspeccion" ("fecha_finalizacion");
@@ -221,9 +213,7 @@ CREATE INDEX ON "eleccion_template" ("inspeccion_id");
 
 CREATE INDEX ON "eleccion_template" ("template_id");
 
-CREATE UNIQUE INDEX "idx_eleccion_template_unica" ON "eleccion_template" ("inspeccion_id", "template_id", "eliminado_en");
-
-CREATE INDEX ON "eleccion_template" ("eliminado_en");
+CREATE UNIQUE INDEX "idx_eleccion_template_unica" ON "eleccion_template" ("inspeccion_id", "template_id");
 
 CREATE INDEX ON "resultado_atributo_checklist" ("observacion_id");
 
@@ -237,9 +227,7 @@ CREATE INDEX ON "eleccion_respuesta" ("template_seccion_id");
 
 CREATE INDEX ON "eleccion_respuesta" ("resultado_atributo_checklist_id");
 
-CREATE UNIQUE INDEX "idx_respuesta_unica_por_atributo" ON "eleccion_respuesta" ("eleccion_template_id", "template_seccion_id", "eliminado_en");
-
-CREATE INDEX ON "eleccion_respuesta" ("eliminado_en");
+CREATE UNIQUE INDEX "idx_respuesta_unica_por_atributo" ON "eleccion_respuesta" ("eleccion_template_id", "template_seccion_id");
 
 CREATE INDEX ON "rol_asignacion" ("eliminado_en");
 
@@ -249,9 +237,7 @@ CREATE INDEX ON "asignacion_inspeccion" ("usuario_id");
 
 CREATE INDEX ON "asignacion_inspeccion" ("rol_asignacion_id");
 
-CREATE UNIQUE INDEX "idx_usuario_unico_por_inspeccion" ON "asignacion_inspeccion" ("inspeccion_id", "usuario_id", "eliminado_en");
-
-CREATE INDEX ON "asignacion_inspeccion" ("eliminado_en");
+CREATE UNIQUE INDEX "idx_usuario_unico_por_inspeccion" ON "asignacion_inspeccion" ("inspeccion_id", "usuario_id");
 
 CREATE INDEX ON "observacion" ("creado_por");
 
@@ -379,8 +365,6 @@ ALTER TABLE "eleccion_template" ADD FOREIGN KEY ("creado_por") REFERENCES "usuar
 
 ALTER TABLE "eleccion_template" ADD FOREIGN KEY ("actualizado_por") REFERENCES "usuario" ("id");
 
-ALTER TABLE "eleccion_template" ADD FOREIGN KEY ("eliminado_por") REFERENCES "usuario" ("id");
-
 ALTER TABLE "resultado_atributo_checklist" ADD FOREIGN KEY ("observacion_id") REFERENCES "observacion" ("id");
 
 ALTER TABLE "resultado_atributo_checklist" ADD FOREIGN KEY ("creado_por") REFERENCES "usuario" ("id");
@@ -397,8 +381,6 @@ ALTER TABLE "eleccion_respuesta" ADD FOREIGN KEY ("creado_por") REFERENCES "usua
 
 ALTER TABLE "eleccion_respuesta" ADD FOREIGN KEY ("actualizado_por") REFERENCES "usuario" ("id");
 
-ALTER TABLE "eleccion_respuesta" ADD FOREIGN KEY ("eliminado_por") REFERENCES "usuario" ("id");
-
 ALTER TABLE "rol_asignacion" ADD FOREIGN KEY ("creado_por") REFERENCES "usuario" ("id");
 
 ALTER TABLE "rol_asignacion" ADD FOREIGN KEY ("actualizado_por") REFERENCES "usuario" ("id");
@@ -412,8 +394,6 @@ ALTER TABLE "asignacion_inspeccion" ADD FOREIGN KEY ("rol_asignacion_id") REFERE
 ALTER TABLE "asignacion_inspeccion" ADD FOREIGN KEY ("creado_por") REFERENCES "usuario" ("id");
 
 ALTER TABLE "asignacion_inspeccion" ADD FOREIGN KEY ("actualizado_por") REFERENCES "usuario" ("id");
-
-ALTER TABLE "asignacion_inspeccion" ADD FOREIGN KEY ("eliminado_por") REFERENCES "usuario" ("id");
 
 ALTER TABLE "observacion" ADD FOREIGN KEY ("creado_por") REFERENCES "usuario" ("id");
 

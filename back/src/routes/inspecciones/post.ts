@@ -82,6 +82,31 @@ export const inspeccionesPostRoutes: FastifyPluginAsync = async fastify => {
           },
         });
       } catch (error) {
+        // Manejar error de Prisma para número de serie duplicado
+        if (error && typeof error === 'object' && 'code' in error) {
+          const prismaError = error as {
+            code: string;
+            meta?: { target?: string[] };
+          };
+          if (
+            prismaError.code === 'P2002' &&
+            prismaError.meta?.target?.includes('num_serie')
+          ) {
+            request.log.warn(
+              `Intento de crear inspección con número de serie duplicado: ${request.body.numSerie}`
+            );
+            return reply.code(409).send({
+              statusCode: 409,
+              error: 'Conflict',
+              message: 'El número de serie ya existe',
+              prismaError: {
+                code: prismaError.code,
+                meta: prismaError.meta,
+              },
+            });
+          }
+        }
+
         if (error instanceof Error) {
           if (
             error.message.includes('no encontrada') ||
@@ -360,14 +385,51 @@ export const terminarInspeccionRoute: FastifyPluginAsync = async fastify => {
         const { id } = request.params;
         const inspeccionId = BigInt(id);
 
-        await fastify.services.inspecciones.terminarInspeccion(
-          inspeccionId,
-          userId
-        );
+        const inspeccion =
+          await fastify.services.inspecciones.terminarInspeccion(
+            inspeccionId,
+            userId
+          );
+
+        // Obtener la inspección completa con relaciones
+        const inspeccionCompleta =
+          await fastify.services.inspecciones.getInspeccionById(inspeccionId);
+
+        if (!inspeccionCompleta) {
+          return reply.code(404).send({
+            statusCode: 404,
+            error: 'Not Found',
+            message: 'Inspección no encontrada',
+          });
+        }
 
         return reply.send({
           success: true,
           message: 'Inspección finalizada exitosamente',
+          inspeccion: {
+            id: inspeccionCompleta.id.toString(),
+            fechaInicio: inspeccionCompleta.fechaInicio.toISOString(),
+            fechaFinalizacion:
+              inspeccionCompleta.fechaFinalizacion?.toISOString() ?? null,
+            maquinaId: inspeccionCompleta.maquinaId,
+            numSerie: inspeccionCompleta.numSerie,
+            nSerieMotor: inspeccionCompleta.nSerieMotor,
+            cabinado: inspeccionCompleta.cabinado,
+            horometro: inspeccionCompleta.horometro
+              ? Number(inspeccionCompleta.horometro)
+              : null,
+            creadoPor: inspeccionCompleta.creadoPor,
+            maquina: inspeccionCompleta.maquina,
+            creador: inspeccionCompleta.creador,
+            asignaciones: inspeccionCompleta.asignaciones?.map(a => ({
+              id: a.id.toString(),
+              inspeccionId: a.inspeccionId.toString(),
+              usuarioId: a.usuarioId,
+              rolAsignacionId: a.rolAsignacionId,
+              usuario: a.usuario,
+              rolAsignacion: a.rolAsignacion,
+            })),
+          },
         });
       } catch (error) {
         if (error instanceof Error) {

@@ -120,7 +120,7 @@ Table inspeccion {
 
   // Datos específicos de la máquina inspeccionada
   maquina_id int [ref: > maquina.id, not null]
-  num_serie varchar(50) [not null]
+  num_serie varchar(50) [unique, not null]
   n_serie_motor varchar(50) [null]
   cabinado boolean [null]
   horometro decimal(10,2) [null, note: "Horas de uso"]
@@ -134,7 +134,6 @@ Table inspeccion {
 
   Indexes {
     maquina_id
-    num_serie
     fecha_inicio
     fecha_finalizacion
     eliminado_en
@@ -157,14 +156,11 @@ Table eleccion_template [note: 'Vincula templates (checklists) con una inspecci�
   creado_en timestamp [default: `now()`]
   actualizado_por int [ref: > usuario.id, null]
   actualizado_en timestamp [null]
-  eliminado_por int [ref: > usuario.id, null]
-  eliminado_en timestamp [null]
 
   Indexes {
     inspeccion_id
     template_id
-    (inspeccion_id, template_id, eliminado_en) [unique, name: 'idx_eleccion_template_unica']
-    eliminado_en
+    (inspeccion_id, template_id) [unique, name: 'idx_eleccion_template_unica']
   }
 
   Note: '''
@@ -201,15 +197,12 @@ Table eleccion_respuesta [note: 'Vincula cada atributo del checklist con su resp
   creado_en timestamp [default: `now()`]
   actualizado_por int [ref: > usuario.id, null]
   actualizado_en timestamp [null]
-  eliminado_por int [ref: > usuario.id, null]
-  eliminado_en timestamp [null]
 
   Indexes {
     eleccion_template_id
     template_seccion_id
     resultado_atributo_checklist_id
-    (eleccion_template_id, template_seccion_id, eliminado_en) [unique, name: 'idx_respuesta_unica_por_atributo']
-    eliminado_en
+    (eleccion_template_id, template_seccion_id) [unique, name: 'idx_respuesta_unica_por_atributo']
   }
 
   Note: '''
@@ -244,15 +237,12 @@ Table asignacion_inspeccion {
   creado_en timestamp [default: `now()`]
   actualizado_por int [ref: > usuario.id, null]
   actualizado_en timestamp [null]
-  eliminado_por int [ref: > usuario.id, null]
-  eliminado_en timestamp [null]
 
   Indexes {
     inspeccion_id
     usuario_id
     rol_asignacion_id
-    (inspeccion_id, usuario_id, eliminado_en) [unique, name: 'idx_usuario_unico_por_inspeccion']
-    eliminado_en
+    (inspeccion_id, usuario_id) [unique, name: 'idx_usuario_unico_por_inspeccion']
   }
 
   Note: '''

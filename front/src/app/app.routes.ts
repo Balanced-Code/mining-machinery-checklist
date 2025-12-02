@@ -56,6 +56,15 @@ export const routes: Routes = [
         // Accesible para todos los usuarios autenticados (vista limitada según nivel)
       },
       {
+        path: 'maquinaria',
+        loadComponent: () => import('./pages/maquinaria/maquinaria').then((m) => m.Maquinaria),
+        data: {
+          title: 'Maquinaria',
+          description: 'Gestión de maquinaria del sistema',
+          nivel: 3, // Solo accesible para nivel 3 o superior (Inspector, Administrador)
+        },
+      },
+      {
         path: 'historial',
         loadComponent: () => import('./pages/historial/historial').then((m) => m.Historial),
         data: {

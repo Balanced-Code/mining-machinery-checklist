@@ -128,6 +128,14 @@ export class ObservacionDialog {
   }
 
   /**
+   * Elimina la observación
+   */
+  protected eliminar(): void {
+    // Cerrar el diálogo con un valor especial para indicar eliminación
+    this.dialogRef.close('DELETE');
+  }
+
+  /**
    * Actualiza la descripción
    */
   protected updateDescripcion(value: string): void {

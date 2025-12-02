@@ -320,6 +320,42 @@ export class InspeccionService {
   }
 
   /**
+   * Reactivar una inspección eliminada (solo admins)
+   */
+  async reactivar(id: number): Promise<boolean> {
+    this.isLoadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    try {
+      const response = await firstValueFrom(
+        this.http.post<{ inspeccion: BackendInspeccion }>(
+          `${this.baseUrl}/inspecciones/${id}/reactivar`,
+          {}
+        )
+      );
+
+      // Actualizar la inspección actual si es la misma
+      if (response?.inspeccion && this.currentInspeccionSignal()?.id === id) {
+        this.currentInspeccionSignal.update((current) => {
+          if (!current) return current;
+          return {
+            ...current,
+            eliminadoPor: undefined,
+            eliminadoEn: undefined,
+          };
+        });
+      }
+
+      return true;
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al reactivar la inspección');
+      return false;
+    } finally {
+      this.isLoadingSignal.set(false);
+    }
+  }
+
+  /**
    * Agrega un placeholder para un nuevo checklist a la inspección
    */
   agregarChecklistPlaceholder(): void {
@@ -333,7 +369,11 @@ export class InspeccionService {
       progresoNA: 0,
       progresoTotal: 0,
     };
-    this.checklistsSignal.update((checklists) => [...checklists, placeholder]);
+    this.checklistsSignal.update((checklists) => {
+      // Asegurar que sea un array antes de hacer spread
+      const currentChecklists = Array.isArray(checklists) ? checklists : [];
+      return [...currentChecklists, placeholder];
+    });
   }
 
   /**
@@ -423,12 +463,18 @@ export class InspeccionService {
           if (checklist.templateId === templateId) {
             const items = checklist.items.map((item) => {
               if (item.templateSeccionId === respuesta.templateSeccionId) {
+                // Generar ID temporal solo para UI local, no para enviar al backend
+                const observacionIdLocal =
+                  respuesta.observacion?.id && respuesta.observacion.id < 1000000000000
+                    ? respuesta.observacion.id
+                    : Date.now();
+
                 return {
                   ...item,
                   cumple: respuesta.cumple,
                   observacion: respuesta.observacion
                     ? {
-                        id: respuesta.observacion.id || Date.now(),
+                        id: observacionIdLocal,
                         descripcion: respuesta.observacion.descripcion,
                         archivos: respuesta.observacion.archivosExistentes || [],
                       }
@@ -478,15 +524,19 @@ export class InspeccionService {
     this.errorSignal.set(null);
 
     try {
-      const checklists = await firstValueFrom(
-        this.http.get<InspeccionChecklistDTO[]>(
+      const response = await firstValueFrom(
+        this.http.get<{ checklists: InspeccionChecklistDTO[] }>(
           `${this.baseUrl}/inspecciones/${_inspeccionId}/checklists`
         )
       );
 
-      this.checklistsSignal.set(checklists);
+      // Extraer el array de checklists de la respuesta
+      const checklists = response.checklists || [];
+      this.checklistsSignal.set(Array.isArray(checklists) ? checklists : []);
     } catch (err: unknown) {
       this.handleError(err, 'Error al cargar los checklists');
+      // En caso de error, establecer array vacío
+      this.checklistsSignal.set([]);
     } finally {
       this.isLoadingSignal.set(false);
     }
@@ -608,6 +658,13 @@ export class InspeccionService {
   }
 
   /**
+   * Limpia solo el mensaje de error
+   */
+  limpiarError(): void {
+    this.errorSignal.set(null);
+  }
+
+  /**
    * Obtiene la lista de máquinas disponibles
    */
   async obtenerMaquinas(): Promise<Maquina[]> {
@@ -698,7 +755,21 @@ export class InspeccionService {
   private handleError(err: unknown, defaultMessage: string): void {
     let message = defaultMessage;
     if (err instanceof HttpErrorResponse) {
-      message = err.error?.message || err.message || message;
+      // Verificar si es error 409 (número de serie duplicado)
+      if (err.status === 409) {
+        message = 'El número de serie ya existe. Por favor, use un número de serie diferente.';
+      }
+      // Verificar si es error de Prisma P2002 en la respuesta
+      else if (
+        err.error?.prismaError?.code === 'P2002' &&
+        err.error?.prismaError?.meta?.target?.includes('num_serie')
+      ) {
+        message = 'El número de serie ya existe. Por favor, use un número de serie diferente.';
+      }
+      // Otros errores
+      else {
+        message = err.error?.message || err.message || message;
+      }
     }
     this.errorSignal.set(message);
   }

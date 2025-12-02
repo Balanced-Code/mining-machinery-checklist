@@ -182,6 +182,15 @@
   background: rgb(185 28 28);
 }
 
+.btn-info {
+  background: #ed1b2e;
+}
+
+.btn-info:hover {
+  background: #d01828;
+  box-shadow: 0 2px 8px rgb(237 27 46 / 30%);
+}
+
 /* Responsive */
 @media (width <= 768px) {
   .confirm-container {

@@ -24,9 +24,10 @@ export class Sidebar {
   private readonly allMenuItems: MenuItem[] = [
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard' },
     { icon: 'people', label: 'Usuarios', route: '/usuarios', minLevel: 3 },
-    { icon: 'checklist', label: 'Checklist', route: '/checklist' },
+    { icon: 'checklist', label: 'Checklist', route: '/checklist', minLevel: 3 },
+    { icon: 'precision_manufacturing', label: 'Maquinaria', route: '/maquinaria', minLevel: 3 },
     { icon: 'history', label: 'Historial', route: '/historial' },
-    { icon: 'assignment', label: 'Crear revisión', route: '/inspeccion/crear', minLevel: 2 },
+    { icon: 'assignment', label: 'Crear revisión', route: '/inspeccion/crear', minLevel: 3 },
   ];
 
   // Filtrar items del menú según el nivel del cargo del usuario

@@ -356,10 +356,51 @@
 .dialog-footer {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding: 20px 25px 25px;
   flex-shrink: 0;
   border-top: 1px solid rgb(0 0 0 / 5%);
+}
+
+.footer-left {
+  display: flex;
+  gap: 12px;
+}
+
+.footer-right {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.btn-delete {
+  height: 40px;
+  padding: 0 20px;
+  background: white;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-delete:hover {
+  background: rgb(239 68 68 / 10%);
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.btn-delete mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 
 .btn-cancel {
