@@ -148,16 +148,9 @@ async function main() {
 
   // Crear roles de asignación
 
-  const rolInspectorPrincipal = await prisma.rolAsignacion.create({
+  const rolInspector = await prisma.rolAsignacion.create({
     data: {
-      nombre: 'Inspector Principal',
-      creadoPor: adminUser.id,
-    },
-  });
-
-  const rolTecnico = await prisma.rolAsignacion.create({
-    data: {
-      nombre: 'Técnico',
+      nombre: 'Inspector',
       creadoPor: adminUser.id,
     },
   });
@@ -165,6 +158,13 @@ async function main() {
   const rolSupervisor = await prisma.rolAsignacion.create({
     data: {
       nombre: 'Supervisor',
+      creadoPor: adminUser.id,
+    },
+  });
+
+  const rolTecnico = await prisma.rolAsignacion.create({
+    data: {
+      nombre: 'Tecnico',
       creadoPor: adminUser.id,
     },
   });
@@ -365,25 +365,41 @@ async function main() {
     }),
   ]);
 
+  console.log('✅ Seed completado exitosamente!');
+  console.log('\n📊 Resumen de datos creados:');
+  console.log('\n👥 Usuarios creados:');
+  console.log(`   • Admin: admin@normet.com (Contraseña: Admin123?)`);
+  console.log(`   • Inspector: inspector@normet.com`);
+  console.log(`   • Supervisor: supervisor@normet.com`);
+  console.log(`   • Técnico: tecnico@normet.com`);
+  console.log(`   • Operador: operador@normet.com`);
+  console.log(`   • Invitado: invitado@normet.com`);
+
+  console.log('\n💼 Cargos creados:');
+  console.log(`   • Nivel 4: Administrador (ID: ${cargoAdmin.id})`);
+  console.log(`   • Nivel 3: Inspector (ID: ${cargoInspector.id})`);
   console.log(
-    `     • Nivel 2: Supervisor (ID: ${cargoSupervisor.id}), Técnico Mecánico (ID: ${cargoTecnicoMecanico.id})`
+    `   • Nivel 2: Supervisor (ID: ${cargoSupervisor.id}), Técnico Mecánico (ID: ${cargoTecnicoMecanico.id})`
   );
   console.log(
-    `     • Nivel 1: Operador (ID: ${cargoOperador.id}), Invitado (ID: ${cargoInvitado.id})`
+    `   • Nivel 1: Operador (ID: ${cargoOperador.id}), Invitado (ID: ${cargoInvitado.id})`
   );
 
-  console.log(
-    `     • ID ${rolInspectorPrincipal.id}: Inspector Principal (solo 1 por inspección)`
-  );
+  console.log('\n🔖 Roles de asignación creados:');
+  console.log(`   • Inspector (ID: ${rolInspector.id})`);
+  console.log(`   • Supervisor (ID: ${rolSupervisor.id})`);
+  console.log(`   • Técnico (ID: ${rolTecnico.id})`);
 
-  console.log(
-    `     • ID ${rolSupervisor.id}: Supervisor (solo 1 por inspección)`
-  );
+  console.log('\n🚜 Máquinas creadas:');
+  console.log(`   • ${maquinas.length} máquinas de ejemplo`);
+
+  console.log('\n📋 Templates creados:');
+  console.log(`   • 7 checklists de ejemplo`);
 }
 
 main()
   .catch(e => {
-    console.error('ror durante el seed:', e);
+    console.error('Error durante el seed:', e);
     process.exit(1);
   })
   .finally(async () => {

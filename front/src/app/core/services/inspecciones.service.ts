@@ -208,6 +208,59 @@ export class InspeccionesService {
   }
 
   /**
+   * Exportar una inspección a Excel (ZIP con Excel + imágenes)
+   */
+  async exportarExcel(inspeccionId: number): Promise<void> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get(`${this.baseUrl}/inspecciones/${inspeccionId}/export`, {
+          responseType: 'blob',
+          observe: 'response',
+        })
+      );
+
+      if (!response.body) {
+        throw new Error('No se recibió el archivo');
+      }
+
+      // Obtener nombre del archivo desde headers o usar uno por defecto
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `Inspeccion_${inspeccionId}_${this.formatDate(new Date())}.zip`;
+
+      if (contentDisposition) {
+        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+        if (matches?.[1]) {
+          filename = matches[1].replace(/['"]/g, '');
+        }
+      }
+
+      // Crear URL del blob y descargar
+      const blob = response.body;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+
+      // Limpiar
+      window.URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al exportar la inspección');
+      throw err;
+    }
+  }
+
+  /**
+   * Formatea una fecha para nombre de archivo YYYYMMDD
+   */
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}${month}${day}`;
+  }
+
+  /**
    * Maneja errores HTTP y actualiza el signal de error
    */
   private handleError(err: unknown, defaultMessage: string): void {

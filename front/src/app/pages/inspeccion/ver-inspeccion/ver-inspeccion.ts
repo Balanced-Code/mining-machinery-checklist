@@ -10,10 +10,11 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Archivo, Maquina, UsuarioInspeccion } from '@core/models/inspeccion.model';
+import { Archivo, Inspeccion, Maquina, UsuarioInspeccion } from '@core/models/inspeccion.model';
 import { ArchivoService } from '@core/services/archivo.service';
 import { AuthService } from '@core/services/auth.service';
 import { InspeccionService } from '@core/services/inspeccion.service';
+import { InspeccionesService } from '@core/services/inspecciones.service';
 import { ObservacionDialog } from '@shared/components/observacion-dialog/observacion-dialog';
 
 @Component({
@@ -25,6 +26,7 @@ import { ObservacionDialog } from '@shared/components/observacion-dialog/observa
 })
 export class VerInspeccion implements OnInit, OnDestroy {
   private readonly inspeccionService = inject(InspeccionService);
+  protected readonly inspeccionesService = inject(InspeccionesService);
   protected readonly archivoService = inject(ArchivoService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
@@ -33,6 +35,9 @@ export class VerInspeccion implements OnInit, OnDestroy {
 
   // ID de la inspección a ver
   private readonly inspeccionId = signal<number | null>(null);
+
+  // Estado de exportación
+  protected readonly exportando = signal(false);
 
   // Estados del formulario (readonly)
   protected readonly fechaInicio = signal<Date>(new Date());
@@ -121,6 +126,11 @@ export class VerInspeccion implements OnInit, OnDestroy {
     return this.fechaFin() ? 'Completada' : 'En Progreso';
   });
 
+  // Puede exportar solo si la inspección está finalizada
+  protected readonly puedeExportar = computed(() => {
+    return this.fechaFin() !== null && !this.exportando();
+  });
+
   async ngOnInit() {
     // Obtener el ID de la inspección desde la ruta
     const id = this.route.snapshot.paramMap.get('id');
@@ -163,15 +173,7 @@ export class VerInspeccion implements OnInit, OnDestroy {
     this.poblarDatos(inspeccion);
   }
 
-  private poblarDatos(inspeccion: {
-    fechaInicio: string;
-    fechaFinalizacion: string | null;
-    numSerie: string;
-    maquinaId: number;
-    nSerieMotor?: string | null;
-    cabinado?: boolean | null;
-    horometro?: number | null;
-  }): void {
+  private poblarDatos(inspeccion: Inspeccion): void {
     // Fecha y hora de inicio
     const fechaInicio = new Date(inspeccion.fechaInicio);
     this.fechaInicio.set(fechaInicio);
@@ -198,20 +200,28 @@ export class VerInspeccion implements OnInit, OnDestroy {
       this.maquinaNombre.set(maquina.nombre);
     }
 
-    // TODO: Cargar supervisor y técnicos cuando el modelo lo soporte
-    // const supervisor = this.usuarios().find(u => u.id === inspeccion.supervisorId);
-    // if (supervisor) {
-    //   this.supervisorNombre.set(this.formatUsuario(supervisor));
-    // }
+    // Cargar personal desde asignaciones
+    if (inspeccion.asignaciones && inspeccion.asignaciones.length > 0) {
+      // Inspector (rol ID 1)
+      const inspectorAsignacion = inspeccion.asignaciones.find((a) => a.rolAsignacion?.id === 1);
+      if (inspectorAsignacion?.usuario) {
+        this.inspectorNombre.set(this.formatUsuario(inspectorAsignacion.usuario));
+      }
 
-    // TODO: Cargar técnicos
-    // const tecnicos = this.usuarios().filter(u => inspeccion.tecnicoIds?.includes(u.id));
-    // this.tecnicosNombres.set(tecnicos.map(t => this.formatUsuario(t)));
+      // Supervisor (rol ID 2)
+      const supervisorAsignacion = inspeccion.asignaciones.find((a) => a.rolAsignacion?.id === 2);
+      if (supervisorAsignacion?.usuario) {
+        this.supervisorNombre.set(this.formatUsuario(supervisorAsignacion.usuario));
+      }
 
-    // Inspector (usuario actual por ahora)
-    const user = this.inspector();
-    if (user) {
-      this.inspectorNombre.set(this.formatUsuario(user));
+      // Técnicos (rol ID 3)
+      const tecnicoAsignaciones = inspeccion.asignaciones.filter((a) => a.rolAsignacion?.id === 3);
+      if (tecnicoAsignaciones.length > 0) {
+        const tecnicosNombres = tecnicoAsignaciones
+          .filter((a) => a.usuario !== undefined)
+          .map((a) => this.formatUsuario(a.usuario!));
+        this.tecnicosNombres.set(tecnicosNombres);
+      }
     }
   }
 
@@ -270,5 +280,27 @@ export class VerInspeccion implements OnInit, OnDestroy {
         requiereObservacion: false,
       },
     });
+  }
+
+  /**
+   * Exporta la inspección a Excel (ZIP con Excel + imágenes)
+   */
+  protected async exportarExcel(): Promise<void> {
+    const id = this.inspeccionId();
+    if (!id) {
+      console.error('No hay inspección cargada');
+      return;
+    }
+
+    this.exportando.set(true);
+
+    try {
+      await this.inspeccionesService.exportarExcel(id);
+    } catch (error) {
+      console.error('Error al exportar inspección:', error);
+      // Podrías mostrar un mensaje de error al usuario aquí
+    } finally {
+      this.exportando.set(false);
+    }
   }
 }

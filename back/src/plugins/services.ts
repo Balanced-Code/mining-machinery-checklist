@@ -4,6 +4,7 @@ import { UsuariosService } from '@/services/usuariosService';
 import { InspeccionesService } from '@/services/inspeccionesService';
 import { MaquinasService } from '@/services/maquinasService';
 import { ArchivosService } from '@/services/archivosService';
+import { ExcelExportService } from '@/services/excelExportService';
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 
@@ -26,6 +27,7 @@ declare module 'fastify' {
       inspecciones: InspeccionesService;
       maquinas: MaquinasService;
       archivos: ArchivosService;
+      excelExport: ExcelExportService;
     };
   }
 }
@@ -52,6 +54,7 @@ async function servicesPlugin(fastify: FastifyInstance) {
     archivosService
   );
   const maquinasService = new MaquinasService(fastify.prisma);
+  const excelExportService = new ExcelExportService(fastify.prisma);
 
   // Decorar fastify con el objeto services
   fastify.decorate('services', {
@@ -61,6 +64,7 @@ async function servicesPlugin(fastify: FastifyInstance) {
     inspecciones: inspeccionesService,
     maquinas: maquinasService,
     archivos: archivosService,
+    excelExport: excelExportService,
   });
 
   fastify.log.info('Servicios registrados correctamente');

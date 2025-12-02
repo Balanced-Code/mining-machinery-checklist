@@ -47,6 +47,9 @@ export class Historial {
   protected readonly showDeleteConfirm = signal(false);
   protected readonly inspeccionToDelete = signal<Inspeccion | undefined>(undefined);
 
+  // Estado de exportación
+  protected readonly exportandoId = signal<number | null>(null);
+
   // ============================================================================
   // PERMISOS
   // ============================================================================
@@ -522,6 +525,46 @@ export class Historial {
   protected getEstado(inspeccion: Inspeccion): string {
     return inspeccion.fechaFinalizacion ? 'Completada' : 'En progreso';
   }
+
+  /**
+   * Verificar si una inspección puede ser exportada
+   */
+  protected puedeExportar(inspeccion: Inspeccion): boolean {
+    return inspeccion.fechaFinalizacion !== null && !inspeccion.eliminadoEn;
+  }
+
+  /**
+   * Obtener título del botón de exportación
+   */
+  protected getExportButtonTitle(inspeccion: Inspeccion): string {
+    if (inspeccion.eliminadoEn) {
+      return 'No se puede exportar una inspección eliminada';
+    }
+    if (!inspeccion.fechaFinalizacion) {
+      return 'Solo se pueden exportar inspecciones finalizadas';
+    }
+    return 'Exportar a Excel';
+  }
+
+  /**
+   * Exportar inspección a Excel
+   */
+  protected async exportarInspeccion(inspeccion: Inspeccion): Promise<void> {
+    if (!this.puedeExportar(inspeccion)) {
+      return;
+    }
+
+    this.exportandoId.set(inspeccion.id);
+
+    try {
+      await this.inspeccionesService.exportarExcel(inspeccion.id);
+    } catch (error) {
+      console.error('Error al exportar inspección:', error);
+    } finally {
+      this.exportandoId.set(null);
+    }
+  }
+
   /**
    * Cargar inspecciones desde el backend
    */

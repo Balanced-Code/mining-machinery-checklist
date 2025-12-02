@@ -7,6 +7,19 @@
         <h1 class="page-title">Detalles de la Inspección</h1>
       </div>
       <div class="header-right">
+        <button
+          class="btn-export"
+          (click)="exportarExcel()"
+          [disabled]="!puedeExportar()"
+          [title]="
+            puedeExportar()
+              ? 'Exportar a Excel'
+              : 'Solo se pueden exportar inspecciones finalizadas'
+          "
+        >
+          <mat-icon>download</mat-icon>
+          <span>{{ exportando() ? 'Exportando...' : 'Exportar Excel' }}</span>
+        </button>
         <span
           class="estado-badge"
           [class.estado-completada]="fechaFin() !== null"
@@ -44,6 +57,10 @@
         <div class="field-value">{{ maquinaNombre() || '-' }}</div>
       </div>
       <div class="form-field">
+        <label class="field-label">Inspector</label>
+        <div class="field-value">{{ inspectorNombre() }}</div>
+      </div>
+      <div class="form-field">
         <label class="field-label">Supervisor</label>
         <div class="field-value">{{ supervisorNombre() || '-' }}</div>
       </div>
@@ -58,10 +75,6 @@
           </div>
           } @else { - }
         </div>
-      </div>
-      <div class="form-field">
-        <label class="field-label">Inspector</label>
-        <div class="field-value">{{ inspectorNombre() }}</div>
       </div>
       <div class="form-field">
         <label class="field-label">N° Serie Motor</label>

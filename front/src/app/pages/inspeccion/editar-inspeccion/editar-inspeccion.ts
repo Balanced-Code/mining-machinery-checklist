@@ -15,6 +15,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChecklistTemplate } from '@core/models/checklist.model';
 import {
+  Archivo,
   Inspeccion,
   InspeccionItemDTO,
   Maquina,
@@ -86,24 +87,64 @@ export class EditarInspeccion implements OnInit, OnDestroy {
 
   protected readonly usuariosFiltradosSupervisor = computed(() => {
     const search = this.searchSupervisor().toLowerCase().trim();
-    if (!search) return this.usuarios();
+    const inspectorId = this.inspector()?.id;
+    const tecnicosSeleccionados = this.tecnicoIds();
 
-    return this.usuarios().filter(
-      (usuario) =>
-        usuario.nombre.toLowerCase().includes(search) ||
-        usuario.correo.toLowerCase().includes(search)
-    );
+    // Filtrar usuarios excluyendo:
+    // 1. El inspector (creador)
+    // 2. Los técnicos ya seleccionados
+    let usuariosFiltrados = this.usuarios().filter((usuario) => {
+      // Excluir al inspector
+      if (inspectorId && usuario.id === inspectorId) return false;
+
+      // Excluir técnicos seleccionados
+      if (tecnicosSeleccionados.includes(usuario.id)) return false;
+
+      return true;
+    });
+
+    // Aplicar búsqueda
+    if (search) {
+      usuariosFiltrados = usuariosFiltrados.filter(
+        (usuario) =>
+          usuario.nombre.toLowerCase().includes(search) ||
+          usuario.correo.toLowerCase().includes(search)
+      );
+    }
+
+    return usuariosFiltrados;
   });
 
   protected readonly usuariosFiltradosTecnicos = computed(() => {
     const search = this.searchTecnicos().toLowerCase().trim();
-    if (!search) return this.usuarios();
+    const inspectorId = this.inspector()?.id;
+    const supervisorSeleccionado = this.supervisorId();
 
-    return this.usuarios().filter(
-      (usuario) =>
-        usuario.nombre.toLowerCase().includes(search) ||
-        usuario.correo.toLowerCase().includes(search)
-    );
+    // Filtrar usuarios excluyendo:
+    // 1. El inspector (creador)
+    // 2. El supervisor seleccionado
+    // NOTA: No excluimos técnicos ya seleccionados porque mat-select multiple
+    // los maneja automáticamente mostrándolos con checkbox marcado
+    let usuariosFiltrados = this.usuarios().filter((usuario) => {
+      // Excluir al inspector
+      if (inspectorId && usuario.id === inspectorId) return false;
+
+      // Excluir supervisor seleccionado
+      if (supervisorSeleccionado && usuario.id === supervisorSeleccionado) return false;
+
+      return true;
+    });
+
+    // Aplicar búsqueda
+    if (search) {
+      usuariosFiltrados = usuariosFiltrados.filter(
+        (usuario) =>
+          usuario.nombre.toLowerCase().includes(search) ||
+          usuario.correo.toLowerCase().includes(search)
+      );
+    }
+
+    return usuariosFiltrados;
   });
 
   // Estados de UI
@@ -314,7 +355,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     if (inspeccion.asignaciones && inspeccion.asignaciones.length > 0) {
       // Buscar supervisor (rol id 3 o nombre "Supervisor")
       const supervisorAsignacion = inspeccion.asignaciones.find(
-        (a) => a.rolAsignacion?.id === 3 || a.rolAsignacion?.nombre === 'Supervisor'
+        (a) => a.rolAsignacion?.id === 2 || a.rolAsignacion?.nombre === 'Supervisor'
       );
       if (supervisorAsignacion) {
         this.supervisorId.set(supervisorAsignacion.usuarioId);
@@ -322,7 +363,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
 
       // Buscar técnicos (rol ID 2 o nombre "Técnico")
       const tecnicoAsignaciones = inspeccion.asignaciones.filter(
-        (a) => a.rolAsignacion?.id === 2 || a.rolAsignacion?.nombre === 'Técnico'
+        (a) => a.rolAsignacion?.id === 3 || a.rolAsignacion?.nombre === 'Técnico'
       );
       if (tecnicoAsignaciones.length > 0) {
         const tecnicoIds = tecnicoAsignaciones.map((a) => a.usuarioId);
@@ -502,13 +543,13 @@ export class EditarInspeccion implements OnInit, OnDestroy {
 
         // Buscar si ya hay un supervisor asignado
         const supervisorAsignadoAntes = asignacionesActuales.find(
-          (a) => a.rolAsignacion?.id === 3 || a.rolAsignacion?.nombre === 'Supervisor'
+          (a) => a.rolAsignacion?.id === 2 || a.rolAsignacion?.nombre === 'Supervisor'
         );
 
         if (supervisorId !== null) {
           // Asignar nuevo supervisor o actualizar
 
-          await this.inspeccionService.asignarUsuario(id, supervisorId, 3);
+          await this.inspeccionService.asignarUsuario(id, supervisorId, 2);
         } else if (supervisorAsignadoAntes) {
           // Eliminar supervisor si había uno y ahora es null
 
@@ -520,7 +561,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
 
         // Obtener IDs de técnicos que ya están asignados (rol Técnico = ID 2)
         const tecnicosAsignadosAntes = asignacionesActuales
-          .filter((a) => a.rolAsignacion?.nombre === 'Técnico' || a.rolAsignacion?.id === 2)
+          .filter((a) => a.rolAsignacion?.nombre === 'Técnico' || a.rolAsignacion?.id === 3)
           .map((a) => a.usuarioId);
 
         // Agregar nuevos técnicos
@@ -528,8 +569,8 @@ export class EditarInspeccion implements OnInit, OnDestroy {
           (id) => !tecnicosAsignadosAntes.includes(id)
         );
         for (const tecnicoId of tecnicosAAgregar) {
-          // Rol ID 2 = Técnico (según seed)
-          await this.inspeccionService.asignarUsuario(id, tecnicoId, 2);
+          // Rol ID 3 = Técnico (según seed)
+          await this.inspeccionService.asignarUsuario(id, tecnicoId, 3);
         }
 
         // Eliminar técnicos deseleccionados
@@ -603,50 +644,61 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     dialogRef
       .afterClosed()
       .pipe(filter((result) => !!result))
-      .subscribe(async (result: any) => {
-        // Si el resultado es 'DELETE', eliminar la observación
-        if (result === 'DELETE') {
+      .subscribe(
+        async (
+          result:
+            | 'DELETE'
+            | {
+                descripcion: string;
+                archivosNuevos?: File[];
+                archivosExistentes?: Archivo[];
+                archivosEliminadosIds?: string[];
+              }
+        ) => {
+          // Si el resultado es 'DELETE', eliminar la observación
+          if (result === 'DELETE') {
+            await this.inspeccionService.guardarRespuesta(checklist.templateId, {
+              templateSeccionId: item.templateSeccionId,
+              cumple: item.cumple,
+              observacion: undefined, // Eliminar observación
+            });
+            return;
+          }
+
+          // Eliminar archivos marcados para eliminación
+          if (result.archivosEliminadosIds && result.archivosEliminadosIds.length > 0) {
+            for (const archivoId of result.archivosEliminadosIds) {
+              try {
+                await this.inspeccionService['archivoService'].eliminarArchivo(archivoId);
+              } catch (error) {
+                console.error('Error al eliminar archivo:', archivoId, error);
+              }
+            }
+          }
+
+          // Caso normal: guardar o actualizar observación
+          // Solo enviar el ID si es un ID real de base de datos (no temporal)
+          const observacionId =
+            item.observacion?.id && item.observacion.id < 1000000000000
+              ? item.observacion.id
+              : undefined;
+
+          // Convertir archivosExistentes de Archivo[] a number[]
+          const archivosExistentesIds =
+            result.archivosExistentes?.map((a) => parseInt(a.id, 10)) || [];
+
           await this.inspeccionService.guardarRespuesta(checklist.templateId, {
             templateSeccionId: item.templateSeccionId,
             cumple: item.cumple,
-            observacion: undefined, // Eliminar observación
+            observacion: {
+              id: observacionId,
+              descripcion: result.descripcion || '',
+              archivosNuevos: result.archivosNuevos || [],
+              archivosExistentes: archivosExistentesIds,
+            },
           });
-          return;
         }
-
-        // Eliminar archivos marcados para eliminación
-        if (result.archivosEliminadosIds && result.archivosEliminadosIds.length > 0) {
-          for (const archivoId of result.archivosEliminadosIds) {
-            try {
-              await this.inspeccionService['archivoService'].eliminarArchivo(archivoId);
-            } catch (error) {
-              console.error('Error al eliminar archivo:', archivoId, error);
-            }
-          }
-        }
-
-        // Caso normal: guardar o actualizar observación
-        // Solo enviar el ID si es un ID real de base de datos (no temporal)
-        const observacionId =
-          item.observacion?.id && item.observacion.id < 1000000000000
-            ? item.observacion.id
-            : undefined;
-
-        // Convertir archivosExistentes de Archivo[] a number[]
-        const archivosExistentesIds =
-          result.archivosExistentes?.map((a: any) => parseInt(a.id, 10)) || [];
-
-        await this.inspeccionService.guardarRespuesta(checklist.templateId, {
-          templateSeccionId: item.templateSeccionId,
-          cumple: item.cumple,
-          observacion: {
-            id: observacionId,
-            descripcion: result.descripcion || '',
-            archivosNuevos: result.archivosNuevos || [],
-            archivosExistentes: archivosExistentesIds,
-          },
-        });
-      });
+      );
   }
 
   protected intentarSalir(): void {
@@ -707,5 +759,27 @@ export class EditarInspeccion implements OnInit, OnDestroy {
   protected get inspectorNombre(): string {
     const user = this.inspector();
     return user ? this.formatUsuario(user) : 'Cargando...';
+  }
+
+  /**
+   * Valida que solo se ingresen números y punto decimal
+   */
+  protected soloNumeros(event: KeyboardEvent): boolean {
+    const charCode = event.charCode;
+    const value = (event.target as HTMLInputElement).value;
+
+    // Permitir números (0-9)
+    if (charCode >= 48 && charCode <= 57) {
+      return true;
+    }
+
+    // Permitir punto decimal solo si no existe ya uno
+    if (charCode === 46 && !value.includes('.')) {
+      return true;
+    }
+
+    // Bloquear cualquier otra tecla
+    event.preventDefault();
+    return false;
   }
 }

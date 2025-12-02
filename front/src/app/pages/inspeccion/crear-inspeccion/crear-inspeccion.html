@@ -192,6 +192,7 @@
             horometro.set($any($event.target).value ? parseFloat($any($event.target).value) : null);
             onHorometroChange()
           "
+          (keypress)="soloNumeros($event)"
         />
       </div>
     </div>

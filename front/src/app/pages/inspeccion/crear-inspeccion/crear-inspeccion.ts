@@ -14,7 +14,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { ChecklistTemplate } from '@core/models/checklist.model';
-import { InspeccionItemDTO, Maquina, UsuarioInspeccion } from '@core/models/inspeccion.model';
+import {
+  Archivo,
+  InspeccionItemDTO,
+  Maquina,
+  UsuarioInspeccion,
+} from '@core/models/inspeccion.model';
 import { AuthService } from '@core/services/auth.service';
 import { InspeccionService } from '@core/services/inspeccion.service';
 import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
@@ -76,24 +81,64 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
   protected readonly supervisoresFiltrados = computed(() => {
     const search = this.searchSupervisor().toLowerCase().trim();
-    if (!search) return this.usuarios();
+    const inspectorId = this.inspector()?.id;
+    const tecnicosSeleccionados = this.tecnicoIds();
 
-    return this.usuarios().filter(
-      (usuario) =>
-        usuario.nombre.toLowerCase().includes(search) ||
-        usuario.correo.toLowerCase().includes(search)
-    );
+    // Filtrar usuarios excluyendo:
+    // 1. El inspector (creador)
+    // 2. Los técnicos ya seleccionados
+    let usuariosFiltrados = this.usuarios().filter((usuario) => {
+      // Excluir al inspector
+      if (inspectorId && usuario.id === inspectorId) return false;
+
+      // Excluir técnicos seleccionados
+      if (tecnicosSeleccionados.includes(usuario.id)) return false;
+
+      return true;
+    });
+
+    // Aplicar búsqueda
+    if (search) {
+      usuariosFiltrados = usuariosFiltrados.filter(
+        (usuario) =>
+          usuario.nombre.toLowerCase().includes(search) ||
+          usuario.correo.toLowerCase().includes(search)
+      );
+    }
+
+    return usuariosFiltrados;
   });
 
   protected readonly tecnicosFiltrados = computed(() => {
     const search = this.searchTecnicos().toLowerCase().trim();
-    if (!search) return this.usuarios();
+    const inspectorId = this.inspector()?.id;
+    const supervisorSeleccionado = this.supervisorId();
 
-    return this.usuarios().filter(
-      (usuario) =>
-        usuario.nombre.toLowerCase().includes(search) ||
-        usuario.correo.toLowerCase().includes(search)
-    );
+    // Filtrar usuarios excluyendo:
+    // 1. El inspector (creador)
+    // 2. El supervisor seleccionado
+    // NOTA: No excluimos técnicos ya seleccionados porque mat-select multiple
+    // los maneja automáticamente mostrándolos con checkbox marcado
+    let usuariosFiltrados = this.usuarios().filter((usuario) => {
+      // Excluir al inspector
+      if (inspectorId && usuario.id === inspectorId) return false;
+
+      // Excluir supervisor seleccionado
+      if (supervisorSeleccionado && usuario.id === supervisorSeleccionado) return false;
+
+      return true;
+    });
+
+    // Aplicar búsqueda
+    if (search) {
+      usuariosFiltrados = usuariosFiltrados.filter(
+        (usuario) =>
+          usuario.nombre.toLowerCase().includes(search) ||
+          usuario.correo.toLowerCase().includes(search)
+      );
+    }
+
+    return usuariosFiltrados;
   });
 
   // Verifica si hay una máquina que coincida exactamente con la búsqueda
@@ -424,7 +469,7 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
     // Obtener el supervisor asignado anteriormente (rol Supervisor = ID 3)
     const supervisorAnterior = asignacionesActuales.find(
-      (a) => a.rolAsignacion?.nombre === 'Supervisor' || a.rolAsignacion?.id === 3
+      (a) => a.rolAsignacion?.nombre === 'Supervisor' || a.rolAsignacion?.id === 2
     );
 
     // Si se quitó el supervisor (null)
@@ -443,8 +488,8 @@ export class CrearInspeccion implements OnInit, OnDestroy {
         );
       }
 
-      // Asignar el nuevo supervisor (Rol ID 3 = Supervisor)
-      await this.inspeccionService.asignarUsuario(inspeccion.id, supervisorIdActual, 3);
+      // Asignar el nuevo supervisor (Rol ID 2 = Supervisor)
+      await this.inspeccionService.asignarUsuario(inspeccion.id, supervisorIdActual, 2);
     }
   }
 
@@ -460,7 +505,7 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
     // Obtener IDs de técnicos que ya están asignados (rol Técnico = ID 2)
     const tecnicosAsignadosAntes = asignacionesActuales
-      .filter((a) => a.rolAsignacion?.nombre === 'Técnico' || a.rolAsignacion?.id === 2)
+      .filter((a) => a.rolAsignacion?.nombre === 'Técnico' || a.rolAsignacion?.id === 3)
       .map((a) => a.usuarioId);
 
     // Agregar nuevos técnicos
@@ -468,8 +513,8 @@ export class CrearInspeccion implements OnInit, OnDestroy {
       (id) => !tecnicosAsignadosAntes.includes(id)
     );
     for (const tecnicoId of tecnicosAAgregar) {
-      // Rol ID 2 = Técnico (según seed)
-      await this.inspeccionService.asignarUsuario(inspeccion.id, tecnicoId, 2);
+      // Rol ID 3 = Técnico (según seed)
+      await this.inspeccionService.asignarUsuario(inspeccion.id, tecnicoId, 3);
     }
 
     // Eliminar técnicos deseleccionados
@@ -564,20 +609,26 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   }
 
   /**
-   * Asigna supervisor y técnicos a la inspección recién creada
+   * Asigna inspector, supervisor y técnicos a la inspección recién creada
    */
   private async asignarUsuariosIniciales(inspeccionId: number): Promise<void> {
+    const inspectorId = this.authService.user()?.id;
     const supervisorId = this.supervisorId();
     const tecnicoIds = this.tecnicoIds();
 
+    // Asignar inspector (usuario que crea la inspección)
+    if (inspectorId) {
+      await this.inspeccionService.asignarUsuario(inspeccionId, inspectorId, 1);
+    }
+
     // Asignar supervisor si fue seleccionado
     if (supervisorId !== null) {
-      await this.inspeccionService.asignarUsuario(inspeccionId, supervisorId, 3);
+      await this.inspeccionService.asignarUsuario(inspeccionId, supervisorId, 2);
     }
 
     // Asignar técnicos si fueron seleccionados
     for (const tecnicoId of tecnicoIds) {
-      await this.inspeccionService.asignarUsuario(inspeccionId, tecnicoId, 2);
+      await this.inspeccionService.asignarUsuario(inspeccionId, tecnicoId, 3);
     }
   }
 
@@ -631,50 +682,61 @@ export class CrearInspeccion implements OnInit, OnDestroy {
     dialogRef
       .afterClosed()
       .pipe(filter((result) => !!result))
-      .subscribe(async (result: any) => {
-        // Si el resultado es 'DELETE', eliminar la observación
-        if (result === 'DELETE') {
+      .subscribe(
+        async (
+          result:
+            | 'DELETE'
+            | {
+                descripcion: string;
+                archivosNuevos?: File[];
+                archivosExistentes?: Archivo[];
+                archivosEliminadosIds?: string[];
+              }
+        ) => {
+          // Si el resultado es 'DELETE', eliminar la observación
+          if (result === 'DELETE') {
+            await this.inspeccionService.guardarRespuesta(checklist.templateId, {
+              templateSeccionId: item.templateSeccionId,
+              cumple: item.cumple,
+              observacion: undefined, // Eliminar observación
+            });
+            return;
+          }
+
+          // Eliminar archivos marcados para eliminación
+          if (result.archivosEliminadosIds && result.archivosEliminadosIds.length > 0) {
+            for (const archivoId of result.archivosEliminadosIds) {
+              try {
+                await this.inspeccionService['archivoService'].eliminarArchivo(archivoId);
+              } catch (error) {
+                console.error('Error al eliminar archivo:', archivoId, error);
+              }
+            }
+          }
+
+          // Caso normal: guardar o actualizar observación
+          // Solo enviar el ID si es un ID real de base de datos (no temporal)
+          const observacionId =
+            item.observacion?.id && item.observacion.id < 1000000000000
+              ? item.observacion.id
+              : undefined;
+
+          // Convertir archivosExistentes de Archivo[] a number[]
+          const archivosExistentesIds =
+            result.archivosExistentes?.map((a) => parseInt(a.id, 10)) || [];
+
           await this.inspeccionService.guardarRespuesta(checklist.templateId, {
             templateSeccionId: item.templateSeccionId,
             cumple: item.cumple,
-            observacion: undefined, // Eliminar observación
+            observacion: {
+              id: observacionId,
+              descripcion: result.descripcion || '',
+              archivosNuevos: result.archivosNuevos || [],
+              archivosExistentes: archivosExistentesIds,
+            },
           });
-          return;
         }
-
-        // Eliminar archivos marcados para eliminación
-        if (result.archivosEliminadosIds && result.archivosEliminadosIds.length > 0) {
-          for (const archivoId of result.archivosEliminadosIds) {
-            try {
-              await this.inspeccionService['archivoService'].eliminarArchivo(archivoId);
-            } catch (error) {
-              console.error('Error al eliminar archivo:', archivoId, error);
-            }
-          }
-        }
-
-        // Caso normal: guardar o actualizar observación
-        // Solo enviar el ID si es un ID real de base de datos (no temporal)
-        const observacionId =
-          item.observacion?.id && item.observacion.id < 1000000000000
-            ? item.observacion.id
-            : undefined;
-
-        // Convertir archivosExistentes de Archivo[] a number[]
-        const archivosExistentesIds =
-          result.archivosExistentes?.map((a: any) => parseInt(a.id, 10)) || [];
-
-        await this.inspeccionService.guardarRespuesta(checklist.templateId, {
-          templateSeccionId: item.templateSeccionId,
-          cumple: item.cumple,
-          observacion: {
-            id: observacionId,
-            descripcion: result.descripcion || '',
-            archivosNuevos: result.archivosNuevos || [],
-            archivosExistentes: archivosExistentesIds,
-          },
-        });
-      });
+      );
   }
 
   protected intentarSalir(): void {
@@ -734,5 +796,27 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
   protected parseFloat(value: string): number {
     return parseFloat(value);
+  }
+
+  /**
+   * Valida que solo se ingresen números y punto decimal
+   */
+  protected soloNumeros(event: KeyboardEvent): boolean {
+    const charCode = event.charCode;
+    const value = (event.target as HTMLInputElement).value;
+
+    // Permitir números (0-9)
+    if (charCode >= 48 && charCode <= 57) {
+      return true;
+    }
+
+    // Permitir punto decimal solo si no existe ya uno
+    if (charCode === 46 && !value.includes('.')) {
+      return true;
+    }
+
+    // Bloquear cualquier otra tecla
+    event.preventDefault();
+    return false;
   }
 }

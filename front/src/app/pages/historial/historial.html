@@ -171,18 +171,16 @@
                 <mat-icon>edit</mat-icon>
               </button>
 
-              <!-- Descargar -->
+              <!-- Exportar Excel -->
               <button
                 class="btn-icon"
-                [disabled]="inspeccion.eliminadoEn"
-                (click)="descargarInspeccion(inspeccion)"
-                [title]="
-                  inspeccion.eliminadoEn
-                    ? 'No se puede descargar una inspección eliminada'
-                    : 'Descargar reporte'
-                "
+                [disabled]="!puedeExportar(inspeccion) || exportandoId() === inspeccion.id"
+                (click)="exportarInspeccion(inspeccion)"
+                [title]="getExportButtonTitle(inspeccion)"
               >
-                <mat-icon>download</mat-icon>
+                <mat-icon>{{
+                  exportandoId() === inspeccion.id ? 'hourglass_empty' : 'download'
+                }}</mat-icon>
               </button>
 
               <!-- Eliminar -->

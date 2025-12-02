@@ -43,7 +43,7 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
           numSerie: insp.numSerie,
           nSerieMotor: insp.nSerieMotor,
           cabinado: insp.cabinado,
-          horometro: insp.horometro,
+          horometro: insp.horometro ? Number(insp.horometro) : null,
           creadoPor: insp.creadoPor,
           creadoEn: insp.creadoEn,
           eliminadoEn: insp.eliminadoEn, // Incluir estado de eliminación
@@ -105,6 +105,7 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
         const inspeccionSerializada = {
           ...inspeccion,
           id: inspeccion.id.toString(),
+          horometro: inspeccion.horometro ? Number(inspeccion.horometro) : null,
           asignaciones: inspeccion.asignaciones?.map(asignacion => ({
             ...asignacion,
             id: asignacion.id.toString(),
@@ -188,4 +189,46 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
       return reply.internalServerError('Error al obtener los roles');
     }
   });
+
+  /**
+   * GET /inspecciones/:id/export
+   * Exportar una inspección a Excel con imágenes en formato ZIP
+   * Acceso: Automático (cualquier usuario autenticado)
+   */
+  fastify.get<{ Params: { id: string } }>(
+    '/:id/export',
+    async (request, reply) => {
+      try {
+        const { id } = request.params;
+        const inspeccionId = BigInt(id);
+
+        // Verificar que la inspección existe
+        const inspeccion =
+          await fastify.services.inspecciones.getInspeccionById(inspeccionId);
+
+        if (!inspeccion) {
+          return reply.notFound('Inspección no encontrada');
+        }
+
+        // Generar el ZIP con Excel e imágenes
+        const { buffer, filename } =
+          await fastify.services.excelExport.generateInspeccionZip(
+            inspeccionId
+          );
+
+        // Configurar headers para descarga
+        reply.header('Content-Type', 'application/zip');
+        reply.header(
+          'Content-Disposition',
+          `attachment; filename="${filename}"`
+        );
+
+        // Enviar el buffer
+        return reply.send(buffer);
+      } catch (error) {
+        fastify.log.error({ error }, 'Error al exportar inspección:');
+        return reply.internalServerError('Error al exportar la inspección');
+      }
+    }
+  );
 };
