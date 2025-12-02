@@ -322,7 +322,8 @@ export class InspeccionesService {
                 await this.archivosService.duplicarArchivosParaObservacion(
                   data.observacion.archivosExistentes,
                   observacionActualizada.id,
-                  data.userId
+                  data.userId,
+                  tx
                 );
               }
             }
@@ -347,7 +348,8 @@ export class InspeccionesService {
           await this.archivosService.duplicarArchivosParaObservacion(
             data.observacion.archivosExistentes,
             nuevaObservacion.id,
-            data.userId
+            data.userId,
+            tx
           );
         }
       }

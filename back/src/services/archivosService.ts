@@ -374,12 +374,14 @@ export class ArchivosService {
   async duplicarArchivosParaObservacion(
     archivosIds: number[],
     observacionId: bigint,
-    usuarioId: number
+    usuarioId: number,
+    prismaClient?: PrismaClient
   ): Promise<number[]> {
+    const client = prismaClient || this.prisma;
     const archivosNuevos: number[] = [];
 
     for (const archivoId of archivosIds) {
-      const archivo = await this.prisma.archivo.findUnique({
+      const archivo = await client.archivo.findUnique({
         where: { id: archivoId },
       });
 
@@ -394,7 +396,8 @@ export class ArchivosService {
       ) {
         // Generar nuevo nombre con sufijo numérico
         const nuevoNombre = await this.generarNombreIncrementado(
-          archivo.nombre
+          archivo.nombre,
+          client
         );
 
         // Si es un archivo físico, copiarlo
@@ -437,7 +440,7 @@ export class ArchivosService {
         }
 
         // Crear nuevo registro de archivo
-        const archivoNuevo = await this.prisma.archivo.create({
+        const archivoNuevo = await client.archivo.create({
           data: {
             nombre: nuevoNombre,
             tipo: archivo.tipo,
@@ -454,7 +457,7 @@ export class ArchivosService {
         archivosNuevos.push(Number(archivoNuevo.id));
       } else {
         // Si no está vinculado o ya está vinculado a esta observación, solo actualizar observacionId
-        await this.prisma.archivo.update({
+        await client.archivo.update({
           where: { id: archivoId },
           data: {
             observacionId,
@@ -473,15 +476,16 @@ export class ArchivosService {
    * Genera un nombre incrementado (ArchivoA → ArchivoA1 → ArchivoA2)
    */
   private async generarNombreIncrementado(
-    nombreOriginal: string
+    nombreOriginal: string,
+    prismaClient?: PrismaClient
   ): Promise<string> {
+    const client = prismaClient || this.prisma;
     // Extraer nombre base y extensión
     const extension = path.extname(nombreOriginal);
     const nombreSinExtension = path.basename(nombreOriginal, extension);
 
     // Buscar archivos con nombres similares
-    const patron = `${nombreSinExtension}%`;
-    const archivosExistentes = await this.prisma.archivo.findMany({
+    const archivosExistentes = await client.archivo.findMany({
       where: {
         nombre: {
           startsWith: nombreSinExtension,
