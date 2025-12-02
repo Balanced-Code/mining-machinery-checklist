@@ -21,15 +21,19 @@ import inspeccionesRoutes from './routes/inspecciones';
 import maquinasRoutes from './routes/maquinas';
 import usuariosRoutes from './routes/usuarios';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const app = Fastify({
-  logger: {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        translateTime: 'SYS:HH:MM:ss',
+  logger: isProduction
+    ? true // En producción, usar logger básico sin pino-pretty
+    : {
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            translateTime: 'SYS:HH:MM:ss',
+          },
+        },
       },
-    },
-  },
   ajv: {
     customOptions: {
       keywords: ['example'],

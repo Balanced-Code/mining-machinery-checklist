@@ -73,14 +73,29 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
   // Hook global que se ejecuta antes de cada handler de ruta
   fastify.addHook('preHandler', async (request, reply) => {
+    // Obtener la URL sin query parameters (con fallback a string vacío)
+    const urlPath = (request.url ?? '').split('?')[0] || '';
+
+    // IMPORTANTE: Las rutas API siempre requieren autenticación (excepto las marcadas explícitamente)
+    // Las rutas del frontend (sin /api o /uploads) NO requieren autenticación
+    // porque el frontend de Angular maneja su propio routing y autenticación del lado del cliente
+
+    // Si la ruta NO es /api ni /uploads, es una ruta del frontend -> sin autenticación
+    if (!urlPath.startsWith('/api') && !urlPath.startsWith('/uploads')) {
+      fastify.log.debug({
+        url: urlPath,
+        method: request.method,
+        message: 'Ruta del frontend - sin autenticación requerida',
+      });
+      return;
+    }
+
     // Verificar si es un archivo estático específico (por ruta exacta)
-    const isStaticFilePath = staticFilePaths.includes(
-      request.url.split('?')[0]
-    );
+    const isStaticFilePath = staticFilePaths.includes(urlPath);
 
     if (isStaticFilePath) {
       fastify.log.debug({
-        url: request.url,
+        url: urlPath,
         method: request.method,
         message: 'Archivo estático específico - sin autenticación requerida',
       });
@@ -89,12 +104,12 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // Verificar si es un archivo estático del frontend (por extensión)
     const isStaticFile = staticFileExtensions.some(ext =>
-      request.url.toLowerCase().split('?')[0].endsWith(ext)
+      urlPath.toLowerCase().endsWith(ext)
     );
 
     if (isStaticFile) {
       fastify.log.debug({
-        url: request.url,
+        url: urlPath,
         method: request.method,
         message: 'Archivo estático - sin autenticación requerida',
       });
@@ -103,12 +118,12 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // Verificar si la ruta es de documentación (rutas públicas)
     const isPublicRoute = publicRoutes.some(
-      route => request.url === route || request.url.startsWith(route + '/')
+      route => urlPath === route || urlPath.startsWith(route + '/')
     );
 
     if (isPublicRoute) {
       fastify.log.debug({
-        url: request.url,
+        url: urlPath,
         method: request.method,
         message: 'Ruta pública - sin autenticación requerida',
       });
@@ -118,7 +133,7 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // Verificar si la ruta específicamente no requiere autenticación
     if (request.routeOptions?.config?.requiresAuth === false) {
       fastify.log.debug({
-        url: request.url,
+        url: urlPath,
         method: request.method,
         message: 'Ruta exenta de autenticación automática',
       });
@@ -127,7 +142,7 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // Aplicar autenticación automática para todas las demás rutas
     fastify.log.debug({
-      url: request.url,
+      url: urlPath,
       method: request.method,
       message: 'Aplicando autenticación automática',
     });
