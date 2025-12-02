@@ -1,5 +1,6 @@
 # Angular specific
 dist/
+dist-release/
 out-tsc/
 tmp/
 coverage/
