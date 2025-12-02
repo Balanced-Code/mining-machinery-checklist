@@ -150,6 +150,7 @@ $packageJson | Add-Member -NotePropertyName "type" -NotePropertyValue "module" -
 $packageJson | ConvertTo-Json -Depth 10 | Set-Content "$DIST_DIR\$APP_NAME\backend\package.json"
 
 Copy-Item "back\prisma" "$DIST_DIR\$APP_NAME\backend\" -Recurse
+Copy-Item "back\src\generated" "$DIST_DIR\$APP_NAME\backend\src\" -Recurse -Force
 Copy-Item "back\node_modules" "$DIST_DIR\$APP_NAME\backend\" -Recurse
 Write-Host "Backend copiado" -ForegroundColor Green
 
@@ -232,7 +233,7 @@ if (`$PRIMERA_VEZ) {
     
     New-Item -ItemType Directory -Path `$PG_DATA -Force | Out-Null
     
-    # Crear archivo de contraseña temporal
+    # Crear archivo de contrasena temporal
     `$pwdFile = "`$APP_DIR\data\pwd.tmp"
     "admin" | Out-File -FilePath `$pwdFile -Encoding ASCII -NoNewline
     
@@ -289,7 +290,7 @@ New-Item -ItemType Directory -Path `$PG_DATA -Force | Out-Null
 
 Write-Host "Inicializando base de datos PostgreSQL..." -ForegroundColor Cyan
 
-# Crear archivo de contraseña temporal
+# Crear archivo de contrasena temporal
 `$pwdFile = "`$APP_DIR\data\pwd.tmp"
 "admin" | Out-File -FilePath `$pwdFile -Encoding ASCII -NoNewline
 
