@@ -72,7 +72,7 @@ async function main() {
     },
   });
 
-  const supervisorUser = await prisma.usuario.create({
+  const _supervisorUser = await prisma.usuario.create({
     data: {
       nombre: 'Juan Pérez',
       correo: 'supervisor@normet.com',
@@ -81,7 +81,7 @@ async function main() {
     },
   });
 
-  const operadorUser = await prisma.usuario.create({
+  const _operadorUser = await prisma.usuario.create({
     data: {
       nombre: 'Carlos Martinez',
       correo: 'operador@normet.com',
@@ -90,7 +90,7 @@ async function main() {
     },
   });
 
-  const tecnicoUser = await prisma.usuario.create({
+  const _tecnicoUser = await prisma.usuario.create({
     data: {
       nombre: 'María González',
       correo: 'tecnico@normet.com',
@@ -99,7 +99,7 @@ async function main() {
     },
   });
 
-  const inspectorUser = await prisma.usuario.create({
+  const _inspectorUser = await prisma.usuario.create({
     data: {
       nombre: 'Roberto Silva',
       correo: 'inspector@normet.com',
@@ -108,7 +108,7 @@ async function main() {
     },
   });
 
-  const invitadoUser = await prisma.usuario.create({
+  const _invitadoUser = await prisma.usuario.create({
     data: {
       nombre: 'Invitado General',
       correo: 'invitado@normet.com',

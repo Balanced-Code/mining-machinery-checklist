@@ -99,7 +99,7 @@ export class InspeccionService {
     };
   });
 
-  private readonly baseUrl = 'http://localhost:3000';
+  private readonly baseUrl = '';
 
   /**
    * Crea una nueva inspección

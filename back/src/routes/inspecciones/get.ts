@@ -143,23 +143,28 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
           await fastify.services.inspecciones.getChecklists(inspeccionId);
 
         // Serializar BigInt a string
-        const checklistsSerializados = checklists.map(checklist => ({
-          ...checklist,
-          items: checklist.items.map(item => ({
-            ...item,
-            observacion: item.observacion
-              ? {
-                  ...item.observacion,
-                  archivos: item.observacion.archivos?.map(archivo => ({
-                    ...archivo,
-                    id: archivo.id.toString(),
-                    tamano: archivo.tamano.toString(),
-                    observacionId: archivo.observacionId?.toString() ?? null,
-                  })),
-                }
-              : null,
-          })),
-        }));
+        const checklistsSerializados = checklists.map(
+          (checklist: (typeof checklists)[0]) => ({
+            ...checklist,
+            items: checklist.items.map((item: (typeof checklist.items)[0]) => ({
+              ...item,
+              observacion: item.observacion
+                ? {
+                    ...item.observacion,
+                    archivos: item.observacion.archivos?.map(
+                      (archivo: (typeof item.observacion.archivos)[0]) => ({
+                        ...archivo,
+                        id: archivo.id.toString(),
+                        tamano: archivo.tamano.toString(),
+                        observacionId:
+                          archivo.observacionId?.toString() ?? null,
+                      })
+                    ),
+                  }
+                : null,
+            })),
+          })
+        );
 
         return reply.send({
           checklists: checklistsSerializados,
@@ -248,7 +253,7 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
       const { excludeId } = request.query;
 
       // Buscar inspección con ese número de serie
-      const whereCondition: any = {
+      const whereCondition: { numSerie: string; id?: { not: bigint } } = {
         numSerie,
       };
 

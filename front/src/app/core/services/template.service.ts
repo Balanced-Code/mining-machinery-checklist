@@ -44,7 +44,7 @@ export class TemplateService {
   readonly errorMessage = this.errorSignal.asReadonly();
   readonly hasTemplates = computed(() => this.templatesSignal().length > 0);
 
-  private readonly baseUrl = 'http://localhost:3000';
+  private readonly baseUrl = '';
 
   /**
    * Obtiene todos los templates del sistema

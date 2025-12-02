@@ -21,7 +21,7 @@ interface MaquinaResponse {
 })
 export class MaquinariaService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:3000';
+  private readonly baseUrl = '';
   private readonly apiUrl = `${this.baseUrl}/maquinas`;
 
   // Estados

@@ -40,7 +40,7 @@ export class AuthService {
   readonly configLoaded = this.configLoadedSignal.asReadonly();
   readonly configError = this.configErrorSignal.asReadonly();
 
-  private readonly baseUrl = 'http://localhost:3000';
+  private readonly baseUrl = '';
 
   constructor() {
     // Los cargos se cargan a través de APP_INITIALIZER antes de que la app arranque
@@ -203,13 +203,12 @@ export class AuthService {
         try {
           this.cargosHierarchySignal.set(JSON.parse(cached));
           this.configLoadedSignal.set(true);
-          const hoursRemaining = Math.round((MAX_AGE - age) / 1000 / 60 / 60);
+          const _hoursRemaining = Math.round((MAX_AGE - age) / 1000 / 60 / 60);
 
           return;
         } catch (err) {
           console.warn('Error al parsear cache, recargando:', err);
         }
-      } else {
       }
     } else {
       // Diagnóstico de qué falta

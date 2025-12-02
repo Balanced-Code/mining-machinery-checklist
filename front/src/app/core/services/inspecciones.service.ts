@@ -73,7 +73,7 @@ export class InspeccionesService {
   readonly errorMessage = this.errorSignal.asReadonly();
   readonly hasInspecciones = computed(() => this.inspeccionesSignal().length > 0);
 
-  private readonly baseUrl = 'http://localhost:3000';
+  private readonly baseUrl = '';
 
   /**
    * Obtener todas las inspecciones

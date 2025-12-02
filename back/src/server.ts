@@ -53,21 +53,10 @@ async function start() {
     await app.register(jwtPlugin); // 10. Autenticación JWT
     await app.register(authPlugin); // 11. Plugin de autenticación global
     await app.register(multipartPlugin); // 12. Manejo de archivos multipart
-    await app.register(staticPlugin); // 13. Servir archivos estáticos
-    await app.register(swaggerPlugin); // 14. Swagger
+    await app.register(swaggerPlugin); // 13. Swagger
+    await app.register(staticPlugin); // 14. Servir archivos estáticos
 
-    // Ruta raíz - Redirección a documentación (oculta de Swagger)
-    app.get(
-      '/',
-      {
-        schema: { hide: true },
-      },
-      async (request, reply) => {
-        return reply.redirect('/documentation');
-      }
-    );
-
-    // 12. Rutas con prefijos
+    // Rutas con prefijos
     await app.register(authRoutes, { prefix: '/auth' }); // Gestión de Autenticación/Perfil
     await app.register(usuariosRoutes, { prefix: '/usuarios' }); // Gestión de Usuarios
     await app.register(templateRoutes, { prefix: '/templates' }); // Gestion de Templates de Checklist

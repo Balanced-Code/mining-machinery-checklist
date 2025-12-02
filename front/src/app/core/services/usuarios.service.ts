@@ -29,7 +29,7 @@ export class UsuariosService {
   readonly errorMessage = this.errorSignal.asReadonly();
   readonly hasUsuarios = computed(() => this.usuariosSignal().length > 0);
 
-  private readonly baseUrl = 'http://localhost:3000';
+  private readonly baseUrl = '';
 
   /**
    * Obtiene todos los usuarios del sistema

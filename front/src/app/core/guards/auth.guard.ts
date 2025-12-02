@@ -29,9 +29,8 @@ const checkAuthAndRole = async (route: ActivatedRouteSnapshot): Promise<boolean>
       console.error('Timeout esperando configuración de cargos');
       // Si hay error de configuración, usar fallback
       if (authService.configError()) {
-        console.warn('⚠ando configuración fallback');
+        console.warn('Usando configuración fallback');
       }
-    } else {
     }
   }
 
