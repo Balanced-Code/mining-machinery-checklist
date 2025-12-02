@@ -1,5 +1,4 @@
 import type { Cargo, Usuario } from '@/generated/prisma';
-
 /**
  * Detalles de Usuarios (listado/no)
  */

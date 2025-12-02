@@ -14,12 +14,12 @@ import rateLimitPlugin from './plugins/rateLimit';
 import servicesPlugin from './plugins/services';
 import staticPlugin from './plugins/static';
 import swaggerPlugin from './plugins/swagger';
+import archivosRoutes from './routes/archivos';
 import authRoutes from './routes/auth/index';
-import usuariosRoutes from './routes/usuarios';
 import templateRoutes from './routes/checklists_template';
 import inspeccionesRoutes from './routes/inspecciones';
 import maquinasRoutes from './routes/maquinas';
-import archivosRoutes from './routes/archivos';
+import usuariosRoutes from './routes/usuarios';
 
 const app = Fastify({
   logger: {
@@ -56,13 +56,13 @@ async function start() {
     await app.register(swaggerPlugin); // 13. Swagger
     await app.register(staticPlugin); // 14. Servir archivos estáticos
 
-    // Rutas con prefijos
-    await app.register(authRoutes, { prefix: '/auth' }); // Gestión de Autenticación/Perfil
-    await app.register(usuariosRoutes, { prefix: '/usuarios' }); // Gestión de Usuarios
-    await app.register(templateRoutes, { prefix: '/templates' }); // Gestion de Templates de Checklist
-    await app.register(inspeccionesRoutes, { prefix: '/inspecciones' }); // Gestión de Inspecciones
-    await app.register(maquinasRoutes, { prefix: '/maquinas' }); // Gestión de Máquinas
-    await app.register(archivosRoutes, { prefix: '/archivos' }); // Gestión de Archivos
+    // Rutas API con prefijo global /api
+    await app.register(authRoutes, { prefix: '/api/auth' }); // Gestión de Autenticación/Perfil
+    await app.register(usuariosRoutes, { prefix: '/api/usuarios' }); // Gestión de Usuarios
+    await app.register(templateRoutes, { prefix: '/api/templates' }); // Gestion de Templates de Checklist
+    await app.register(inspeccionesRoutes, { prefix: '/api/inspecciones' }); // Gestión de Inspecciones
+    await app.register(maquinasRoutes, { prefix: '/api/maquinas' }); // Gestión de Máquinas
+    await app.register(archivosRoutes, { prefix: '/api/archivos' }); // Gestión de Archivos
 
     // Iniciar servidor
     await app.listen({

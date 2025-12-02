@@ -40,7 +40,7 @@ export class AuthService {
   readonly configLoaded = this.configLoadedSignal.asReadonly();
   readonly configError = this.configErrorSignal.asReadonly();
 
-  private readonly baseUrl = '';
+  private readonly baseUrl = '/api';
 
   constructor() {
     // Los cargos se cargan a través de APP_INITIALIZER antes de que la app arranque

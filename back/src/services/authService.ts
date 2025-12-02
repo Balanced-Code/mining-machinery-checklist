@@ -1,6 +1,5 @@
 import type { PrismaClient } from '@/generated/prisma';
 import type { UserAuth } from '@/models/user';
-
 export class AuthService {
   constructor(private prisma: PrismaClient) {}
 

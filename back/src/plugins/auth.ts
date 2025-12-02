@@ -1,3 +1,5 @@
+import { verifyJWTAndToken } from '@/middlewares/auth';
+import '@/models/fastify';
 import type {
   FastifyInstance,
   FastifyPluginAsync,
@@ -5,8 +7,6 @@ import type {
   FastifyRequest,
 } from 'fastify';
 import fp from 'fastify-plugin';
-import { verifyJWTAndToken } from '@/middlewares/auth';
-import '@/models/fastify';
 
 /**
  * Lógica de autenticación (movida desde middlewares/auth.ts)
@@ -48,8 +48,59 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     '/openapi.json', // Schema OpenAPI JSON (ruta alternativa)
   ];
 
+  // Extensiones de archivos estáticos del frontend que no requieren autenticación
+  const staticFileExtensions = [
+    '.js',
+    '.mjs',
+    '.css',
+    '.html',
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.gif',
+    '.svg',
+    '.ico',
+    '.woff',
+    '.woff2',
+    '.ttf',
+    '.eot',
+    '.map',
+    '.webp',
+  ];
+
+  // Rutas específicas de archivos estáticos
+  const staticFilePaths = ['/favicon.ico'];
+
   // Hook global que se ejecuta antes de cada handler de ruta
   fastify.addHook('preHandler', async (request, reply) => {
+    // Verificar si es un archivo estático específico (por ruta exacta)
+    const isStaticFilePath = staticFilePaths.includes(
+      request.url.split('?')[0]
+    );
+
+    if (isStaticFilePath) {
+      fastify.log.debug({
+        url: request.url,
+        method: request.method,
+        message: 'Archivo estático específico - sin autenticación requerida',
+      });
+      return;
+    }
+
+    // Verificar si es un archivo estático del frontend (por extensión)
+    const isStaticFile = staticFileExtensions.some(ext =>
+      request.url.toLowerCase().split('?')[0].endsWith(ext)
+    );
+
+    if (isStaticFile) {
+      fastify.log.debug({
+        url: request.url,
+        method: request.method,
+        message: 'Archivo estático - sin autenticación requerida',
+      });
+      return; // Saltar autenticación para archivos estáticos
+    }
+
     // Verificar si la ruta es de documentación (rutas públicas)
     const isPublicRoute = publicRoutes.some(
       route => request.url === route || request.url.startsWith(route + '/')

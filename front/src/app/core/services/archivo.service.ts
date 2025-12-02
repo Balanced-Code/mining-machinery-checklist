@@ -38,7 +38,7 @@ export interface ListarArchivosResponse {
 })
 export class ArchivoService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/archivos';
+  private readonly baseUrl = '/api/archivos';
 
   /**
    * Sube un archivo al servidor

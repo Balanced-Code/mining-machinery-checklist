@@ -99,7 +99,7 @@ export class InspeccionService {
     };
   });
 
-  private readonly baseUrl = '';
+  private readonly baseUrl = '/api';
 
   /**
    * Crea una nueva inspección

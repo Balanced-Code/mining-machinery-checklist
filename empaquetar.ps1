@@ -142,6 +142,7 @@ New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\data" -Force | Out-Null
 # 2. Copiar archivos del backend
 Write-Host "`nCopiando backend..." -ForegroundColor Cyan
 Copy-Item "back\dist" "$DIST_DIR\$APP_NAME\backend\" -Recurse
+Copy-Item "back\src\generated" "$DIST_DIR\$APP_NAME\backend\dist\" -Recurse -Force
 Copy-Item "back\package.json" "$DIST_DIR\$APP_NAME\backend\"
 
 # Agregar "type": "module" al package.json
@@ -150,7 +151,6 @@ $packageJson | Add-Member -NotePropertyName "type" -NotePropertyValue "module" -
 $packageJson | ConvertTo-Json -Depth 10 | Set-Content "$DIST_DIR\$APP_NAME\backend\package.json"
 
 Copy-Item "back\prisma" "$DIST_DIR\$APP_NAME\backend\" -Recurse
-Copy-Item "back\src\generated" "$DIST_DIR\$APP_NAME\backend\src\" -Recurse -Force
 Copy-Item "back\node_modules" "$DIST_DIR\$APP_NAME\backend\" -Recurse
 Write-Host "Backend copiado" -ForegroundColor Green
 
@@ -163,7 +163,7 @@ Write-Host "Frontend copiado" -ForegroundColor Green
 Write-Host "`nPreparando PostgreSQL..." -ForegroundColor Cyan
 
 # Prioridad 1: Copiar desde carpeta pre-extraida (mas rapido)
-if (Test-Path ".cache\postgresql-extracted\pgsql") {
+if (Test-Path ".cache\postgresql-extracted") {
     Write-Host "Copiando PostgreSQL pre-extraido..." -ForegroundColor Cyan
     Copy-Item ".cache\postgresql-extracted\*" "$DIST_DIR\$APP_NAME\database\postgresql\" -Recurse -Force
     Write-Host "PostgreSQL copiado (rapido)" -ForegroundColor Green
@@ -260,6 +260,38 @@ if (`$pgRunning) {
 } else {
     Write-Host "Error: PostgreSQL no inicio. Revisa data\postgres.log" -ForegroundColor Red
     exit 1
+}
+
+# Si es primera vez, crear la base de datos y ejecutar migraciones
+if (`$PRIMERA_VEZ) {
+    Write-Host "`nConfigurando base de datos de la aplicacion..." -ForegroundColor Cyan
+    
+    # Crear la base de datos
+    Write-Host "Creando base de datos 'checklist_db'..." -ForegroundColor Gray
+    & "`$PG_DIR\bin\createdb.exe" -h localhost -p `$PG_PORT -U postgres checklist_db
+    
+    if (`$LASTEXITCODE -eq 0) {
+        Write-Host "Base de datos 'checklist_db' creada correctamente" -ForegroundColor Green
+    } else {
+        Write-Host "Error al crear la base de datos" -ForegroundColor Red
+        & "`$PG_DIR\bin\pg_ctl.exe" stop -D "`$PG_DATA" -s
+        exit 1
+    }
+    
+    # Ejecutar migraciones de Prisma
+    Write-Host "Ejecutando migraciones de base de datos..." -ForegroundColor Gray
+    Set-Location "`$APP_DIR\backend"
+    npx prisma migrate deploy
+    
+    if (`$LASTEXITCODE -eq 0) {
+        Write-Host "Migraciones ejecutadas correctamente" -ForegroundColor Green
+    } else {
+        Write-Host "Error al ejecutar migraciones" -ForegroundColor Red
+        & "`$PG_DIR\bin\pg_ctl.exe" stop -D "`$PG_DATA" -s
+        exit 1
+    }
+    
+    Write-Host "`nConfiguracion inicial completada!`n" -ForegroundColor Green
 }
 
 Write-Host "`nIniciando backend..." -ForegroundColor Cyan

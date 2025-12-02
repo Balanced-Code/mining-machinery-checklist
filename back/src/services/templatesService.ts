@@ -5,7 +5,6 @@ import type {
   TemplateDetails,
   UpdateSeccionData,
 } from '@/models/template';
-
 export class TemplatesService {
   constructor(private prisma: PrismaClient) {}
 

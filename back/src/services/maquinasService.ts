@@ -1,5 +1,4 @@
 import type { PrismaClient } from '@/generated/prisma';
-
 export class MaquinasService {
   constructor(private prisma: PrismaClient) {}
 

@@ -29,7 +29,7 @@ export class UsuariosService {
   readonly errorMessage = this.errorSignal.asReadonly();
   readonly hasUsuarios = computed(() => this.usuariosSignal().length > 0);
 
-  private readonly baseUrl = '';
+  private readonly baseUrl = '/api';
 
   /**
    * Obtiene todos los usuarios del sistema

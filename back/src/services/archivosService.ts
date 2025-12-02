@@ -1,17 +1,16 @@
+import type { PrismaClient } from '@/generated/prisma';
 import type {
-  ArchivoDetails,
   ActualizarArchivoParams,
+  ArchivoDetails,
   ListarArchivosParams,
 } from '@/models/archivo';
 import { CategoriaArchivo } from '@/models/archivo';
-import type { PrismaClient } from '@/generated/prisma';
 import type { MultipartFile } from '@fastify/multipart';
 import { createHash } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
-import { mkdir, unlink, access } from 'node:fs/promises';
+import { access, mkdir, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
-
 /**
  * MIME types permitidos por categoría
  */
