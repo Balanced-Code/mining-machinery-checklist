@@ -382,54 +382,33 @@
   overflow-wrap: break-word;
 }
 
-.observacion-preview {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 12px;
-  background: rgb(59 130 246 / 10%);
-  border-left: 3px solid #3b82f6;
-  border-radius: 6px;
-  margin-top: 4px;
-}
-
-.observacion-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
-  color: #3b82f6;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.observacion-text {
-  font-size: 13px;
-  color: rgb(0 0 0 / 80%);
-  line-height: 1.5;
-  flex: 1;
-}
-
-.archivos-preview {
-  display: flex;
+.btn-observacion-indicator {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background: rgb(107 114 128 / 10%);
-  border-radius: 6px;
-  width: fit-content;
-}
-
-.archivo-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-  color: #6b7280;
-}
-
-.archivos-count {
-  font-size: 12px;
-  color: rgb(0 0 0 / 70%);
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  background: rgb(59 130 246 / 10%);
+  color: #3b82f6;
+  border: none;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  width: fit-content;
+  max-width: max-content;
+}
+
+.btn-observacion-indicator:hover {
+  background: rgb(59 130 246 / 20%);
+}
+
+.btn-observacion-indicator mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
 }
 
 /* ========== ESTADO DEL ITEM ========== */

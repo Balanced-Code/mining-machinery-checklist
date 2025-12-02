@@ -257,78 +257,94 @@ export class InspeccionesService {
         throw new Error('Sección de template no encontrada');
       }
 
-      // 4. Crear o actualizar observación si se proporciona
+      // 4. Manejar observación
       let observacionId: bigint | null = null;
-      if (data.observacion) {
-        // Validar si el ID es un número válido de base de datos (no temporal)
+
+      // Si hay una observación existente pero viene vacía (sin descripción y sin archivos), eliminarla
+      if (data.observacion?.id) {
         const idValido =
-          data.observacion.id &&
           typeof data.observacion.id === 'number' &&
           data.observacion.id > 0 &&
-          data.observacion.id < 1000000000000; // No es timestamp
+          data.observacion.id < 1000000000000;
 
-        let observacionExiste = false;
         if (idValido) {
-          try {
-            const observacion = await tx.observacion.findUnique({
-              where: { id: BigInt(data.observacion.id!) },
-            });
-            observacionExiste = !!observacion;
-          } catch {
-            observacionExiste = false;
+          const observacionExistente = await tx.observacion.findUnique({
+            where: { id: BigInt(data.observacion.id) },
+            include: { archivos: true },
+          });
+
+          if (observacionExistente) {
+            const descripcionVacia = !data.observacion.descripcion?.trim();
+            const sinArchivosNuevos =
+              !data.observacion.archivosExistentes ||
+              data.observacion.archivosExistentes.length === 0;
+
+            // Si la observación queda vacía (sin descripción y sin archivos), eliminarla
+            if (descripcionVacia && sinArchivosNuevos) {
+              // Eliminar archivos asociados si el servicio está disponible
+              if (this.archivosService) {
+                for (const archivo of observacionExistente.archivos) {
+                  try {
+                    await this.archivosService.eliminarArchivo(
+                      archivo.id,
+                      data.userId
+                    );
+                  } catch (_error) {
+                    // Continuar aunque falle (archivo podría estar compartido)
+                  }
+                }
+              }
+
+              // Eliminar la observación
+              await tx.observacion.delete({
+                where: { id: BigInt(data.observacion.id) },
+              });
+
+              observacionId = null;
+            } else {
+              // Actualizar observación existente
+              const observacionActualizada = await tx.observacion.update({
+                where: { id: BigInt(data.observacion.id) },
+                data: {
+                  descripcion: data.observacion.descripcion,
+                  actualizadoPor: data.userId,
+                  actualizadoEn: new Date(),
+                },
+              });
+              observacionId = observacionActualizada.id;
+
+              // Vincular archivos existentes a la observación
+              if (
+                data.observacion.archivosExistentes &&
+                data.observacion.archivosExistentes.length > 0
+              ) {
+                await tx.archivo.updateMany({
+                  where: { id: { in: data.observacion.archivosExistentes } },
+                  data: { observacionId: observacionActualizada.id },
+                });
+              }
+            }
           }
         }
+      } else if (data.observacion && data.observacion.descripcion?.trim()) {
+        // Crear nueva observación solo si tiene descripción
+        const nuevaObservacion = await tx.observacion.create({
+          data: {
+            descripcion: data.observacion.descripcion,
+            creadoPor: data.userId,
+          },
+        });
+        observacionId = nuevaObservacion.id;
 
-        if (idValido && observacionExiste) {
-          // Actualizar observación existente
-          const observacionActualizada = await tx.observacion.update({
-            where: { id: BigInt(data.observacion.id!) },
-            data: {
-              descripcion: data.observacion.descripcion,
-              actualizadoPor: data.userId,
-              actualizadoEn: new Date(),
-            },
+        // Vincular archivos existentes a la nueva observación
+        if (
+          data.observacion.archivosExistentes &&
+          data.observacion.archivosExistentes.length > 0
+        ) {
+          await tx.archivo.updateMany({
+            where: { id: { in: data.observacion.archivosExistentes } },
+            data: { observacionId: nuevaObservacion.id },
           });
-          observacionId = observacionActualizada.id;
-
-          // Vincular archivos existentes a la observación
-          if (
-            data.observacion.archivosExistentes &&
-            data.observacion.archivosExistentes.length > 0
-          ) {
-            await tx.archivo.updateMany({
-              where: {
-                id: { in: data.observacion.archivosExistentes },
-              },
-              data: {
-                observacionId: observacionActualizada.id,
-              },
-            });
-          }
-        } else {
-          // Crear nueva observación
-          const nuevaObservacion = await tx.observacion.create({
-            data: {
-              descripcion: data.observacion.descripcion,
-              creadoPor: data.userId,
-            },
-          });
-          observacionId = nuevaObservacion.id;
-
-          // Vincular archivos existentes a la nueva observación
-          if (
-            data.observacion.archivosExistentes &&
-            data.observacion.archivosExistentes.length > 0
-          ) {
-            await tx.archivo.updateMany({
-              where: {
-                id: { in: data.observacion.archivosExistentes },
-              },
-              data: {
-                observacionId: nuevaObservacion.id,
-              },
-            });
-          }
         }
       }
 
@@ -847,17 +863,17 @@ export class InspeccionesService {
       const archivosIds: bigint[] = [];
       const observacionesIds: bigint[] = [];
 
-      eleccionesTemplate.forEach(eleccion => {
-        eleccion.eleccionRespuestas.forEach(respuesta => {
+      for (const eleccion of eleccionesTemplate) {
+        for (const respuesta of eleccion.eleccionRespuestas) {
           const observacion = respuesta.resultadoAtributo.observacion;
           if (observacion) {
             observacionesIds.push(observacion.id);
-            observacion.archivos.forEach(archivo => {
+            for (const archivo of observacion.archivos) {
               archivosIds.push(archivo.id);
-            });
+            }
           }
-        });
-      });
+        }
+      }
 
       // 3. Eliminar archivos físicos y registros
       if (this.archivosService && archivosIds.length > 0) {
@@ -884,7 +900,10 @@ export class InspeccionesService {
       });
 
       // 6. Eliminar elecciones de templates y sus respuestas
-      const eleccionTemplateIds = eleccionesTemplate.map(et => et.id);
+      const eleccionTemplateIds: bigint[] = [];
+      for (const et of eleccionesTemplate) {
+        eleccionTemplateIds.push(et.id);
+      }
 
       if (eleccionTemplateIds.length > 0) {
         // Obtener resultados para eliminarlos después
@@ -893,9 +912,10 @@ export class InspeccionesService {
           select: { resultadoAtributoChecklistId: true },
         });
 
-        const resultadoIds = respuestas.map(
-          r => r.resultadoAtributoChecklistId
-        );
+        const resultadoIds: bigint[] = [];
+        for (const r of respuestas) {
+          resultadoIds.push(r.resultadoAtributoChecklistId);
+        }
 
         // Eliminar respuestas
         await tx.eleccionRespuesta.deleteMany({

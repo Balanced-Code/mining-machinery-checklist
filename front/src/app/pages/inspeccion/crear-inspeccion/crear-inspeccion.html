@@ -312,7 +312,12 @@
                 title="Ver observación"
               >
                 <mat-icon>comment</mat-icon>
-                <span>Observación</span>
+                <span
+                  >Observación @if (item.observacion.archivos && item.observacion.archivos.length >
+                  0) { + {{ item.observacion.archivos.length }}
+                  {{ item.observacion.archivos.length === 1 ? 'Archivo' : 'Archivos' }}
+                  }
+                </span>
               </button>
               }
             </div>

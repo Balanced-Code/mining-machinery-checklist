@@ -461,23 +461,36 @@ export class InspeccionService {
       // Solo enviar al backend si la inspección ya fue creada
       // En modo "crear", las respuestas se guardan solo localmente hasta que se cree la inspección
       if (currentInspeccion) {
+        // Determinar si se debe enviar la observación:
+        // - Si tiene ID: SIEMPRE enviar (incluso vacía) para que el backend pueda eliminarla si no tiene contenido
+        // - Si NO tiene ID: solo enviar si tiene descripción (no crear observaciones vacías)
+        const debeEnviarObservacion =
+          respuesta.observacion &&
+          (respuesta.observacion.id || respuesta.observacion.descripcion.trim());
+
         await firstValueFrom(
           this.http.post(`${this.baseUrl}/inspecciones/respuestas`, {
             inspeccionId: currentInspeccion.id.toString(),
             templateId,
             ...respuesta,
-            observacion: respuesta.observacion
-              ? {
-                  ...(respuesta.observacion.id && { id: respuesta.observacion.id }),
-                  descripcion: respuesta.observacion.descripcion,
-                  archivosExistentes: todosLosArchivosIds,
-                }
-              : undefined,
+            observacion:
+              debeEnviarObservacion && respuesta.observacion
+                ? {
+                    ...(respuesta.observacion.id && { id: respuesta.observacion.id }),
+                    descripcion: respuesta.observacion.descripcion || '',
+                    archivosExistentes: todosLosArchivosIds,
+                  }
+                : undefined,
           })
         );
+
+        // Recargar los checklists para reflejar el estado real del backend
+        // Esto es especialmente importante cuando se elimina una observación vacía
+        await this.cargarChecklists(Number(currentInspeccion.id));
+        return true;
       }
 
-      // Siempre actualizar localmente (para modo crear Y editar)
+      // Modo crear: actualizar localmente (la inspección aún no existe en el backend)
       this.checklistsSignal.update((checklists) =>
         checklists.map((checklist) => {
           if (checklist.templateId === templateId) {

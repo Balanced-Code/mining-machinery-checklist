@@ -118,6 +118,13 @@ export const getArchivosRoutes: FastifyPluginAsync = async (
 
       // Si es archivo local, enviarlo
       if (archivo.ruta) {
+        // Configurar headers para forzar descarga
+        reply.header(
+          'Content-Disposition',
+          `attachment; filename="${encodeURIComponent(archivo.nombre)}"`
+        );
+        reply.header('Content-Type', archivo.tipo);
+
         return reply.sendFile(
           archivo.ruta,
           path.join(process.cwd(), 'uploads'),

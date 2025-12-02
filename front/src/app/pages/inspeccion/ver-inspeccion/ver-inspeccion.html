@@ -147,19 +147,20 @@
             <div class="item-description">
               <span class="item-text">{{ item.descripcion }}</span>
               @if (item.observacion) {
-              <div class="observacion-preview">
-                <mat-icon class="observacion-icon">comment</mat-icon>
-                <span class="observacion-text">{{ item.observacion.descripcion }}</span>
-              </div>
-              @if (item.observacion.archivos && item.observacion.archivos.length > 0) {
-              <div class="archivos-preview">
-                <mat-icon class="archivo-icon">attach_file</mat-icon>
-                <span class="archivos-count"
-                  >{{ item.observacion.archivos.length }}
-                  {{ item.observacion.archivos.length === 1 ? 'archivo' : 'archivos' }}</span
-                >
-              </div>
-              } }
+              <button
+                class="btn-observacion-indicator"
+                (click)="abrirObservacion(checklistIndex, itemIndex)"
+                title="Ver observación"
+              >
+                <mat-icon>comment</mat-icon>
+                <span
+                  >Observación @if (item.observacion.archivos && item.observacion.archivos.length >
+                  0) { + {{ item.observacion.archivos.length }}
+                  {{ item.observacion.archivos.length === 1 ? 'Archivo' : 'Archivos' }}
+                  }
+                </span>
+              </button>
+              }
             </div>
             <div class="item-status">
               @if (item.cumple === true) {

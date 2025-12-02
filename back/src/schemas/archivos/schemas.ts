@@ -8,22 +8,7 @@ export const subirArchivoSchema: FastifySchema = {
   tags: ['Archivos'],
   consumes: ['multipart/form-data'],
   security: [{ bearerAuth: [] }],
-  body: {
-    type: 'object',
-    properties: {
-      file: {
-        type: 'object',
-        description: 'Archivo a subir (máx 50MB)',
-      },
-      observacionId: {
-        type: 'string',
-        description:
-          'ID de la observación a la que pertenece el archivo (opcional)',
-        example: '1',
-      },
-    },
-    required: ['file'],
-  },
+  // No validar body para multipart/form-data
   response: {
     201: {
       type: 'object',

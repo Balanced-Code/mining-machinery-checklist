@@ -903,6 +903,8 @@
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  width: fit-content;
+  max-width: max-content;
 }
 
 .btn-observacion-indicator:hover {

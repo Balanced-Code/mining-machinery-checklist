@@ -45,6 +45,8 @@ export class ObservacionDialog {
   );
   protected readonly archivosEliminadosIds = signal<string[]>([]);
   protected readonly imagenesPreview = signal<{ file: File; preview: string }[]>([]);
+  protected readonly imagenVistaPrevia = signal<string | null>(null);
+  protected readonly imagenZoom = signal<boolean>(false);
 
   // Computed
   protected readonly esEditable = computed(() => this.modo() !== 'ver');
@@ -58,12 +60,45 @@ export class ObservacionDialog {
   });
 
   protected readonly descripcionValida = computed(() => {
-    if (!this.requiereObservacion()) return true;
+    // La descripción siempre debe tener al menos 1 carácter (validación del backend)
     return this.descripcion().trim().length > 0;
   });
 
+  protected readonly tieneContenido = computed(() => {
+    return (
+      this.descripcion().trim().length > 0 ||
+      this.archivosNuevos().length > 0 ||
+      this.archivosExistentes().length > 0
+    );
+  });
+
+  protected readonly mensajeValidacion = computed(() => {
+    // Si no tiene contenido y está editando una observación existente
+    if (!this.tieneContenido() && this.data.observacionInicial) {
+      return 'Para eliminar la observación, usa el botón "Eliminar"';
+    }
+    // Si tiene archivos pero no tiene descripción
+    if (
+      (this.archivosNuevos().length > 0 || this.archivosExistentes().length > 0) &&
+      !this.descripcionValida()
+    ) {
+      return 'Debes agregar una descripción para guardar los archivos';
+    }
+    // Si requiere observación pero no tiene descripción
+    if (this.requiereObservacion() && !this.descripcionValida()) {
+      return 'Debes completar las observaciones antes de guardar';
+    }
+    // Si no tiene ningún contenido
+    if (!this.tieneContenido()) {
+      return 'Debes agregar una descripción o al menos un archivo';
+    }
+    return null;
+  });
+
   protected readonly puedeGuardar = computed(() => {
-    return this.esEditable() && this.descripcionValida() && this.tieneCambios();
+    return (
+      this.esEditable() && this.descripcionValida() && this.tieneCambios() && this.tieneContenido()
+    );
   });
 
   /**
@@ -191,8 +226,12 @@ export class ObservacionDialog {
   /**
    * Descarga un archivo
    */
-  protected descargarArchivo(archivo: Archivo): void {
-    this.archivoService.descargarArchivo(archivo.id);
+  protected async descargarArchivo(archivo: Archivo): Promise<void> {
+    try {
+      await this.archivoService.descargarArchivo(archivo.id);
+    } catch (error) {
+      console.error('Error al descargar archivo:', error);
+    }
   }
 
   /**
@@ -215,6 +254,33 @@ export class ObservacionDialog {
    */
   protected updateDescripcion(value: string): void {
     this.descripcion.set(value);
+  }
+
+  /**
+   * Abre el visor de imagen en grande
+   */
+  protected abrirVisorImagen(url: string): void {
+    this.imagenVistaPrevia.set(url);
+    this.imagenZoom.set(false);
+  }
+
+  /**
+   * Cierra el visor de imagen
+   */
+  protected cerrarVisorImagen(event?: MouseEvent): void {
+    // Si se hace clic en el backdrop o en el botón de cerrar
+    if (!event || event.target === event.currentTarget) {
+      this.imagenVistaPrevia.set(null);
+      this.imagenZoom.set(false);
+    }
+  }
+
+  /**
+   * Alterna el zoom de la imagen (doble click o click)
+   */
+  protected toggleZoomImagen(event: MouseEvent): void {
+    event.stopPropagation();
+    this.imagenZoom.update((zoom) => !zoom);
   }
 
   /**

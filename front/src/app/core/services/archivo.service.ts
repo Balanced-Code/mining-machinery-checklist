@@ -155,11 +155,38 @@ export class ArchivoService {
   }
 
   /**
-   * Descarga un archivo abriendo la URL en una nueva pestaña
+   * Descarga un archivo forzando la descarga
    * @param id ID del archivo
    */
-  descargarArchivo(id: string): void {
-    window.open(this.getUrlDescarga(id), '_blank');
+  async descargarArchivo(id: string): Promise<void> {
+    try {
+      // Obtener información del archivo primero para conocer el nombre
+      const info = await this.obtenerArchivo(id);
+
+      // Descargar el archivo como blob
+      const blob = await firstValueFrom(
+        this.http.get(this.getUrlDescarga(id), {
+          responseType: 'blob',
+        })
+      );
+
+      // Crear URL del blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Crear elemento de descarga
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = info.nombre; // Usar el nombre original del archivo
+      document.body.appendChild(link);
+      link.click();
+
+      // Limpiar
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error al descargar archivo:', error);
+      throw error;
+    }
   }
 
   /**

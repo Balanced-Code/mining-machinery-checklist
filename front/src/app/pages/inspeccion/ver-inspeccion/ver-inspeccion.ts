@@ -7,12 +7,14 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Archivo, Maquina, UsuarioInspeccion } from '@core/models/inspeccion.model';
 import { ArchivoService } from '@core/services/archivo.service';
 import { AuthService } from '@core/services/auth.service';
 import { InspeccionService } from '@core/services/inspeccion.service';
+import { ObservacionDialog } from '@shared/components/observacion-dialog/observacion-dialog';
 
 @Component({
   selector: 'app-ver-inspeccion',
@@ -27,6 +29,7 @@ export class VerInspeccion implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly dialog = inject(MatDialog);
 
   // ID de la inspección a ver
   private readonly inspeccionId = signal<number | null>(null);
@@ -245,5 +248,27 @@ export class VerInspeccion implements OnInit, OnDestroy {
    */
   protected esImagen(archivo: Archivo): boolean {
     return archivo.tipo.startsWith('image/');
+  }
+
+  /**
+   * Abre el diálogo de observación en modo visualización
+   */
+  protected abrirObservacion(checklistIndex: number, itemIndex: number): void {
+    const checklist = this.checklists()[checklistIndex];
+    if (!checklist) return;
+
+    const item = checklist.items[itemIndex];
+    if (!item || !item.observacion) return;
+
+    this.dialog.open(ObservacionDialog, {
+      width: '600px',
+      maxHeight: '90vh',
+      data: {
+        itemDescripcion: item.descripcion,
+        observacionInicial: item.observacion,
+        modo: 'ver',
+        requiereObservacion: false,
+      },
+    });
   }
 }

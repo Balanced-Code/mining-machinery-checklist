@@ -14,12 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { ChecklistTemplate } from '@core/models/checklist.model';
-import {
-  InspeccionItemDTO,
-  Maquina,
-  Observacion,
-  UsuarioInspeccion,
-} from '@core/models/inspeccion.model';
+import { InspeccionItemDTO, Maquina, UsuarioInspeccion } from '@core/models/inspeccion.model';
 import { AuthService } from '@core/services/auth.service';
 import { InspeccionService } from '@core/services/inspeccion.service';
 import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
@@ -595,20 +590,26 @@ export class CrearInspeccion implements OnInit, OnDestroy {
     const item = checklist?.items[itemIndex];
     if (!checklist || !item) return;
 
-    // Solo enviar observación si tiene un ID real de base de datos
-    const observacionId =
-      item.observacion?.id && item.observacion.id < 1000000000000 ? item.observacion.id : undefined;
+    // Preparar observación si existe
+    let observacionData = undefined;
+    if (item.observacion) {
+      const observacionId =
+        item.observacion.id && item.observacion.id < 1000000000000
+          ? item.observacion.id
+          : undefined;
+
+      observacionData = {
+        id: observacionId,
+        descripcion: item.observacion.descripcion || '',
+        archivosNuevos: [],
+        archivosExistentes: item.observacion.archivos?.map((a) => parseInt(a.id, 10)) || [],
+      };
+    }
 
     await this.inspeccionService.guardarRespuesta(checklist.templateId, {
       templateSeccionId: item.templateSeccionId,
       cumple,
-      observacion: item.observacion
-        ? {
-            id: observacionId,
-            descripcion: item.observacion.descripcion,
-            archivosExistentes: item.observacion.archivos?.map((a) => parseInt(a.id, 10)) || [],
-          }
-        : undefined,
+      observacion: observacionData,
     });
   }
 
@@ -630,7 +631,7 @@ export class CrearInspeccion implements OnInit, OnDestroy {
     dialogRef
       .afterClosed()
       .pipe(filter((result) => !!result))
-      .subscribe(async (result: Omit<Observacion, 'id'> | string) => {
+      .subscribe(async (result: any) => {
         // Si el resultado es 'DELETE', eliminar la observación
         if (result === 'DELETE') {
           await this.inspeccionService.guardarRespuesta(checklist.templateId, {
@@ -641,6 +642,17 @@ export class CrearInspeccion implements OnInit, OnDestroy {
           return;
         }
 
+        // Eliminar archivos marcados para eliminación
+        if (result.archivosEliminadosIds && result.archivosEliminadosIds.length > 0) {
+          for (const archivoId of result.archivosEliminadosIds) {
+            try {
+              await this.inspeccionService['archivoService'].eliminarArchivo(archivoId);
+            } catch (error) {
+              console.error('Error al eliminar archivo:', archivoId, error);
+            }
+          }
+        }
+
         // Caso normal: guardar o actualizar observación
         // Solo enviar el ID si es un ID real de base de datos (no temporal)
         const observacionId =
@@ -648,12 +660,18 @@ export class CrearInspeccion implements OnInit, OnDestroy {
             ? item.observacion.id
             : undefined;
 
+        // Convertir archivosExistentes de Archivo[] a number[]
+        const archivosExistentesIds =
+          result.archivosExistentes?.map((a: any) => parseInt(a.id, 10)) || [];
+
         await this.inspeccionService.guardarRespuesta(checklist.templateId, {
           templateSeccionId: item.templateSeccionId,
           cumple: item.cumple,
           observacion: {
             id: observacionId,
-            ...(result as Omit<Observacion, 'id'>),
+            descripcion: result.descripcion || '',
+            archivosNuevos: result.archivosNuevos || [],
+            archivosExistentes: archivosExistentesIds,
           },
         });
       });

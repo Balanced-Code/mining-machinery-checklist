@@ -141,8 +141,27 @@ export const getInspeccionesRoutes: FastifyPluginAsync = async (
         const checklists =
           await fastify.services.inspecciones.getChecklists(inspeccionId);
 
+        // Serializar BigInt a string
+        const checklistsSerializados = checklists.map(checklist => ({
+          ...checklist,
+          items: checklist.items.map(item => ({
+            ...item,
+            observacion: item.observacion
+              ? {
+                  ...item.observacion,
+                  archivos: item.observacion.archivos?.map(archivo => ({
+                    ...archivo,
+                    id: archivo.id.toString(),
+                    tamano: archivo.tamano.toString(),
+                    observacionId: archivo.observacionId?.toString() ?? null,
+                  })),
+                }
+              : null,
+          })),
+        }));
+
         return reply.send({
-          checklists,
+          checklists: checklistsSerializados,
         });
       } catch (error) {
         fastify.log.error({ error }, 'Error al obtener checklists:');

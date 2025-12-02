@@ -33,17 +33,17 @@
         <textarea
           class="field-textarea"
           [class.required]="requiereObservacion()"
-          [class.invalid]="!descripcionValida()"
+          [class.invalid]="!descripcionValida() || !tieneContenido()"
           placeholder="Las observaciones son obligatorias para items marcados como NO..."
           [value]="descripcion()"
           (input)="updateDescripcion($any($event.target).value)"
           rows="6"
         ></textarea>
 
-        @if (requiereObservacion() && !descripcionValida()) {
+        @if (mensajeValidacion()) {
         <p class="field-warning">
           <mat-icon class="warning-icon">warning</mat-icon>
-          Debes completar las observaciones antes de guardar
+          {{ mensajeValidacion() }}
         </p>
         } } @else {
         <div class="field-value">
@@ -86,7 +86,11 @@
           <div class="file-item">
             <!-- Preview para imágenes -->
             @if (archivo.tipo.startsWith('image/')) {
-            <div class="file-preview image-preview">
+            <div
+              class="file-preview image-preview clickable"
+              (click)="abrirVisorImagen(getArchivoUrl(archivo))"
+              title="Click para ver en grande"
+            >
               <img [src]="getArchivoUrl(archivo)" [alt]="archivo.nombre" />
             </div>
             } @else {
@@ -136,7 +140,11 @@
           <div class="file-item new-file">
             <!-- Preview para imágenes nuevas -->
             @if (file.type.startsWith('image/')) {
-            <div class="file-preview image-preview">
+            <div
+              class="file-preview image-preview clickable"
+              (click)="abrirVisorImagen(getPreviewNuevo(file))"
+              title="Click para ver en grande"
+            >
               <img [src]="getPreviewNuevo(file)" [alt]="file.name" />
             </div>
             } @else {
@@ -203,3 +211,27 @@
     </div>
   </div>
 </div>
+
+<!-- Visor de Imagen en Grande -->
+@if (imagenVistaPrevia()) {
+<div class="image-viewer-backdrop" (click)="cerrarVisorImagen($event)">
+  <div class="image-viewer-container">
+    <button
+      class="image-viewer-close"
+      (click)="cerrarVisorImagen()"
+      type="button"
+      aria-label="Cerrar"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+    <img
+      [src]="imagenVistaPrevia()"
+      alt="Vista previa"
+      class="image-viewer-img"
+      [class.zoomed]="imagenZoom()"
+      (dblclick)="toggleZoomImagen($event)"
+      title="Doble click para zoom"
+    />
+  </div>
+</div>
+}
