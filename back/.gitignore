@@ -1,31 +1,53 @@
-node_modules
+# Dependencies
+node_modules/
+pnpm-lock.yaml
 
 # Environment variables
 .env
 .env.local
 .env.production
+!.env.production.example
 
 # Build output
 dist/
 public/
 
 # Prisma generated files
-/src/generated/prisma
+/src/generated/
 
-# Uploads
-uploads/
+# Prisma migrations
+/prisma/migrations/
+
+# Uploads (archivos subidos por usuarios)
+/uploads/
 
 # Logs
 *.log
 npm-debug.log*
 pnpm-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.parcel-cache/
 
 # OS files
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Temporary files
+*.tmp
+*.temp
+.eslintcache
