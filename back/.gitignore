@@ -15,9 +15,6 @@ public/
 # Prisma generated files
 /src/generated/
 
-# Prisma migrations
-/prisma/migrations/
-
 # Uploads (archivos subidos por usuarios)
 /uploads/
 
