@@ -20,12 +20,12 @@ export function isProductionEnvironment(nodeEnv: string): boolean {
   return nodeEnv === 'production';
 }
 
-// Función helper para generar opciones de cookies basadas en el entorno
-export function getCookieOptions(isProduction: boolean) {
+// Función helper para generar opciones de cookies para red local
+export function getCookieOptions(_isProduction: boolean) {
   return {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: 'strict' as const,
+    secure: false, // Permitir HTTP en red local
+    sameSite: 'lax' as const, // Permitir cookies cross-site
     path: '/',
   };
 }

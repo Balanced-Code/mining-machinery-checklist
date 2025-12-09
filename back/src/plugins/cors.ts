@@ -9,30 +9,9 @@ async function corsPlugin(app: FastifyInstance) {
 
     // IMPORTANTE: No usar '*' cuando credentials: true
     origin: (origin, cb) => {
-      // Lista de orígenes permitidos para desarrollo y producción
-      const allowedOrigins = [
-        'http://localhost:4200', // Angular dev server
-        'http://127.0.0.1:4200', // Angular dev server (IP)
-      ];
-
-      // En desarrollo, permitir cualquier localhost
-      if (
-        !origin ||
-        origin.startsWith('http://localhost') ||
-        origin.startsWith('http://127.0.0.1')
-      ) {
-        cb(null, true);
-        return;
-      }
-
-      // En producción, verificar lista permitida
-      if (allowedOrigins.includes(origin)) {
-        cb(null, true);
-        return;
-      }
-
-      // Rechazar otros orígenes
-      cb(new Error('Not allowed by CORS'), false);
+      // Permitir cualquier origen para app interna/LAN
+      // Esto permite que dispositivos en la red local accedan
+      cb(null, true);
     },
 
     // Métodos HTTP permitidos

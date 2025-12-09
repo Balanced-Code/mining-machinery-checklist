@@ -45,8 +45,8 @@
   <div class="templates-list">
     @for (template of paginatedTemplates(); track template.id) {
     <div class="template-card">
-      <!-- Header del template -->
-      <div class="template-header">
+      <!-- Header del template (click para expandir/colapsar) -->
+      <div class="template-header" (click)="toggleTemplate(template.id)">
         <div class="template-title-section">
           <span class="template-number">#</span>
 
@@ -59,6 +59,7 @@
             (keydown.enter)="saveTitle(template.id)"
             (keydown.escape)="cancelEditingTitle()"
             (blur)="saveTitle(template.id)"
+            (click)="$event.stopPropagation()"
             autofocus
           />
           } @else {
@@ -68,7 +69,7 @@
           @if (canEdit()) {
           <button
             class="btn-icon"
-            (click)="startEditingTitle(template.id, template.titulo)"
+            (click)="$event.stopPropagation(); startEditingTitle(template.id, template.titulo)"
             title="Editar título"
           >
             <mat-icon>edit</mat-icon>
@@ -79,7 +80,7 @@
           <button
             class="btn-toggle"
             [class.expanded]="isExpanded(template.id)"
-            (click)="toggleTemplate(template.id)"
+            (click)="$event.stopPropagation(); toggleTemplate(template.id)"
             title="Expandir/Colapsar"
           >
             <mat-icon>expand_more</mat-icon>
@@ -89,7 +90,7 @@
         @if (canEdit()) {
         <button
           class="btn-delete-template"
-          (click)="deleteTemplate(template)"
+          (click)="$event.stopPropagation(); deleteTemplate(template)"
           title="Eliminar checklist"
         >
           <mat-icon>close</mat-icon>

@@ -41,7 +41,7 @@ export class UserDialog implements OnInit {
 
   // State
   protected saving = signal(false);
-  protected readonly generatedPassword = 'Password123?';
+  protected readonly generatedPassword = 'Password123!';
   protected showResetConfirm = signal(false);
   protected showStatusConfirm = signal(false);
   protected passwordCopied = signal(false);

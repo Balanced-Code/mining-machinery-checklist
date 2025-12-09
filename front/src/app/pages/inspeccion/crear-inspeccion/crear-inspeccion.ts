@@ -60,16 +60,20 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   protected readonly nSerieMotor = signal('');
   protected readonly cabinado = signal<boolean | null>(null);
   protected readonly horometro = signal<number | null>(null);
+  protected readonly inspectorId = signal<number | null>(null);
   protected readonly supervisorId = signal<number | null>(null);
   protected readonly tecnicoIds = signal<number[]>([]);
 
   // Datos del formulario
   protected readonly maquinas = signal<Maquina[]>([]);
-  protected readonly usuarios = signal<UsuarioInspeccion[]>([]);
+  protected readonly inspectores = signal<UsuarioInspeccion[]>([]);
+  protected readonly supervisores = signal<UsuarioInspeccion[]>([]);
+  protected readonly tecnicos = signal<UsuarioInspeccion[]>([]);
   protected readonly templatesDisponibles = signal<ChecklistTemplate[]>([]);
 
   // Filtros de búsqueda
   protected readonly searchMaquina = signal('');
+  protected readonly searchInspector = signal('');
   protected readonly searchSupervisor = signal('');
   protected readonly searchTecnicos = signal('');
 
@@ -81,66 +85,43 @@ export class CrearInspeccion implements OnInit, OnDestroy {
     return this.maquinas().filter((maquina) => maquina.nombre.toLowerCase().includes(search));
   });
 
+  protected readonly inspectoresFiltrados = computed(() => {
+    const search = this.searchInspector().toLowerCase().trim();
+
+    // Aplicar solo búsqueda (ya vienen filtrados por rol del backend)
+    if (!search) return this.inspectores();
+
+    return this.inspectores().filter(
+      (usuario) =>
+        usuario.nombre.toLowerCase().includes(search) ||
+        usuario.correo.toLowerCase().includes(search)
+    );
+  });
+
   protected readonly supervisoresFiltrados = computed(() => {
     const search = this.searchSupervisor().toLowerCase().trim();
-    const inspectorId = this.inspector()?.id;
-    const tecnicosSeleccionados = this.tecnicoIds();
 
-    // Filtrar usuarios excluyendo:
-    // 1. El inspector (creador)
-    // 2. Los técnicos ya seleccionados
-    let usuariosFiltrados = this.usuarios().filter((usuario) => {
-      // Excluir al inspector
-      if (inspectorId && usuario.id === inspectorId) return false;
+    // Aplicar solo búsqueda (ya vienen filtrados por rol del backend)
+    if (!search) return this.supervisores();
 
-      // Excluir técnicos seleccionados
-      if (tecnicosSeleccionados.includes(usuario.id)) return false;
-
-      return true;
-    });
-
-    // Aplicar búsqueda
-    if (search) {
-      usuariosFiltrados = usuariosFiltrados.filter(
-        (usuario) =>
-          usuario.nombre.toLowerCase().includes(search) ||
-          usuario.correo.toLowerCase().includes(search)
-      );
-    }
-
-    return usuariosFiltrados;
+    return this.supervisores().filter(
+      (usuario) =>
+        usuario.nombre.toLowerCase().includes(search) ||
+        usuario.correo.toLowerCase().includes(search)
+    );
   });
 
   protected readonly tecnicosFiltrados = computed(() => {
     const search = this.searchTecnicos().toLowerCase().trim();
-    const inspectorId = this.inspector()?.id;
-    const supervisorSeleccionado = this.supervisorId();
 
-    // Filtrar usuarios excluyendo:
-    // 1. El inspector (creador)
-    // 2. El supervisor seleccionado
-    // NOTA: No excluimos técnicos ya seleccionados porque mat-select multiple
-    // los maneja automáticamente mostrándolos con checkbox marcado
-    let usuariosFiltrados = this.usuarios().filter((usuario) => {
-      // Excluir al inspector
-      if (inspectorId && usuario.id === inspectorId) return false;
+    // Aplicar solo búsqueda (ya vienen filtrados por rol del backend)
+    if (!search) return this.tecnicos();
 
-      // Excluir supervisor seleccionado
-      if (supervisorSeleccionado && usuario.id === supervisorSeleccionado) return false;
-
-      return true;
-    });
-
-    // Aplicar búsqueda
-    if (search) {
-      usuariosFiltrados = usuariosFiltrados.filter(
-        (usuario) =>
-          usuario.nombre.toLowerCase().includes(search) ||
-          usuario.correo.toLowerCase().includes(search)
-      );
-    }
-
-    return usuariosFiltrados;
+    return this.tecnicos().filter(
+      (usuario) =>
+        usuario.nombre.toLowerCase().includes(search) ||
+        usuario.correo.toLowerCase().includes(search)
+    );
   });
 
   // Verifica si hay una máquina que coincida exactamente con la búsqueda
@@ -174,8 +155,8 @@ export class CrearInspeccion implements OnInit, OnDestroy {
       .filter((id) => id > 0);
   });
 
-  // Usuario actual (inspector)
-  protected readonly inspector = this.authService.user;
+  // Usuario actual (para permisos)
+  protected readonly currentUser = this.authService.user;
 
   // Validaciones de campos obligatorios
   protected readonly camposObligatoriosCompletos = computed(() => {
@@ -291,14 +272,18 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   }
 
   private async cargarDatos(): Promise<void> {
-    const [maquinas, usuarios, templates] = await Promise.all([
+    const [maquinas, inspectores, supervisores, tecnicos, templates] = await Promise.all([
       this.inspeccionService.obtenerMaquinas(),
-      this.inspeccionService.obtenerUsuarios(),
+      this.inspeccionService.obtenerInspectores(),
+      this.inspeccionService.obtenerSupervisores(),
+      this.inspeccionService.obtenerTecnicos(),
       this.obtenerTemplates(),
     ]);
 
     this.maquinas.set(maquinas);
-    this.usuarios.set(usuarios);
+    this.inspectores.set(inspectores);
+    this.supervisores.set(supervisores);
+    this.tecnicos.set(tecnicos);
     this.templatesDisponibles.set(templates);
   }
 
@@ -461,6 +446,39 @@ export class CrearInspeccion implements OnInit, OnDestroy {
   }
 
   /**
+   * Se llama cuando cambia el inspector
+   */
+  protected async onInspectorChange(): Promise<void> {
+    const inspeccion = this.inspeccionService.currentInspeccion();
+    if (!inspeccion) return;
+
+    const inspectorIdActual = this.inspectorId();
+    const asignacionesActuales = inspeccion.asignaciones || [];
+
+    // Obtener el inspector asignado anteriormente (rol Inspector = ID 1)
+    const inspectorAnterior = asignacionesActuales.find(
+      (a) => a.rolAsignacion?.nombre === 'Inspector' || a.rolAsignacion?.id === 1
+    );
+
+    // Si se quitó el inspector (null)
+    if (inspectorIdActual === null && inspectorAnterior) {
+      await this.inspeccionService.eliminarAsignacion(inspeccion.id, inspectorAnterior.usuarioId);
+      return;
+    }
+
+    // Si se asignó un nuevo inspector
+    if (inspectorIdActual !== null) {
+      // Si es diferente al anterior, primero eliminar el anterior
+      if (inspectorAnterior && inspectorAnterior.usuarioId !== inspectorIdActual) {
+        await this.inspeccionService.eliminarAsignacion(inspeccion.id, inspectorAnterior.usuarioId);
+      }
+
+      // Asignar el nuevo inspector (Rol ID 1 = Inspector)
+      await this.inspeccionService.asignarUsuario(inspeccion.id, inspectorIdActual, 1);
+    }
+  }
+
+  /**
    * Se llama cuando cambia el supervisor
    */
   protected async onSupervisorChange(): Promise<void> {
@@ -615,13 +633,13 @@ export class CrearInspeccion implements OnInit, OnDestroy {
    * Asigna inspector, supervisor y técnicos a la inspección recién creada
    */
   private async asignarUsuariosIniciales(inspeccionId: number): Promise<void> {
-    const inspectorId = this.authService.user()?.id;
+    const inspectorIdSeleccionado = this.inspectorId();
     const supervisorId = this.supervisorId();
     const tecnicoIds = this.tecnicoIds();
 
-    // Asignar inspector (usuario que crea la inspección)
-    if (inspectorId) {
-      await this.inspeccionService.asignarUsuario(inspeccionId, inspectorId, 1);
+    // Asignar inspector seleccionado
+    if (inspectorIdSeleccionado !== null) {
+      await this.inspeccionService.asignarUsuario(inspeccionId, inspectorIdSeleccionado, 1);
     }
 
     // Asignar supervisor si fue seleccionado
@@ -823,11 +841,6 @@ export class CrearInspeccion implements OnInit, OnDestroy {
 
   protected formatUsuario(usuario: UsuarioInspeccion): string {
     return `${usuario.nombre} (${usuario.correo})`;
-  }
-
-  protected get inspectorNombre(): string {
-    const user = this.inspector();
-    return user ? this.formatUsuario(user) : 'Cargando...';
   }
 
   protected parseFloat(value: string): number {

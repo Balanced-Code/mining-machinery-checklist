@@ -763,6 +763,54 @@ export class InspeccionService {
   }
 
   /**
+   * Obtiene la lista de usuarios con cargo de Inspector
+   */
+  async obtenerInspectores(): Promise<UsuarioInspeccion[]> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<UsuariosResponse>(`${this.baseUrl}/usuarios/cargo/Inspector`)
+      );
+
+      return response.users;
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al obtener los inspectores');
+      return [];
+    }
+  }
+
+  /**
+   * Obtiene la lista de usuarios con cargo de Supervisor
+   */
+  async obtenerSupervisores(): Promise<UsuarioInspeccion[]> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<UsuariosResponse>(`${this.baseUrl}/usuarios/cargo/Supervisor`)
+      );
+
+      return response.users;
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al obtener los supervisores');
+      return [];
+    }
+  }
+
+  /**
+   * Obtiene la lista de usuarios con cargo de Técnico Mecánico
+   */
+  async obtenerTecnicos(): Promise<UsuarioInspeccion[]> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<UsuariosResponse>(`${this.baseUrl}/usuarios/cargo/Tecnico Mecanico`)
+      );
+
+      return response.users;
+    } catch (err: unknown) {
+      this.handleError(err, 'Error al obtener los técnicos');
+      return [];
+    }
+  }
+
+  /**
    * Obtiene la lista de templates de checklist disponibles
    */
   async obtenerTemplates(): Promise<ChecklistTemplate[]> {

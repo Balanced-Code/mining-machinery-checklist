@@ -138,6 +138,7 @@ New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME" -Force | Out-Null
 New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\backend" -Force | Out-Null
 New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\database" -Force | Out-Null
 New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\data" -Force | Out-Null
+New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\_internal" -Force | Out-Null
 
 # 2. Copiar archivos del backend
 Write-Host "`nCopiando backend..." -ForegroundColor Cyan
@@ -220,37 +221,82 @@ else {
 Write-Host "`nCreando configuracion..." -ForegroundColor Cyan
 $random1 = Get-Random -Minimum 10000000 -Maximum 99999999
 $random2 = Get-Random -Minimum 10000000 -Maximum 99999999
-$envContent = "JWT_SECRET=mining-checklist-jwt-secret-$random1`r`nCOOKIE_SECRET=mining-checklist-cookie-secret-$random2`r`nNODE_ENV=production`r`nPORT=3000`r`nHOST=127.0.0.1`r`nDATABASE_URL=postgresql://postgres:admin@localhost:5433/checklist_db"
+$envContent = "JWT_SECRET=mining-checklist-jwt-secret-$random1`r`nCOOKIE_SECRET=mining-checklist-cookie-secret-$random2`r`nNODE_ENV=production`r`nPORT=4200`r`nHOST=0.0.0.0`r`nDATABASE_URL=postgresql://postgres:admin@localhost:5433/checklist_db"
 $envContent | Out-File -FilePath "$DIST_DIR\$APP_NAME\backend\.env" -Encoding UTF8
 Write-Host "Configuracion creada" -ForegroundColor Green
 
 # 6. Crear scripts de inicio
 Write-Host "`nCreando scripts de inicio..." -ForegroundColor Cyan
 
-# Script principal de inicio
-$iniciarScriptPath = "$DIST_DIR\$APP_NAME\Iniciar.ps1"
+# Script principal de inicio (PowerShell) - en carpeta _internal
+$iniciarScriptPath = "$DIST_DIR\$APP_NAME\_internal\Iniciar.ps1"
 $iniciarContent = @"
 `$ErrorActionPreference = "Stop"
+`$Host.UI.RawUI.WindowTitle = "Mining Machinery Checklist"
 
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Mining Machinery Checklist          " -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  ========================================" -ForegroundColor Cyan
+Write-Host "    Mining Machinery Checklist" -ForegroundColor Cyan
+Write-Host "  ========================================" -ForegroundColor Cyan
 Write-Host ""
 
-`$APP_DIR = `$PSScriptRoot
+`$APP_DIR = Split-Path `$PSScriptRoot -Parent
 `$PG_DIR = "`$APP_DIR\database\postgresql"
 `$PG_DATA = "`$APP_DIR\data\pgdata"
 `$PG_PORT = 5433
+`$APP_PORT = 4200
+`$APP_URL = "http://localhost:`$APP_PORT"
+`$FIREWALL_RULE_NAME = "Mining Checklist App"
+
+# Verificar si ya hay una instancia corriendo
+if (Test-Path "`$PG_DATA\postmaster.pid") {
+    Write-Host "  [!] Ya existe una instancia en ejecucion" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  Para iniciar de nuevo, primero debes detener" -ForegroundColor White
+    Write-Host "  PostgreSQL y la instancia anterior." -ForegroundColor White
+    Write-Host ""
+    Write-Host "  Ejecuta Detener.bat y vuelve a intentar." -ForegroundColor Cyan
+    Write-Host ""
+    Read-Host "  Presiona Enter para cerrar"
+    exit 0
+}
+
+# Configurar regla de firewall si no existe
+`$firewallRule = Get-NetFirewallRule -DisplayName `$FIREWALL_RULE_NAME -ErrorAction SilentlyContinue
+if (-not `$firewallRule) {
+    Write-Host "  Configurando firewall..." -ForegroundColor Yellow
+    try {
+        New-NetFirewallRule -DisplayName `$FIREWALL_RULE_NAME -Direction Inbound -Protocol TCP -LocalPort `$APP_PORT -Action Allow | Out-Null
+        Write-Host "  [OK] Firewall configurado" -ForegroundColor Green
+    } catch {
+        Write-Host "  [!] No se pudo configurar el firewall" -ForegroundColor Yellow
+    }
+}
+
+# Funcion para limpiar al cerrar
+function Cleanup {
+    Write-Host "``n" -NoNewline
+    Write-Host "  Cerrando aplicacion..." -ForegroundColor Yellow
+    if (Test-Path "`$PG_DATA\postmaster.pid") {
+        Write-Host "  Deteniendo PostgreSQL..." -ForegroundColor Yellow
+        & "`$PG_DIR\bin\pg_ctl.exe" stop -D "`$PG_DATA" -m fast -s 2>`$null
+        Write-Host "  PostgreSQL detenido." -ForegroundColor Green
+    }
+    Write-Host ""
+}
+
+# Registrar limpieza al cerrar
+`$null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action { Cleanup }
 
 `$PRIMERA_VEZ = -not (Test-Path `$PG_DATA)
 
 if (`$PRIMERA_VEZ) {
-    Write-Host "Primera ejecucion detectada..." -ForegroundColor Yellow
-    Write-Host "Inicializando base de datos..." -ForegroundColor Yellow
+    Write-Host "  [!] Primera ejecucion detectada" -ForegroundColor Yellow
+    Write-Host "  Inicializando base de datos..." -ForegroundColor Yellow
+    Write-Host ""
     
     New-Item -ItemType Directory -Path `$PG_DATA -Force | Out-Null
     
-    # Crear archivo de contrasena temporal
     `$pwdFile = "`$APP_DIR\data\pwd.tmp"
     "admin" | Out-File -FilePath `$pwdFile -Encoding ASCII -NoNewline
     
@@ -258,129 +304,206 @@ if (`$PRIMERA_VEZ) {
     Remove-Item `$pwdFile -Force
     
     if (`$LASTEXITCODE -eq 0) {
-        Write-Host "Base de datos inicializada correctamente" -ForegroundColor Green
+        Write-Host "  [OK] Base de datos inicializada" -ForegroundColor Green
     } else {
-        Write-Host "Error al inicializar la base de datos" -ForegroundColor Red
+        Write-Host "  [X] Error al inicializar la base de datos" -ForegroundColor Red
+        Read-Host "  Presiona Enter para cerrar"
         exit 1
     }
 }
 
-Write-Host "`nIniciando PostgreSQL en puerto `$PG_PORT..." -ForegroundColor Cyan
+Write-Host "  Iniciando PostgreSQL (puerto `$PG_PORT)..." -ForegroundColor Cyan
 & "`$PG_DIR\bin\pg_ctl.exe" start -D "`$PG_DATA" -l "`$APP_DIR\data\postgres.log" -o "-p `$PG_PORT"
 
 Start-Sleep -Seconds 3
 
-# Verificar si PostgreSQL inicio correctamente
 `$pgRunning = Test-Path "`$PG_DATA\postmaster.pid"
 if (`$pgRunning) {
-    Write-Host "PostgreSQL iniciado correctamente" -ForegroundColor Green
+    Write-Host "  [OK] PostgreSQL iniciado" -ForegroundColor Green
 } else {
-    Write-Host "Error: PostgreSQL no inicio. Revisa data\postgres.log" -ForegroundColor Red
+    Write-Host "  [X] Error: PostgreSQL no inicio" -ForegroundColor Red
+    Write-Host "      Revisa: data\postgres.log" -ForegroundColor Gray
+    Read-Host "  Presiona Enter para cerrar"
     exit 1
 }
 
-# Verificar si la base de datos existe
-Write-Host "`nVerificando base de datos..." -ForegroundColor Cyan
+Write-Host "  Verificando base de datos..." -ForegroundColor Cyan
 `$dbExists = & "`$PG_DIR\bin\psql.exe" -h localhost -p `$PG_PORT -U postgres -lqt 2>`$null | Select-String -Pattern "checklist_db" -Quiet
+
 if (-not `$dbExists) {
-    Write-Host "Base de datos 'checklist_db' no encontrada. Creando..." -ForegroundColor Yellow
+    Write-Host "  Creando base de datos 'checklist_db'..." -ForegroundColor Yellow
     & "`$PG_DIR\bin\createdb.exe" -h localhost -p `$PG_PORT -U postgres checklist_db 2>`$null
     
     if (`$LASTEXITCODE -eq 0) {
-        Write-Host "Base de datos 'checklist_db' creada correctamente" -ForegroundColor Green
+        Write-Host "  [OK] Base de datos creada" -ForegroundColor Green
         
-        # Generar Prisma Client primero
-        Write-Host "Generando Prisma Client..." -ForegroundColor Gray
         Set-Location "`$APP_DIR\backend"
-        npx prisma generate
+        
+        Write-Host "  Generando Prisma Client..." -ForegroundColor Gray
+        npx prisma generate 2>`$null
         
         if (`$LASTEXITCODE -ne 0) {
-            Write-Host "Error al generar Prisma Client" -ForegroundColor Red
-            & "`$PG_DIR\bin\pg_ctl.exe" stop -D "`$PG_DATA" -s
+            Write-Host "  [X] Error al generar Prisma Client" -ForegroundColor Red
+            Cleanup
+            Read-Host "  Presiona Enter para cerrar"
             exit 1
         }
         
-        # Ejecutar migraciones de Prisma
-        Write-Host "Ejecutando migraciones de base de datos..." -ForegroundColor Gray
-        npx prisma migrate deploy
+        Write-Host "  Ejecutando migraciones..." -ForegroundColor Gray
+        npx prisma migrate deploy 2>`$null
         
         if (`$LASTEXITCODE -eq 0) {
-            Write-Host "Migraciones ejecutadas correctamente" -ForegroundColor Green
+            Write-Host "  [OK] Migraciones ejecutadas" -ForegroundColor Green
             
-            # Ejecutar seed de datos iniciales
-            Write-Host "Creando datos iniciales (usuarios, cargos, templates)..." -ForegroundColor Gray
-            npx prisma db seed
+            Write-Host "  Creando datos iniciales..." -ForegroundColor Gray
+            npx prisma db seed 2>`$null
             
             if (`$LASTEXITCODE -eq 0) {
-                Write-Host "Datos iniciales creados correctamente" -ForegroundColor Green
+                Write-Host "  [OK] Datos iniciales creados" -ForegroundColor Green
             } else {
-                Write-Host "Advertencia: Error al crear datos iniciales. Puedes ejecutar 'npx prisma db seed' manualmente." -ForegroundColor Yellow
+                Write-Host "  [!] Advertencia: Error al crear datos iniciales" -ForegroundColor Yellow
             }
         } else {
-            Write-Host "Error al ejecutar migraciones" -ForegroundColor Red
-            & "`$PG_DIR\bin\pg_ctl.exe" stop -D "`$PG_DATA" -s
+            Write-Host "  [X] Error al ejecutar migraciones" -ForegroundColor Red
+            Cleanup
+            Read-Host "  Presiona Enter para cerrar"
             exit 1
         }
     } else {
-        Write-Host "Error al crear la base de datos" -ForegroundColor Red
-        & "`$PG_DIR\bin\pg_ctl.exe" stop -D "`$PG_DATA" -s
+        Write-Host "  [X] Error al crear la base de datos" -ForegroundColor Red
+        Cleanup
+        Read-Host "  Presiona Enter para cerrar"
         exit 1
     }
 } else {
-    Write-Host "Base de datos 'checklist_db' encontrada" -ForegroundColor Green
+    Write-Host "  [OK] Base de datos encontrada" -ForegroundColor Green
 }
 
-Write-Host "`nIniciando backend..." -ForegroundColor Cyan
-Set-Location "`$APP_DIR\backend"
-npm start
+Write-Host ""
+Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
+Write-Host "  Iniciando servidor..." -ForegroundColor Cyan
+Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
+Write-Host ""
 
-Write-Host "`nDeteniendo PostgreSQL..." -ForegroundColor Yellow
-& "`$PG_DIR\bin\pg_ctl.exe" stop -D "`$PG_DATA" -s
+# Obtener IP local para acceso en red
+`$LOCAL_IP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { `$_.IPAddress -notlike "127.*" -and `$_.IPAddress -notlike "169.254.*" } | Select-Object -First 1).IPAddress
+
+Write-Host "  La aplicacion estara disponible en:" -ForegroundColor White
+Write-Host ""
+Write-Host "    Local:    `$APP_URL" -ForegroundColor Green
+if (`$LOCAL_IP) {
+    Write-Host "    Red:      http://`${LOCAL_IP}:`$APP_PORT" -ForegroundColor Cyan
+}
+Write-Host ""
+Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
+Write-Host "  Para cerrar correctamente:" -ForegroundColor White
+Write-Host "    - Presiona Ctrl+C en esta ventana" -ForegroundColor Gray
+Write-Host "    - O ejecuta Detener.bat" -ForegroundColor Gray
+Write-Host "  ----------------------------------------" -ForegroundColor DarkGray
+Write-Host ""
+Write-Host "  Abriendo navegador en 3 segundos..." -ForegroundColor Gray
+Write-Host ""
+
+# Abrir navegador despues de un delay
+Start-Job -ScriptBlock {
+    param(`$url)
+    Start-Sleep -Seconds 3
+    Start-Process `$url
+} -ArgumentList `$APP_URL | Out-Null
+
+Set-Location "`$APP_DIR\backend"
+
+try {
+    npm start
+} finally {
+    Cleanup
+}
 "@
 $iniciarContent | Out-File -FilePath $iniciarScriptPath -Encoding UTF8
-Write-Host "Script de inicio creado" -ForegroundColor Green
+Write-Host "Script Iniciar.ps1 creado" -ForegroundColor Green
 
-# Script para setup inicial
-$setupScriptPath = "$DIST_DIR\$APP_NAME\Setup.ps1"
-$setupContent = @"
-`$ErrorActionPreference = "Stop"
+# Script BAT para doble clic
+$iniciarBatPath = "$DIST_DIR\$APP_NAME\Iniciar.bat"
+$iniciarBatContent = @"
+@echo off
+title Mining Machinery Checklist
+color 0B
 
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Setup - Mining Machinery Checklist   " -ForegroundColor Cyan
-Write-Host "========================================`n" -ForegroundColor Cyan
-
-`$APP_DIR = `$PSScriptRoot
-`$PG_DIR = "`$APP_DIR\database\postgresql"
-`$PG_DATA = "`$APP_DIR\data\pgdata"
-`$PG_PORT = 5433
-
-New-Item -ItemType Directory -Path `$PG_DATA -Force | Out-Null
-
-Write-Host "Inicializando base de datos PostgreSQL..." -ForegroundColor Cyan
-
-# Crear archivo de contrasena temporal
-`$pwdFile = "`$APP_DIR\data\pwd.tmp"
-"admin" | Out-File -FilePath `$pwdFile -Encoding ASCII -NoNewline
-
-& "`$PG_DIR\bin\initdb.exe" -D "`$PG_DATA" -U postgres --pwfile=`$pwdFile -E UTF8
-Remove-Item `$pwdFile -Force
-
-if (`$LASTEXITCODE -eq 0) {
-    Write-Host "Base de datos inicializada correctamente" -ForegroundColor Green
+:: Verificar si es administrador
+net session >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo ========================================
+    echo   Mining Machinery Checklist
+    echo ========================================
+    echo.
+    echo   Se requieren permisos de administrador
+    echo   para configurar el firewall.
+    echo.
+    echo   Solicitando permisos...
+    echo.
     
-    Write-Host "`nInstalando dependencias..." -ForegroundColor Cyan
-    Set-Location "`$APP_DIR\backend"
-    npm install
-    
-    Write-Host "`nSetup completado exitosamente" -ForegroundColor Green
-    Write-Host "`nProximo paso: Ejecuta Iniciar.ps1 para iniciar la aplicacion`n" -ForegroundColor White
-} else {
-    Write-Host "Error al inicializar la base de datos" -ForegroundColor Red
-    exit 1
-}
+    :: Relanzar como administrador
+    powershell -Command "Start-Process '%~f0' -Verb RunAs"
+    exit /b
+)
+
+echo.
+echo ========================================
+echo   Mining Machinery Checklist
+echo   Iniciando aplicacion...
+echo ========================================
+echo.
+
+:: Ejecutar el script de PowerShell
+powershell -ExecutionPolicy Bypass -File "%~dp0_internal\Iniciar.ps1"
+
+:: Mantener la ventana abierta si hubo error
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo Ocurrio un error. Presiona cualquier tecla para cerrar...
+    pause >nul
+)
 "@
-$setupContent | Out-File -FilePath $setupScriptPath -Encoding UTF8
-Write-Host "Script de setup creado" -ForegroundColor Green
+$iniciarBatContent | Out-File -FilePath $iniciarBatPath -Encoding ASCII
+Write-Host "Script Iniciar.bat creado" -ForegroundColor Green
+
+# Script BAT para detener PostgreSQL
+$detenerBatPath = "$DIST_DIR\$APP_NAME\Detener.bat"
+$detenerBatContent = @"
+@echo off
+title Mining Machinery Checklist - Detener
+color 0E
+
+echo.
+echo ========================================
+echo   Deteniendo Mining Machinery Checklist
+echo ========================================
+echo.
+
+set "APP_DIR=%~dp0"
+set "PG_DIR=%APP_DIR%database\postgresql"
+set "PG_DATA=%APP_DIR%data\pgdata"
+
+:: Verificar si PostgreSQL esta corriendo
+if exist "%PG_DATA%\postmaster.pid" (
+    echo Deteniendo PostgreSQL...
+    "%PG_DIR%\bin\pg_ctl.exe" stop -D "%PG_DATA%" -m fast
+    if %ERRORLEVEL% EQU 0 (
+        echo PostgreSQL detenido correctamente.
+    ) else (
+        echo Error al detener PostgreSQL.
+    )
+) else (
+    echo PostgreSQL no esta corriendo.
+)
+
+echo.
+echo Presiona cualquier tecla para cerrar...
+pause >nul
+"@
+$detenerBatContent | Out-File -FilePath $detenerBatPath -Encoding ASCII
+Write-Host "Script Detener.bat creado" -ForegroundColor Green
 
 # 7. Crear archivo README
 Write-Host "`nCreando documentacion..." -ForegroundColor Cyan
@@ -390,48 +513,46 @@ $readmeContent = @"
 
 ## Requisitos Previos
 - Windows 10/11
-- PowerShell 5.0 o superior
 - Node.js instalado globalmente (para comandos npm)
 
-## Instalacion
+## Iniciar la Aplicacion
 
-1. **Primer uso**: Ejecuta ``Setup.ps1`` en PowerShell (como administrador)
-   - Inicializa PostgreSQL
-   - Instala dependencias de Node.js
-   
-2. **Iniciar la aplicacion**: Ejecuta ``Iniciar.ps1``
-   - Levanta PostgreSQL
-   - Inicia el backend
-   - Abre http://localhost:3000
+**Doble clic en ``Iniciar.bat``**
+
+Esto hara lo siguiente automaticamente:
+- Primera vez: Inicializa la base de datos y configura todo
+- Inicia PostgreSQL
+- Inicia el servidor
+- Abre el navegador en http://localhost:4200
+
+## Archivos
+
+- **Iniciar.bat** - Inicia la aplicacion (doble clic)
+- **Detener.bat** - Detiene PostgreSQL si quedo corriendo
+- **Iniciar.ps1** - Script PowerShell (usado internamente)
 
 ## Puerto por defecto
-- **Aplicacion**: http://localhost:3000
+- **Aplicacion**: http://localhost:4200
 - **PostgreSQL**: localhost:5433
 
 ## Credenciales por defecto
 - **Usuario PostgreSQL**: postgres
-- **Contrasena**: admin (cambiar en produccion)
+- **Contrasena**: admin
 - **Base de datos**: checklist_db
 
 ## Notas
 - Los datos se guardan en la carpeta ``data/``
 - Los logs de PostgreSQL estan en ``data/postgres.log``
-- Para detener la aplicacion: Presiona Ctrl+C en PowerShell
+- Para detener: Cierra la ventana o presiona Ctrl+C
 
 ## Solucion de problemas
 
 ### PostgreSQL no inicia
-- Verifica que no hay otra instancia en puerto 5433
+- Ejecuta ``Detener.bat`` y luego ``Iniciar.bat`` nuevamente
 - Revisa ``data/postgres.log`` para mas detalles
 
-### Puerto 3000 en uso
+### Puerto 4200 en uso
 - Modifica ``PORT`` en ``backend/.env``
-
-## Desarrollo
-Para trabajar en desarrollo:
-``````
-.\empaquetar.ps1 -dev
-``````
 "@
 
 $readmeContent | Out-File -FilePath "$DIST_DIR\$APP_NAME\README.md" -Encoding UTF8
@@ -446,9 +567,8 @@ Write-Host "  Empaquetado completado              " -ForegroundColor Green
 Write-Host "========================================`n" -ForegroundColor Green
 
 Write-Host "Ubicacion: $DIST_DIR\$APP_NAME\" -ForegroundColor White
-Write-Host "`nProximos pasos:" -ForegroundColor Cyan
-Write-Host "  1. cd $DIST_DIR\$APP_NAME" -ForegroundColor White
-Write-Host "  2. .\Setup.ps1" -ForegroundColor White
-Write-Host "  3. .\Iniciar.ps1`n" -ForegroundColor White
+Write-Host "`nPara iniciar la aplicacion:" -ForegroundColor Cyan
+Write-Host "  Doble clic en Iniciar.bat`n" -ForegroundColor White
 
-Write-Host "La aplicacion estara disponible en: http://localhost:3000" -ForegroundColor Cyan
+Write-Host "La aplicacion estara disponible en: http://localhost:4200" -ForegroundColor Cyan
+

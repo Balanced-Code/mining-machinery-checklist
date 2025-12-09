@@ -33,6 +33,71 @@ export const getUsuariosRoutes: FastifyPluginAsync = async (
   );
 
   /**
+   * GET /usuarios/cargo/:cargo - Obtener usuarios filtrados por nombre de cargo
+   * @param cargo Nombre del cargo (ej: "Inspector", "Supervisor", "Técnico")
+   * @returns Lista de usuarios con ese cargo
+   */
+  fastify.get<{
+    Params: { cargo: string };
+    Reply: { users: UsersDetails[]; total: number };
+  }>(
+    '/cargo/:cargo',
+    {
+      preHandler: requireCargoLevel(3),
+      schema: {
+        description: 'Obtener usuarios filtrados por nombre de cargo',
+        tags: ['Usuarios'],
+        params: {
+          type: 'object',
+          properties: {
+            cargo: { type: 'string', description: 'Nombre del cargo' },
+          },
+          required: ['cargo'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              users: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'number' },
+                    nombre: { type: 'string' },
+                    correo: { type: 'string' },
+                    cargo: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'number' },
+                        nombre: { type: 'string' },
+                        nivel: { type: 'number' },
+                      },
+                    },
+                    eliminadoEn: { type: ['string', 'null'] },
+                  },
+                },
+              },
+              total: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { cargo } = request.params;
+        const result =
+          await fastify.services.usuarios.getUsersByCargoNombre(cargo);
+        return reply.send(result);
+      } catch (error) {
+        fastify.log.error({ error }, 'Error al obtener usuarios por cargo');
+        return reply.internalServerError('Error al obtener usuarios por cargo');
+      }
+    }
+  );
+
+  /**
    * GET /usuarios/cargos - Obtener listado de cargos
    * Solo administradores pueden acceder a esta ruta
    * @returns Lista de cargos

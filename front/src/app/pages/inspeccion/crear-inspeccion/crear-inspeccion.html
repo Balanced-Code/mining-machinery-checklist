@@ -101,13 +101,28 @@
       </div>
       <div class="form-field">
         <label class="field-label">Inspector</label>
-        <input
-          type="text"
-          class="field-input field-input-readonly"
-          [value]="inspectorNombre"
-          readonly
-          tabindex="-1"
-        />
+        <mat-form-field class="field-select">
+          <mat-select
+            placeholder="Seleccione inspector (opcional)"
+            [(ngModel)]="inspectorId"
+            (selectionChange)="onInspectorChange()"
+            (openedChange)="$event ? null : searchInspector.set('')"
+          >
+            <mat-option>
+              <ngx-mat-select-search
+                [(ngModel)]="searchInspector"
+                placeholderLabel="Buscar inspector..."
+                noEntriesFoundLabel="No se encontraron inspectores"
+              ></ngx-mat-select-search>
+            </mat-option>
+            <mat-option [value]="null">Sin asignar</mat-option>
+            @for (usuario of inspectoresFiltrados(); track usuario.id) {
+            <mat-option [value]="usuario.id">
+              {{ usuario.nombre }} ({{ usuario.correo }})
+            </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
       </div>
       <div class="form-field">
         <label class="field-label">Supervisor</label>

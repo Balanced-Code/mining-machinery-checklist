@@ -114,13 +114,26 @@
       </div>
       <div class="form-field">
         <label class="field-label">Inspector</label>
-        <input
-          type="text"
-          class="field-input field-input-readonly"
-          [value]="inspectorNombre"
-          readonly
-          tabindex="-1"
-        />
+        <mat-form-field class="field-select">
+          <mat-select
+            placeholder="Seleccione un inspector"
+            [value]="inspectorId()"
+            (selectionChange)="inspectorId.set($event.value); onInspectorChange($event.value)"
+            (openedChange)="$event ? null : searchInspector.set('')"
+          >
+            <mat-option>
+              <ngx-mat-select-search
+                [(ngModel)]="searchInspector"
+                placeholderLabel="Buscar..."
+                noEntriesFoundLabel="No se encontraron inspectores"
+              ></ngx-mat-select-search>
+            </mat-option>
+            <mat-option [value]="null">Sin asignar</mat-option>
+            @for (usuario of inspectoresFiltrados(); track usuario.id) {
+            <mat-option [value]="usuario.id"> {{ formatUsuario(usuario) }} </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
       </div>
       <div class="form-field">
         <label class="field-label">Supervisor</label>
@@ -139,7 +152,7 @@
               ></ngx-mat-select-search>
             </mat-option>
             <mat-option [value]="null">Ninguno</mat-option>
-            @for (usuario of usuariosFiltradosSupervisor(); track usuario.id) {
+            @for (usuario of supervisoresFiltrados(); track usuario.id) {
             <mat-option [value]="usuario.id"> {{ formatUsuario(usuario) }} </mat-option>
             }
           </mat-select>
@@ -162,7 +175,7 @@
                 noEntriesFoundLabel="No se encontraron usuarios"
               ></ngx-mat-select-search>
             </mat-option>
-            @for (usuario of usuariosFiltradosTecnicos(); track usuario.id) {
+            @for (usuario of tecnicosFiltrados(); track usuario.id) {
             <mat-option [value]="usuario.id"> {{ formatUsuario(usuario) }} </mat-option>
             }
           </mat-select>

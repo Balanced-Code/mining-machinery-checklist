@@ -130,6 +130,12 @@
   background: #d1d5db;
   border-bottom: 1px solid rgb(0 0 0 / 10%);
   min-height: 57px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.template-header:hover {
+  background: #c5c9cf;
 }
 
 .template-title-section {

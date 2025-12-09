@@ -42,6 +42,58 @@ export class UsuariosService {
   }
 
   /**
+   * Obtener usuarios filtrados por nombre de cargo
+   * @param cargoNombre Nombre del cargo (ej: "Inspector", "Supervisor", "Técnico")
+   * @returns Objeto con lista de usuarios y total de registros
+   */
+  async getUsersByCargoNombre(
+    cargoNombre: string
+  ): Promise<{ users: UsersDetails[]; total: number }> {
+    const [users, total] = await this.prisma.$transaction([
+      this.prisma.usuario.findMany({
+        where: {
+          eliminadoEn: null,
+          cargo: {
+            nombre: {
+              equals: cargoNombre,
+              mode: 'insensitive',
+            },
+          },
+        },
+        select: {
+          id: true,
+          nombre: true,
+          correo: true,
+          cargo: {
+            select: {
+              id: true,
+              nombre: true,
+              nivel: true,
+            },
+          },
+          eliminadoEn: true,
+        },
+        orderBy: {
+          nombre: 'asc',
+        },
+      }),
+      this.prisma.usuario.count({
+        where: {
+          eliminadoEn: null,
+          cargo: {
+            nombre: {
+              equals: cargoNombre,
+              mode: 'insensitive',
+            },
+          },
+        },
+      }),
+    ]);
+
+    return { users, total };
+  }
+
+  /**
    * Obtener todos los cargos disponibles
    */
   async getAllCargos(): Promise<CargosDetails[]> {
