@@ -340,25 +340,36 @@ if (-not `$dbExists) {
         Set-Location "`$APP_DIR\backend"
         
         Write-Host "  Generando Prisma Client..." -ForegroundColor Gray
-        npx prisma generate 2>`$null
+        # Ejecutar con ErrorAction Continue para no detener por warnings
+        `$ErrorActionPreference = "Continue"
+        npx prisma generate *>&1 | Out-Null
+        `$generateExitCode = `$LASTEXITCODE
+        `$ErrorActionPreference = "Stop"
         
-        if (`$LASTEXITCODE -ne 0) {
+        if (`$generateExitCode -ne 0) {
             Write-Host "  [X] Error al generar Prisma Client" -ForegroundColor Red
             Cleanup
             Read-Host "  Presiona Enter para cerrar"
             exit 1
         }
+        Write-Host "  [OK] Prisma Client generado" -ForegroundColor Green
         
         Write-Host "  Ejecutando migraciones..." -ForegroundColor Gray
-        npx prisma migrate deploy 2>`$null
+        `$ErrorActionPreference = "Continue"
+        npx prisma migrate deploy *>&1 | Out-Null
+        `$migrateExitCode = `$LASTEXITCODE
+        `$ErrorActionPreference = "Stop"
         
-        if (`$LASTEXITCODE -eq 0) {
+        if (`$migrateExitCode -eq 0) {
             Write-Host "  [OK] Migraciones ejecutadas" -ForegroundColor Green
             
             Write-Host "  Creando datos iniciales..." -ForegroundColor Gray
-            npx prisma db seed 2>`$null
+            `$ErrorActionPreference = "Continue"
+            npm run db:seed *>&1 | Out-Null
+            `$seedExitCode = `$LASTEXITCODE
+            `$ErrorActionPreference = "Stop"
             
-            if (`$LASTEXITCODE -eq 0) {
+            if (`$seedExitCode -eq 0) {
                 Write-Host "  [OK] Datos iniciales creados" -ForegroundColor Green
             } else {
                 Write-Host "  [!] Advertencia: Error al crear datos iniciales" -ForegroundColor Yellow

@@ -47,6 +47,7 @@ export class ObservacionDialog {
   protected readonly imagenesPreview = signal<{ file: File; preview: string }[]>([]);
   protected readonly imagenVistaPrevia = signal<string | null>(null);
   protected readonly imagenZoom = signal<boolean>(false);
+  protected readonly esMobile = signal(this.detectarMobile());
 
   // Computed
   protected readonly esEditable = computed(() => this.modo() !== 'ver');
@@ -297,5 +298,17 @@ export class ObservacionDialog {
       default:
         return 'Observación';
     }
+  }
+
+  private detectarMobile(): boolean {
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isMobileUA =
+      /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(
+        userAgent
+      );
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isSmallScreen = window.innerWidth <= 1024;
+
+    return isMobileUA || (isTouchDevice && isSmallScreen);
   }
 }
