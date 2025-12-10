@@ -159,9 +159,9 @@ export class EditarInspeccion implements OnInit, OnDestroy {
     const inspeccion = this.inspeccionService.currentInspeccion();
     const userLevel = this.authService.user()?.cargo?.nivel ?? 0;
 
-    // Si la inspección está finalizada, solo nivel 4 puede editar
+    // Si la inspección está finalizada, nivel 3+ (inspectores y administradores) pueden editar
     if (inspeccion?.fechaFinalizacion) {
-      return userLevel >= 4;
+      return userLevel >= 3;
     }
 
     // Si no está finalizada, nivel 3+ puede editar
@@ -313,8 +313,7 @@ export class EditarInspeccion implements OnInit, OnDestroy {
 
   /**
    * Validar permisos de edición
-   * - Nivel 3+: puede editar si no está finalizada
-   * - Nivel 4: puede editar incluso si está finalizada
+   * - Nivel 3+: puede editar incluso si está finalizada (inspectores y administradores)
    */
   private validarPermisos(): void {
     const inspeccion = this.inspeccionService.currentInspeccion();
@@ -322,10 +321,10 @@ export class EditarInspeccion implements OnInit, OnDestroy {
 
     const userLevel = this.authService.user()?.cargo?.nivel ?? 0;
 
-    // Si la inspección está finalizada y el usuario no es nivel 4
-    if (inspeccion.fechaFinalizacion && userLevel < 4) {
+    // Si la inspección está finalizada y el usuario no es nivel 3+
+    if (inspeccion.fechaFinalizacion && userLevel < 3) {
       alert(
-        'Esta inspección está finalizada. Solo los administradores (nivel 4) pueden modificarla.'
+        'Esta inspección está finalizada. Solo los inspectores y administradores pueden modificarla.'
       );
       this.router.navigate(['/inspeccion/ver', inspeccion.id]);
       return;

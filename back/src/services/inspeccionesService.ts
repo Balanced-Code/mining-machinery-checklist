@@ -1,9 +1,9 @@
-import type { PrismaClient, Prisma } from '@prisma/client';
 import type {
-  InspeccionData,
   CreateInspeccionCompleteData,
+  InspeccionData,
   UpdateInspeccionData,
 } from '@/models/inspeccion';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type { ArchivosService } from './archivosService';
 
 export class InspeccionesService {
@@ -529,8 +529,8 @@ export class InspeccionesService {
       throw new Error('Inspección no encontrada');
     }
 
-    // Si la inspección está finalizada, solo nivel 4 (administradores) pueden modificarla
-    if (inspeccion.fechaFinalizacion && userLevel < 4) {
+    // Si la inspección está finalizada, solo nivel 3+ (inspectores y administradores) pueden modificarla
+    if (inspeccion.fechaFinalizacion && userLevel < 3) {
       throw new Error('No se puede modificar una inspección finalizada');
     }
 
@@ -584,8 +584,8 @@ export class InspeccionesService {
       throw new Error('Inspección no encontrada');
     }
 
-    // Si la inspección está finalizada, solo nivel 4 (administradores) pueden modificarla
-    if (inspeccion.fechaFinalizacion && userLevel < 4) {
+    // Si la inspección está finalizada, solo nivel 3+ (inspectores y administradores) pueden modificarla
+    if (inspeccion.fechaFinalizacion && userLevel < 3) {
       throw new Error('No se puede modificar una inspección finalizada');
     }
 

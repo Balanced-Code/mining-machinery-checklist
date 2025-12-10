@@ -172,13 +172,15 @@ export class ArchivosService {
 
     // Guardar en base de datos
     const rutaRelativa = path.relative(this.uploadsDir, rutaFinal);
+    // Normalizar la ruta para usar siempre forward slashes (compatibilidad con URLs)
+    const rutaNormalizada = rutaRelativa.replace(/\\/g, '/');
 
     return (await this.prisma.archivo.create({
       data: {
         nombre: file.filename,
         tipo: file.mimetype,
         tamano,
-        ruta: rutaRelativa,
+        ruta: rutaNormalizada,
         url: null,
         categoria,
         hash,

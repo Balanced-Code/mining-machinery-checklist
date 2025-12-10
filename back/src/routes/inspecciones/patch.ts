@@ -1,7 +1,7 @@
-import type { FastifyPluginAsync } from 'fastify';
-import { updateInspeccionSchema } from '@/schemas/inspecciones';
 import { requireCargoLevel } from '@/middlewares/auth';
-import type { UpdateInspeccionData, InspeccionData } from '@/models/inspeccion';
+import type { InspeccionData, UpdateInspeccionData } from '@/models/inspeccion';
+import { updateInspeccionSchema } from '@/schemas/inspecciones';
+import type { FastifyPluginAsync } from 'fastify';
 
 interface UpdateInspeccionParams {
   id: string; // BigInt como string en URL
@@ -51,14 +51,14 @@ export const inspeccionesPatchRoutes: FastifyPluginAsync = async fastify => {
           });
         }
 
-        // Si está finalizada, solo nivel 4 (administradores) pueden editarla
+        // Si está finalizada, solo nivel 3+ (inspectores y administradores) pueden editarla
         // usando el endpoint /inspecciones/:id/admin
-        if (inspeccionExistente.fechaFinalizacion && userLevel < 4) {
+        if (inspeccionExistente.fechaFinalizacion && userLevel < 3) {
           return reply.code(403).send({
             statusCode: 403,
             error: 'Forbidden',
             message:
-              'No se puede modificar una inspección finalizada. Solo los administradores pueden hacerlo usando el endpoint /inspecciones/:id/admin',
+              'No se puede modificar una inspección finalizada. Solo los inspectores y administradores pueden hacerlo.',
           });
         }
 
@@ -68,13 +68,13 @@ export const inspeccionesPatchRoutes: FastifyPluginAsync = async fastify => {
         if (body.fechaInicio) {
           data.fechaInicio = new Date(body.fechaInicio);
         }
-        // Si es admin (nivel 4) editando una inspección finalizada, permitir actualizar fechaFinalizacion
-        if (body.fechaFinalizacion !== undefined && userLevel >= 4) {
+        // Si es inspector o admin (nivel 3+) editando una inspección finalizada, permitir actualizar fechaFinalizacion
+        if (body.fechaFinalizacion !== undefined && userLevel >= 3) {
           data.fechaFinalizacion = body.fechaFinalizacion
             ? new Date(body.fechaFinalizacion)
             : undefined;
         } else if (body.fechaFinalizacion) {
-          // Para no-admins, solo permitir establecer fechaFinalizacion si no es null
+          // Para niveles inferiores, solo permitir establecer fechaFinalizacion si no es null
           data.fechaFinalizacion = new Date(body.fechaFinalizacion);
         }
         if (body.numSerie !== undefined) {

@@ -151,7 +151,9 @@ export class ArchivoService {
    * @returns URL completa del archivo
    */
   getUrlVisualizacion(ruta: string): string {
-    return `http://localhost:3000/uploads/${ruta}`;
+    // Normalizar la ruta: reemplazar backslashes por forward slashes
+    const rutaNormalizada = ruta.replace(/\\/g, '/');
+    return `/uploads/${rutaNormalizada}`;
   }
 
   /**

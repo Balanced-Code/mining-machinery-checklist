@@ -136,6 +136,8 @@ if (Test-Path $DIST_DIR) {
 Write-Host "Creando estructura de carpetas..." -ForegroundColor Cyan
 New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME" -Force | Out-Null
 New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\backend" -Force | Out-Null
+New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\backend\uploads\imagen" -Force | Out-Null
+New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\backend\uploads\pdf" -Force | Out-Null
 New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\database" -Force | Out-Null
 New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\data" -Force | Out-Null
 New-Item -ItemType Directory -Path "$DIST_DIR\$APP_NAME\_internal" -Force | Out-Null
@@ -289,6 +291,14 @@ function Cleanup {
 `$null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action { Cleanup }
 
 `$PRIMERA_VEZ = -not (Test-Path `$PG_DATA)
+
+# Asegurar que existen las carpetas de uploads
+if (-not (Test-Path "`$APP_DIR\backend\uploads\imagen")) {
+    New-Item -ItemType Directory -Path "`$APP_DIR\backend\uploads\imagen" -Force | Out-Null
+}
+if (-not (Test-Path "`$APP_DIR\backend\uploads\pdf")) {
+    New-Item -ItemType Directory -Path "`$APP_DIR\backend\uploads\pdf" -Force | Out-Null
+}
 
 if (`$PRIMERA_VEZ) {
     Write-Host "  [!] Primera ejecucion detectada" -ForegroundColor Yellow
